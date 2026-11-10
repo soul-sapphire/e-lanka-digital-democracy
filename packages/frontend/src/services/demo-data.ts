@@ -375,3 +375,4 @@ export function getClientDemoPetitions(): EPetition[] {
 export function saveClientDemoPetitions(petitions: EPetition[]): void {
   localStorage.setItem(LOCAL_STORAGE_PETITIONS, JSON.stringify(petitions));
 }
+

@@ -4,7 +4,7 @@
   "description": "E-Lanka Secure Node.js Engine with AES-256-GCM FLE, HMAC-SHA256 Blind Indexing, TOTP 2FA, PDPA Right-to-Erasure, and AI Ingestion",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build --workspace=@e-lanka/shared && tsc",
     "start": "node dist/server.js",
     "dev": "tsx watch src/server.ts"
   },
@@ -26,4 +26,3 @@
     "typescript": "^5.4.5"
   }
 }
-
