@@ -21,7 +21,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: packages/backend/Dockerfile
     container_name: elanka-backend
     restart: unless-stopped
     ports:
@@ -39,4 +39,3 @@ services:
 
 volumes:
   pgdata:
-
