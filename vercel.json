@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build --workspace=@e-lanka/frontend",
+  "outputDirectory": "packages/frontend/dist",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
