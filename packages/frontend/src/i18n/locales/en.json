@@ -1,0 +1,120 @@
+{
+  "app": {
+    "name": "E-Lanka Digital Democracy",
+    "tagline": "Civic Participation, Transparent Policy Consultations & E-Petitions",
+    "pdpaBadge": "Sri Lanka PDPA No. 9 of 2022 Compliant",
+    "encryptionBadge": "AES-256-GCM Application Layer Encrypted",
+    "lowBandwidth": "Ultra-Low Bandwidth PWA"
+  },
+  "nav": {
+    "home": "Policy Hub",
+    "petitions": "E-Petitions",
+    "dashboard": "Citizen Tracker",
+    "admin": "Moderation Gate",
+    "lms": "Democracy Academy (CSLK)",
+    "login": "Citizen Login",
+    "logout": "Log Out",
+    "offline": "Offline Mode",
+    "online": "Connected"
+  },
+  "hero": {
+    "title": "Participatory Governance for Sri Lanka",
+    "subtitle": "Cast your voice on national policy briefs, sign verified civic petitions, and shape legislation under statutory non-retaliation data protections.",
+    "explorePolicies": "Explore Policy Consultations",
+    "viewPetitions": "Browse E-Petitions",
+    "activeConsultations": "Active Consultations",
+    "verifiedSignatures": "Verified Signatures",
+    "statutoryCompliance": "PDPA Protection"
+  },
+  "stages": {
+    "PENDING_REVIEW": "Stage 1: Pending Panel Review",
+    "APPROVED_PANEL": "Stage 2: Approved by Panel Gate",
+    "ACTIVE_CONSULTATION": "Stage 3: Active Consultation",
+    "AI_ANALYSIS_SYNC": "Stage 4: AI Opinion Mapping",
+    "CONCLUDED_ARCHIVED": "Stage 5: Concluded & Archived"
+  },
+  "categories": {
+    "ALL": "All Policy Sectors",
+    "DIGITAL_RIGHTS": "Digital Rights & AI",
+    "ECONOMIC_REFORM": "Economic Reform",
+    "HEALTHCARE_WELFARE": "Healthcare & Welfare",
+    "EDUCATION_YOUTH": "Education & Youth",
+    "ENVIRONMENTAL_SUSTAINABILITY": "Environment & Energy",
+    "CONSTITUTIONAL_GOVERNANCE": "Constitutional & Anti-Corruption",
+    "AGRICULTURE_FOOD_SECURITY": "Agriculture & Food Security"
+  },
+  "policyDetail": {
+    "code": "Policy Reference",
+    "targetMinistry": "Target Ministry",
+    "authorAgency": "Drafting Agency",
+    "submissions": "Citizen Submissions",
+    "takeSurvey": "Participate in Consultation",
+    "shareWhatsApp": "Share on WhatsApp",
+    "analyticsTitle": "Aggregated Civic Sentiment & Response Splits",
+    "sentimentBreakdown": "AI Sentiment Distribution (Zero-PII)",
+    "positive": "Positive / Supportive",
+    "neutral": "Neutral / Conditional",
+    "negative": "Critical / Opposing",
+    "thematicClusters": "Key Thematic Clusters Synthesized by AI",
+    "lmsBannerTitle": "Deepen Your Policy Understanding",
+    "lmsBannerDesc": "Access free certified citizen modules hosted on the national democracy portal",
+    "visitLms": "Open Course at www.cslk.org"
+  },
+  "survey": {
+    "title": "Consultation Questionnaire Runner",
+    "step": "Question {{current}} of {{total}}",
+    "prev": "Previous",
+    "next": "Next Question",
+    "submit": "Submit Encrypted Feedback",
+    "submitting": "Encrypting with AES-256-GCM...",
+    "offlineNotice": "You are offline. Submission saved to local queue and will sync automatically upon reconnection.",
+    "privacyNotice": "Protected under Sri Lanka PDPA No. 9 of 2022. Open-text answers are encrypted with AES-256-GCM before transmission.",
+    "successTitle": "Civic Feedback Ingested!",
+    "successDesc": "Your response has been cryptographically recorded. Identity is decoupled via HMAC-SHA256 blind indexing to ensure complete non-retaliation."
+  },
+  "petitions": {
+    "title": "Verified Civic E-Petitions",
+    "subtitle": "Mobilize democratic support for statutory amendments and citizen initiatives.",
+    "target": "Target Authority",
+    "progress": "{{current}} of {{goal}} verified signatures",
+    "signBtn": "Sign This Petition",
+    "shareBtn": "Share (wa.me)",
+    "modalTitle": "Verify & Sign E-Petition",
+    "nicLabel": "National Identity Card (NIC)",
+    "nicHelp": "Sri Lankan format: 9 digits + V/X or 12 digits",
+    "nameLabel": "Full Legal Name",
+    "emailLabel": "Email Address (Optional)",
+    "districtLabel": "Electoral District",
+    "consentCheckbox": "I consent to processing my citizenship credentials under Sri Lanka PDPA No. 9 of 2022 to prevent duplicate voting.",
+    "agreeCheckbox": "I solemnly declare my support for this civic petition.",
+    "confirmSign": "Confirm & Record Verified Signature",
+    "duplicateError": "This NIC has already recorded a signature for this petition."
+  },
+  "dashboard": {
+    "title": "Privacy-Preserving Citizen Tracker",
+    "subtitle": "Your civic participation history is linked via hashed identifiers, keeping public records completely anonymous.",
+    "aliasLabel": "Your Anonymized Civic Identity",
+    "district": "Registered District",
+    "signedPetitions": "E-Petitions You Have Signed",
+    "submittedSurveys": "Policy Consultations You Contributed To",
+    "pdpaRights": "Your Statutory Rights (PDPA No. 9 of 2022)",
+    "erasureTitle": "Automated Right to Erasure (Section 14)",
+    "erasureDesc": "Exercising this right wipes your personal identity and decouples foreign keys while preserving immutable quantitative aggregate counts.",
+    "erasureBtn": "Exercise Right to Erasure",
+    "confirmErasure": "Are you sure? This will delete all personal credentials while retaining your anonymized vote count in national totals."
+  },
+  "admin": {
+    "title": "Statutory Moderation Gate & Admin Portal",
+    "subtitle": "5-Stage Policy Lifecycle Management & PDPA Audit Ledger",
+    "totpBanner": "Restricted administrative zone. RFC 6238 TOTP 2FA verification enforced.",
+    "pendingQueue": "Stage 1: Pending Proposal Moderation Queue",
+    "reviewBtn": "Review & Set Panel Status",
+    "approveAction": "Approve (APPROVED_PANEL)",
+    "rejectAction": "Hold / Request Revision",
+    "totpCodeLabel": "Enter 6-Digit TOTP Code (Google Authenticator / FreeOTP)",
+    "panelNotesLabel": "Statutory Panel Review Findings & Notes",
+    "triggerAi": "Trigger AI Opinion Mapping & Scrubbing",
+    "auditLedger": "PDPA Statutory Audit Ledger (Immutable Chained Logs)"
+  }
+}
+

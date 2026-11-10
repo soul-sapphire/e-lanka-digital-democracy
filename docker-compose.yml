@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Supabase-compatible PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: elanka-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./supabase/migrations/20260101000000_init_schema.sql:/docker-entrypoint-initdb.d/01_init.sql
+      - ./supabase/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+
+  # E-Lanka Node.js Cryptographic API Engine
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: elanka-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      DATABASE_URL: postgresql://postgres:postgrespassword@postgres:5432/postgres
+      FLE_MASTER_KEY: e-lanka-pdpa-2026-master-aes-key-change-in-prod-32b!
+      BLIND_INDEX_PEPPER: e-lanka-pdpa-salt-pepper-2026-v1-secret
+      PDPA_AUDIT_SECRET: e-lanka-pdpa-audit-immutable-chain-2026-secret
+      JWT_SECRET: e-lanka-jwt-token-signature-key-2026
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:

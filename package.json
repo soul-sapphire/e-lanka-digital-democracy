@@ -1,0 +1,27 @@
+{
+  "name": "e-lanka-digital-democracy",
+  "version": "1.0.0",
+  "description": "E-Lanka Digital Democracy Platform - Trilingual Civic Engagement PWA, Cryptographic Node.js Engine & Supabase DB",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "node tests/run-all-tests.js",
+    "dev:backend": "npm run dev --workspace=@e-lanka/backend",
+    "dev:frontend": "npm run dev --workspace=@e-lanka/frontend",
+    "start:backend": "npm run start --workspace=@e-lanka/backend",
+    "db:deploy": "node supabase/apply-migrations.js"
+  },
+  "keywords": [
+    "digital-democracy",
+    "sri-lanka",
+    "pdpa-compliant",
+    "pwa",
+    "field-level-encryption",
+    "trilingual"
+  ],
+  "author": "E-Lanka Engineering Team",
+  "license": "Apache-2.0"
+}
