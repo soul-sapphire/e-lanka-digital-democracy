@@ -11,6 +11,7 @@
 import { Router, Request, Response } from 'express';
 import { DatabaseStore } from '../db/store';
 import { isValidSriLankanNIC } from '../crypto/blind-index';
+import { decodeAndValidateSriLankanNIC } from '../crypto/nic-validator';
 
 export const petitionRouter = Router();
 
@@ -91,10 +92,11 @@ petitionRouter.post('/:id/sign', (req: Request, res: Response): void => {
     return;
   }
 
-  // Validate Sri Lankan NIC format (9 digits + V/X or 12 digits)
-  if (!isValidSriLankanNIC(nicNumber)) {
+  // Validate Sri Lankan NIC format and mathematical day-of-year checksum
+  const nicValidation = decodeAndValidateSriLankanNIC(nicNumber);
+  if (!nicValidation.isValid) {
     res.status(400).json({
-      error: 'Invalid Sri Lankan National Identity Card (NIC) format. Expected 9 digits + V/X (e.g. 851234567V) or 12 digits (e.g. 198512345678).'
+      error: nicValidation.validationError || 'Invalid Sri Lankan National Identity Card (NIC) format or checksum.'
     });
     return;
   }

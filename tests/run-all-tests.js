@@ -33,6 +33,9 @@ const { DatabaseStore } = require('../packages/backend/dist/db/store');
 const { PDPAService } = require('../packages/backend/dist/services/pdpa.service');
 const { AIWorkerService } = require('../packages/backend/dist/services/ai-worker.service');
 const { PolicyLifecycleStage } = require('../packages/shared/dist/types/policy');
+const { decodeAndValidateSriLankanNIC, verifyClaimedCitizenDetails } = require('../packages/shared/dist/nic-validator');
+const { drpGatewayService } = require('../packages/backend/dist/services/drp-gateway.service');
+const { mobileOTPService } = require('../packages/backend/dist/services/otp.service');
 
 let passedTests = 0;
 let failedTests = 0;
@@ -439,6 +442,87 @@ async function runTestSuite() {
     assert.strictEqual(aggregate.totalSubmissions > 0, true);
     assert.strictEqual(aggregate.thematicClusters.length > 0, true);
     assert.strictEqual(typeof aggregate.sentimentDistribution.positive, 'number');
+  });
+
+  // --------------------------------------------------------------------------
+  // SUITE 9: 3-Tier Sovereign Citizen Verification & Anti-Spoofing Engine
+  // --------------------------------------------------------------------------
+  console.log('\n📦 SUITE 9: 3-Tier Citizen Verification & Anti-Spoofing Engine');
+
+  it('9.1 Decodes valid 9-digit old and 12-digit new Sri Lankan NICs', () => {
+    // 851234567V -> Year 1985, Days: 123 (May 3), Male, Voter eligible
+    const oldMale = decodeAndValidateSriLankanNIC('851234567V');
+    assert.strictEqual(oldMale.isValid, true);
+    assert.strictEqual(oldMale.format, 'OLD_9_DIGIT');
+    assert.strictEqual(oldMale.birthYear, 1985);
+    assert.strictEqual(oldMale.gender, 'MALE');
+    assert.strictEqual(oldMale.isVoterEligible, true);
+    assert.strictEqual(oldMale.calculatedDOB, '1985-05-02');
+
+    // 199062345678 -> Year 1990, Days: 623 (Female: 623 - 500 = 123 -> May 2)
+    const newFemale = decodeAndValidateSriLankanNIC('199062345678');
+    assert.strictEqual(newFemale.isValid, true);
+    assert.strictEqual(newFemale.format, 'NEW_12_DIGIT');
+    assert.strictEqual(newFemale.birthYear, 1990);
+    assert.strictEqual(newFemale.gender, 'FEMALE');
+    assert.strictEqual(newFemale.calculatedDOB, '1990-05-02');
+  });
+
+  it('9.2 Mathematically rejects randomly fabricated/invalid NIC sequences', () => {
+    // Day of year 999 is invalid (female max is 866, male max is 366)
+    const invalidNIC = decodeAndValidateSriLankanNIC('909994567V');
+    assert.strictEqual(invalidNIC.isValid, false);
+    assert.strictEqual(invalidNIC.validationError.includes('invalid day-of-year sequence'), true);
+
+    // Day of year 000 is invalid
+    const zeroDays = decodeAndValidateSriLankanNIC('199000012345');
+    assert.strictEqual(zeroDays.isValid, false);
+  });
+
+  it('9.3 Detects identity mismatches between claimed DOB/gender and encoded NIC', () => {
+    // NIC encodes MALE born 1985, but user claims FEMALE born 1992
+    const mismatch = verifyClaimedCitizenDetails({
+      nicNumber: '851234567V',
+      claimedDOB: '1992-05-03',
+      claimedGender: 'FEMALE'
+    });
+    assert.strictEqual(mismatch.verified, false);
+    assert.strictEqual(mismatch.reason.includes('Claimed gender'), true);
+
+    // Correct details match
+    const match = verifyClaimedCitizenDetails({
+      nicNumber: '851234567V',
+      claimedDOB: '1985-05-03',
+      claimedGender: 'MALE'
+    });
+    assert.strictEqual(match.verified, true);
+  });
+
+  await itAsync('9.4 DRP e-ID Gateway verifies registry status and assigns electoral district', async () => {
+    const drpResult = await drpGatewayService.verifyNICWithDRP('851234567V');
+    assert.strictEqual(drpResult.verified, true);
+    assert.strictEqual(drpResult.citizenStatus, 'ACTIVE_LIVING');
+    assert.strictEqual(typeof drpResult.electoralDistrict, 'string');
+    assert.strictEqual(drpResult.drpTransactionId.startsWith('DRP-LK-'), true);
+  });
+
+  await itAsync('9.5 TRCSL Mobile SIM OTP service dispatches, verifies, and produces blind hash', async () => {
+    // Normalizes and dispatches OTP
+    const dispatch = await mobileOTPService.dispatchOTP('0771234567');
+    assert.strictEqual(dispatch.success, true);
+    assert.strictEqual(typeof dispatch.otpReference, 'string');
+    assert.strictEqual(typeof dispatch.demoOtpCode, 'string');
+    assert.strictEqual(dispatch.mobileMasked, '+94 77 *** 4567');
+
+    // Incorrect code fails
+    const failResult = mobileOTPService.verifyOTP(dispatch.otpReference, '0771234567', '000000');
+    assert.strictEqual(failResult.verified, false);
+
+    // Correct code succeeds and produces blind index
+    const verifyResult = mobileOTPService.verifyOTP(dispatch.otpReference, '0771234567', dispatch.demoOtpCode);
+    assert.strictEqual(verifyResult.verified, true);
+    assert.strictEqual(typeof verifyResult.mobileBlindHash, 'string');
+    assert.strictEqual(verifyResult.mobileBlindHash.length, 64); // SHA-256 hex length
   });
 
   // --------------------------------------------------------------------------

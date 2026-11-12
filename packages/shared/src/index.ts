@@ -5,4 +5,5 @@ export * from './types/petition';
 export * from './types/user';
 export * from './types/ai';
 export * from './types/pdpa';
-
+export * from './types/verification';
+export * from './nic-validator';
