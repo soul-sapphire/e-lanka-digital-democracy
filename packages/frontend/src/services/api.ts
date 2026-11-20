@@ -94,24 +94,36 @@ async function tryFetch<T>(endpoint: string, options: RequestInit = {}): Promise
 export const api = {
   // Policies
   getPolicies: async (): Promise<PolicyConsultation[]> => {
+    const user = getStoredUser();
+    const isAdmin = user && ['PANEL_MODERATOR', 'POLICY_ADMIN', 'SYSTEM_AUDITOR'].includes(user.role);
     const live = await tryFetch<{ data: PolicyConsultation[] }>('/policies');
     if (live && live.data) {
       return live.data;
     }
-    // Standalone Demo Fallback
-    return getClientDemoPolicies();
+    // Standalone Demo Fallback (enforce unapproved draft privacy)
+    return getClientDemoPolicies(Boolean(isAdmin));
   },
 
   getPolicyById: async (id: string): Promise<{ data: PolicyConsultation; whatsappShareUrl: string }> => {
+    const user = getStoredUser();
+    const isAdmin = user && ['PANEL_MODERATOR', 'POLICY_ADMIN', 'SYSTEM_AUDITOR'].includes(user.role);
     const live = await tryFetch<{ data: PolicyConsultation; whatsappShareUrl: string }>(`/policies/${id}`);
     if (live && live.data) {
       return live;
     }
 
-    const policies = getClientDemoPolicies();
-    const policy = policies.find(p => p.id === id) || policies[0];
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`E-Lanka Digital Democracy: "${policy.title.en}". Support here: ${window.location.origin}/policies/${policy.id}`)}`;
+    const policies = getClientDemoPolicies(true);
+    const policy = policies.find(p => p.id === id);
+    if (!policy) {
+      throw new Error('Policy consultation not found');
+    }
 
+    // Strict RBAC: unapproved draft proposals (Stage 1 / isPubliclyVisible=false) are restricted
+    if ((!policy.isPubliclyVisible || policy.stage === PolicyLifecycleStage.STAGE_1_PENDING_REVIEW) && !isAdmin) {
+      throw new Error('ACCESS_RESTRICTED: This policy proposal is currently in Stage 1 (Pending Review) and is not accessible to the public.');
+    }
+
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`E-Lanka Digital Democracy: "${policy.title.en}". Support here: ${window.location.origin}/policies/${policy.id}`)}`;
     return { data: policy, whatsappShareUrl: whatsappUrl };
   },
 
@@ -332,15 +344,23 @@ export const api = {
 
   // Admin & Public Aggregates
   getPendingQueue: async (): Promise<{ data: PolicyConsultation[]; totalPending: number }> => {
+    const user = getStoredUser();
+    if (!user || !['PANEL_MODERATOR', 'POLICY_ADMIN'].includes(user.role)) {
+      throw new Error('ACCESS_DENIED: Citizen role cannot access the Stage 1 moderation queue.');
+    }
     const live = await tryFetch<{ data: PolicyConsultation[]; totalPending: number }>('/admin/pending-queue');
     if (live && live.data) return live;
 
-    const policies = getClientDemoPolicies();
+    const policies = getClientDemoPolicies(true);
     const pending = policies.filter(p => p.stage === PolicyLifecycleStage.STAGE_1_PENDING_REVIEW);
     return { data: pending, totalPending: pending.length };
   },
 
   getAuditLogs: async (limit = 20): Promise<any> => {
+    const user = getStoredUser();
+    if (!user || !['SYSTEM_AUDITOR', 'PANEL_MODERATOR', 'POLICY_ADMIN'].includes(user.role)) {
+      throw new Error('ACCESS_DENIED: Citizen role cannot inspect the PDPA audit ledger.');
+    }
     const live = await tryFetch<any>(`/admin/audit-logs?limit=${limit}`);
     if (live) return live;
 
@@ -371,6 +391,10 @@ export const api = {
   },
 
   triggerAISync: async (policyId: string, totpToken: string): Promise<any> => {
+    const user = getStoredUser();
+    if (!user || !['POLICY_ADMIN', 'PANEL_MODERATOR'].includes(user.role)) {
+      throw new Error('ACCESS_DENIED: Citizen role cannot trigger AI opinion mapping.');
+    }
     const live = await tryFetch<any>(`/admin/ai-sync/${policyId}`, {
       method: 'POST',
       headers: { 'x-totp-token': totpToken }

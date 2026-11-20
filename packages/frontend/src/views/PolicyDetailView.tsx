@@ -82,17 +82,36 @@ export const PolicyDetailView: React.FC = () => {
   }
 
   if (error || !policy) {
+    const isRestricted = error?.includes('ACCESS_RESTRICTED');
     return (
-      <div className="py-16 text-center text-slate-300 space-y-4">
-        <h2 className="text-xl font-bold text-red-400">Policy Consultation Not Found</h2>
-        <p className="text-xs text-slate-400">{error || 'The requested policy is unavailable.'}</p>
-        <Link
-          to="/"
-          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs font-semibold hover:bg-slate-700"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Return to Policy Hub</span>
-        </Link>
+      <div className="py-16 text-center text-slate-300 space-y-4 max-w-md mx-auto">
+        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto border ${isRestricted ? 'bg-red-950/80 border-red-800 text-red-400' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>
+          <Lock className="w-7 h-7" />
+        </div>
+        <h2 className="text-xl font-bold text-white">
+          {isRestricted ? 'Proposal Restricted (Stage 1 Draft)' : 'Policy Consultation Not Found'}
+        </h2>
+        <p className="text-xs text-slate-400 leading-relaxed">
+          {error || 'The requested policy consultation is unavailable.'}
+        </p>
+        <div className="pt-2 flex items-center justify-center gap-3">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-800 text-slate-200 text-xs font-semibold hover:bg-slate-700"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Return to Policy Hub</span>
+          </Link>
+          {isRestricted && (
+            <Link
+              to="/admin/login"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold uppercase tracking-wider"
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Admin Login</span>
+            </Link>
+          )}
+        </div>
       </div>
     );
   }

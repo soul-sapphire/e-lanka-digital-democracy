@@ -34,13 +34,23 @@ policyRouter.get('/', authenticateToken, (req: Request, res: Response): void => 
 
 /**
  * Policy detail by ID
+ * Restricts unapproved draft proposals (Stage 1 / isPubliclyVisible=false) to administrative roles
  */
-policyRouter.get('/:id', (req: Request, res: Response): void => {
+policyRouter.get('/:id', authenticateToken, (req: Request, res: Response): void => {
   const store = DatabaseStore.getInstance();
   const policy = store.getPolicyById(req.params.id);
 
   if (!policy) {
     res.status(404).json({ error: 'Policy consultation not found' });
+    return;
+  }
+
+  const isAdmin = req.user && ['PANEL_MODERATOR', 'POLICY_ADMIN', 'SYSTEM_AUDITOR'].includes(req.user.role);
+  if ((!policy.isPubliclyVisible || policy.stage === PolicyLifecycleStage.STAGE_1_PENDING_REVIEW) && !isAdmin) {
+    res.status(403).json({
+      error: 'ACCESS_RESTRICTED',
+      message: 'This policy proposal is currently in Stage 1 (Pending Review) and is restricted to authorized panel moderators.'
+    });
     return;
   }
 

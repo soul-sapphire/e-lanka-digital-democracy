@@ -350,12 +350,15 @@ export const DEMO_PUBLIC_AGGREGATE: ZeroPIIPublicAggregate = {
 };
 
 // Client Storage Helpers
-export function getClientDemoPolicies(): PolicyConsultation[] {
+export function getClientDemoPolicies(includeUnpublished: boolean = false): PolicyConsultation[] {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_POLICIES);
-    return raw ? JSON.parse(raw) : INITIAL_DEMO_POLICIES;
+    const list: PolicyConsultation[] = raw ? JSON.parse(raw) : INITIAL_DEMO_POLICIES;
+    if (includeUnpublished) return list;
+    return list.filter(p => p.isPubliclyVisible && p.stage !== PolicyLifecycleStage.STAGE_1_PENDING_REVIEW);
   } catch {
-    return INITIAL_DEMO_POLICIES;
+    if (includeUnpublished) return INITIAL_DEMO_POLICIES;
+    return INITIAL_DEMO_POLICIES.filter(p => p.isPubliclyVisible && p.stage !== PolicyLifecycleStage.STAGE_1_PENDING_REVIEW);
   }
 }
 

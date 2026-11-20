@@ -434,7 +434,7 @@ export class DatabaseStore {
     if (includeUnpublished) {
       return list;
     }
-    return list.filter(p => p.isPubliclyVisible || p.stage !== PolicyLifecycleStage.STAGE_1_PENDING_REVIEW);
+    return list.filter(p => p.isPubliclyVisible && p.stage !== PolicyLifecycleStage.STAGE_1_PENDING_REVIEW);
   }
 
   public getPolicyById(id: string): PolicyConsultation | undefined {

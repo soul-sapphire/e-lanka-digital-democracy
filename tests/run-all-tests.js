@@ -263,6 +263,27 @@ async function runTestSuite() {
     assert.strictEqual(typeof approved.approvedAt, 'string');
   });
 
+  it('4.4 Server-side RBAC strictly excludes unapproved Stage 1 proposals (EL-POL-2026-004) from public queries', () => {
+    const store = DatabaseStore.getInstance();
+    const publicPolicies = store.getPolicies(false);
+
+    // Verify EL-POL-2026-004 is NOT present in public query
+    const leakedDraft = publicPolicies.find(p => p.code === 'EL-POL-2026-004');
+    assert.strictEqual(leakedDraft, undefined, 'Draft proposal EL-POL-2026-004 must not leak to public queries');
+
+    // Verify all public policies have stage != STAGE_1_PENDING_REVIEW and isPubliclyVisible = true
+    for (const policy of publicPolicies) {
+      assert.notStrictEqual(policy.stage, PolicyLifecycleStage.STAGE_1_PENDING_REVIEW);
+      assert.strictEqual(policy.isPubliclyVisible, true);
+    }
+
+    // Verify admin query can access all proposals including EL-POL-2026-004
+    const adminPolicies = store.getPolicies(true);
+    const adminDraft = adminPolicies.find(p => p.code === 'EL-POL-2026-004');
+    assert.notStrictEqual(adminDraft, undefined, 'Admin query must have access to Stage 1 moderation queue');
+    assert.strictEqual(adminDraft.stage, PolicyLifecycleStage.STAGE_1_PENDING_REVIEW);
+  });
+
   // --------------------------------------------------------------------------
   // SUITE 5: Dynamic Survey Ingestion with AES-256-GCM FLE
   // --------------------------------------------------------------------------

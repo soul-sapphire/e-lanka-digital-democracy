@@ -3,9 +3,10 @@
  * Administrative & Moderation Panel Routes
  *
  * Implements:
- * 1. Stage 1 Proposal Moderation Queue (PENDING -> APPROVED_PANEL)
- * 2. PDPA No. 9 of 2022 Statutory Audit Ledger Viewer
- * 3. AI Opinion Mapping & Scrubbing Worker Triggers
+ * 1. Strict Server-Side RBAC: Blocks CITIZEN and unauthenticated access
+ * 2. Stage 1 Proposal Moderation Queue (PENDING -> APPROVED_PANEL)
+ * 3. PDPA No. 9 of 2022 Statutory Audit Ledger Viewer (SYSTEM_AUDITOR)
+ * 4. AI Opinion Mapping & Scrubbing Worker Triggers (POLICY_ADMIN / PANEL_MODERATOR)
  */
 
 import { Router, Request, Response } from 'express';
@@ -17,12 +18,25 @@ import { authenticateToken, requireRoles, requireTOTP2FA } from '../middleware/a
 
 export const adminRouter = Router();
 
+// Enforce authentication & reject CITIZEN role across all /admin endpoints
+adminRouter.use(authenticateToken);
+adminRouter.use((req: Request, res: Response, next) => {
+  if (!req.user || req.user.role === 'CITIZEN') {
+    res.status(403).json({
+      error: 'ACCESS_DENIED',
+      message: 'Access denied: Citizen role does not possess permissions for administrative moderation or audit resources.'
+    });
+    return;
+  }
+  next();
+});
+
 /**
  * Stage 1 Proposals Moderation Queue
+ * Restricted to PANEL_MODERATOR and POLICY_ADMIN
  */
 adminRouter.get(
   '/pending-queue',
-  authenticateToken,
   requireRoles(['PANEL_MODERATOR', 'POLICY_ADMIN']),
   (req: Request, res: Response): void => {
     const store = DatabaseStore.getInstance();
@@ -37,11 +51,11 @@ adminRouter.get(
 );
 
 /**
- * Immutable PDPA Audit Logs (Restricted to SYSTEM_AUDITOR and PANEL_MODERATOR)
+ * Immutable PDPA Audit Logs
+ * Restricted to SYSTEM_AUDITOR (and PANEL_MODERATOR / POLICY_ADMIN)
  */
 adminRouter.get(
   '/audit-logs',
-  authenticateToken,
   requireRoles(['SYSTEM_AUDITOR', 'PANEL_MODERATOR', 'POLICY_ADMIN']),
   (req: Request, res: Response): void => {
     const action = req.query.action as any;
@@ -60,10 +74,10 @@ adminRouter.get(
 
 /**
  * Trigger AI Opinion Mapping & Scrubbing Worker for a Policy
+ * Restricted to POLICY_ADMIN and PANEL_MODERATOR with mandatory TOTP 2FA
  */
 adminRouter.post(
   '/ai-sync/:policyId',
-  authenticateToken,
   requireRoles(['PANEL_MODERATOR', 'POLICY_ADMIN']),
   requireTOTP2FA,
   async (req: Request, res: Response): Promise<void> => {
@@ -81,16 +95,20 @@ adminRouter.post(
 );
 
 /**
- * Test PII Scrubbing Utility endpoint (useful for demo and verification)
+ * Test PII Scrubbing Utility endpoint
+ * Restricted to PANEL_MODERATOR and POLICY_ADMIN
  */
-adminRouter.post('/test-scrub', (req: Request, res: Response): void => {
-  const { sampleText } = req.body;
-  if (!sampleText) {
-    res.status(400).json({ error: 'sampleText is required' });
-    return;
+adminRouter.post(
+  '/test-scrub',
+  requireRoles(['PANEL_MODERATOR', 'POLICY_ADMIN']),
+  (req: Request, res: Response): void => {
+    const { sampleText } = req.body;
+    if (!sampleText) {
+      res.status(400).json({ error: 'sampleText is required' });
+      return;
+    }
+
+    const result = AIWorkerService.scrubPII(sampleText);
+    res.json({ result });
   }
-
-  const result = AIWorkerService.scrubPII(sampleText);
-  res.json({ result });
-});
-
+);

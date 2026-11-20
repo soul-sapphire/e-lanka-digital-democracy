@@ -241,10 +241,14 @@ ALTER TABLE petition_signatures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pdpa_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ai_consultation_aggregates ENABLE ROW LEVEL SECURITY;
 
--- Policies table: Public can view approved or active policies
+-- Policies table: Public can view ONLY approved or active policies (Stage 1 pending review strictly excluded)
 CREATE POLICY "Public can view active or approved policies"
   ON policies FOR SELECT
-  USING (is_publicly_visible = TRUE OR stage IN ('APPROVED_PANEL', 'ACTIVE_CONSULTATION', 'AI_ANALYSIS_SYNC', 'CONCLUDED_ARCHIVED'));
+  USING (
+    (is_publicly_visible = TRUE AND stage IN ('APPROVED_PANEL', 'ACTIVE_CONSULTATION', 'AI_ANALYSIS_SYNC', 'CONCLUDED_ARCHIVED'))
+    OR
+    (auth.jwt() ->> 'role' IN ('PANEL_MODERATOR', 'POLICY_ADMIN', 'SYSTEM_AUDITOR'))
+  );
 
 -- Policies table: Only authorized moderators/admins can insert or update policies
 CREATE POLICY "Moderators can review pending proposals"

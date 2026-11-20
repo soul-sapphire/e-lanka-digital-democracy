@@ -25,7 +25,11 @@ export const AdminModerationPanel: React.FC = () => {
   const currentLang = (i18n.language as 'en' | 'si' | 'ta') || 'en';
   const [user, setUser] = useState<any>(getStoredUser());
 
-  const [activeTab, setActiveTab] = useState<'moderation' | 'ai_worker' | 'audit_logs'>('moderation');
+  const [activeTab, setActiveTab] = useState<'moderation' | 'ai_worker' | 'audit_logs'>(() => {
+    const stored = getStoredUser();
+    if (stored?.role === 'SYSTEM_AUDITOR') return 'audit_logs';
+    return 'moderation';
+  });
   const [pendingQueue, setPendingQueue] = useState<PolicyConsultation[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,11 +60,15 @@ export const AdminModerationPanel: React.FC = () => {
     try {
       setLoading(true);
       if (activeTab === 'moderation') {
-        const res = await api.getPendingQueue();
-        setPendingQueue(res.data);
+        if (['PANEL_MODERATOR', 'POLICY_ADMIN'].includes(user?.role)) {
+          const res = await api.getPendingQueue();
+          setPendingQueue(res.data);
+        }
       } else if (activeTab === 'audit_logs') {
-        const res = await api.getAuditLogs(30);
-        setAuditLogs(res.logs || []);
+        if (['SYSTEM_AUDITOR', 'PANEL_MODERATOR', 'POLICY_ADMIN'].includes(user?.role)) {
+          const res = await api.getAuditLogs(30);
+          setAuditLogs(res.logs || []);
+        }
       }
     } catch (e) {
       console.error('Failed to load admin data', e);
@@ -171,6 +179,23 @@ export const AdminModerationPanel: React.FC = () => {
         <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
           {t('admin.subtitle')}. Designated experts must review incoming policy drafts and explicitly grant <span className="text-lanka-gold font-mono font-bold">APPROVED_PANEL</span> status before questionnaires can be formulated or deployed.
         </p>
+
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-slate-800">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-400">Authenticated Role:</span>
+            <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300">
+              {user?.role}
+            </span>
+            <span className="text-xs text-slate-400">({user?.anonymizedAlias})</span>
+          </div>
+          <Link
+            to="/admin/login"
+            className="text-xs text-amber-400 hover:text-amber-300 underline underline-offset-2 flex items-center gap-1 font-medium"
+          >
+            <Lock className="w-3 h-3" />
+            <span>Switch Role / Re-authenticate</span>
+          </Link>
+        </div>
       </div>
 
       {/* Tabs navigation */}
@@ -217,6 +242,15 @@ export const AdminModerationPanel: React.FC = () => {
 
       {/* TAB 1: Stage 1 Moderation Queue */}
       {activeTab === 'moderation' && (
+        !['PANEL_MODERATOR', 'POLICY_ADMIN'].includes(user?.role) ? (
+          <div className="p-8 text-center bg-slate-900 border border-slate-800 rounded-2xl text-slate-300 space-y-3">
+            <Lock className="w-8 h-8 text-amber-400 mx-auto" />
+            <h4 className="font-bold text-white">Role Permission Required</h4>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Reviewing and moderating Stage 1 policy drafts is restricted to <strong>PANEL_MODERATOR</strong> or <strong>POLICY_ADMIN</strong> roles. Your active authenticated role is <strong>{user?.role}</strong>.
+            </p>
+          </div>
+        ) : (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
@@ -287,10 +321,20 @@ export const AdminModerationPanel: React.FC = () => {
             </div>
           )}
         </div>
+        )
       )}
 
       {/* TAB 2: AI Worker & PII Scrubbing */}
       {activeTab === 'ai_worker' && (
+        !['POLICY_ADMIN', 'PANEL_MODERATOR'].includes(user?.role) ? (
+          <div className="p-8 text-center bg-slate-900 border border-slate-800 rounded-2xl text-slate-300 space-y-3">
+            <Lock className="w-8 h-8 text-amber-400 mx-auto" />
+            <h4 className="font-bold text-white">Role Permission Required</h4>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Triggering AI opinion clustering and PII scrubbing is restricted to <strong>POLICY_ADMIN</strong>. Your active authenticated role is <strong>{user?.role}</strong>.
+            </p>
+          </div>
+        ) : (
         <div className="space-y-8">
           {/* AI Opinion Mapping Trigger */}
           <div className="p-6 sm:p-8 rounded-2xl bg-slate-900 border border-slate-800 text-white space-y-5">
@@ -414,10 +458,20 @@ export const AdminModerationPanel: React.FC = () => {
             )}
           </div>
         </div>
+        )
       )}
 
       {/* TAB 3: PDPA Statutory Audit Ledger */}
       {activeTab === 'audit_logs' && (
+        !['SYSTEM_AUDITOR', 'PANEL_MODERATOR', 'POLICY_ADMIN'].includes(user?.role) ? (
+          <div className="p-8 text-center bg-slate-900 border border-slate-800 rounded-2xl text-slate-300 space-y-3">
+            <Lock className="w-8 h-8 text-amber-400 mx-auto" />
+            <h4 className="font-bold text-white">Role Permission Required</h4>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Inspecting the immutable PDPA statutory audit ledger is restricted to <strong>SYSTEM_AUDITOR</strong>. Your active authenticated role is <strong>{user?.role}</strong>.
+            </p>
+          </div>
+        ) : (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -467,6 +521,7 @@ export const AdminModerationPanel: React.FC = () => {
             </div>
           </div>
         </div>
+        )
       )}
 
       {/* Moderation Gate Decision Modal */}
