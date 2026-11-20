@@ -8,6 +8,7 @@ import { DynamicSurveyRunner } from './views/DynamicSurveyRunner';
 import { EPetitionsView } from './views/EPetitionsView';
 import { CitizenDashboard } from './views/CitizenDashboard';
 import { AdminModerationPanel } from './views/AdminModerationPanel';
+import { AdminLoginView } from './views/AdminLoginView';
 import { LMSAcademyView } from './views/LMSAcademyView';
 import { OfflineQueueManager } from './services/offline-queue';
 import { Wifi, WifiOff, CheckCircle2 } from 'lucide-react';
@@ -70,6 +71,7 @@ export const App: React.FC = () => {
             <Route path="/petitions" element={<EPetitionsView />} />
             <Route path="/dashboard" element={<CitizenDashboard />} />
             <Route path="/admin" element={<AdminModerationPanel />} />
+            <Route path="/admin/login" element={<AdminLoginView />} />
             <Route path="/academy" element={<LMSAcademyView />} />
           </Routes>
         </main>

@@ -391,17 +391,59 @@ export const api = {
   },
 
   // Auth & TOTP
-  login: async (credentials: any): Promise<any> => {
-    const live = await tryFetch<any>('/auth/login', { method: 'POST', body: JSON.stringify(credentials) });
+  citizenLogin: async (credentials: { nicNumber?: string; district?: string; email?: string }): Promise<any> => {
+    const live = await tryFetch<any>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ ...credentials, role: 'CITIZEN' })
+    });
     if (live) return live;
 
+    const district = credentials.district || 'Colombo';
     const user = {
       id: `usr_${Date.now()}`,
-      role: credentials.role || 'CITIZEN',
-      anonymizedAlias: credentials.role === 'CITIZEN' ? 'Citizen-Colombo-4912' : `Admin-${credentials.role}`,
-      totpEnabled: credentials.role !== 'CITIZEN'
+      role: 'CITIZEN',
+      anonymizedAlias: `Citizen-${district}-${Math.floor(1000 + Math.random() * 9000)}`,
+      district,
+      totpEnabled: false
     };
-    return { token: `demo_jwt_token_${Date.now()}`, user };
+    return { token: `demo_jwt_citizen_${Date.now()}`, user };
+  },
+
+  adminLogin: async (credentials: {
+    email: string;
+    password: string;
+    role: 'PANEL_MODERATOR' | 'POLICY_ADMIN' | 'SYSTEM_AUDITOR';
+    totpToken: string;
+  }): Promise<any> => {
+    const live = await tryFetch<any>('/auth/admin-login', {
+      method: 'POST',
+      body: JSON.stringify(credentials)
+    });
+    if (live) return live;
+
+    // Standalone fallback: validate default admin credentials
+    if (credentials.email.toLowerCase() !== 'admin@cslk.org' || credentials.password !== 'E-LankaAdmin2026!') {
+      throw new Error('Invalid administrative email address or password.');
+    }
+    if (!credentials.totpToken || credentials.totpToken.trim().length !== 6) {
+      throw new Error('A 6-digit TOTP code is required.');
+    }
+
+    const user = {
+      id: `admin_master`,
+      role: credentials.role,
+      anonymizedAlias: `Admin-${credentials.role}`,
+      totpEnabled: true,
+      requires2FA: false
+    };
+    return { token: `demo_jwt_admin_${Date.now()}`, user };
+  },
+
+  login: async (credentials: any): Promise<any> => {
+    if (credentials.role && credentials.role !== 'CITIZEN') {
+      return api.adminLogin(credentials);
+    }
+    return api.citizenLogin(credentials);
   },
 
   setupTOTP: async (): Promise<any> => {

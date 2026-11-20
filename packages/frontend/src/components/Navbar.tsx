@@ -1,16 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Shield, Vote, UserCheck, Lock, BookOpen, Wifi, WifiOff, Menu, X, Landmark } from 'lucide-react';
-import { getStoredUser, setStoredUser, clearStoredAuth, api } from '../services/api';
+import {
+  Shield,
+  Vote,
+  UserCheck,
+  Lock,
+  BookOpen,
+  Menu,
+  X,
+  Landmark,
+  LogIn,
+  LogOut,
+  User
+} from 'lucide-react';
+import { getStoredUser, clearStoredAuth } from '../services/api';
+import { CitizenSignInModal } from './CitizenSignInModal';
 
 export const Navbar: React.FC = () => {
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [user, setUser] = useState<any>(getStoredUser());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showSignInModal, setShowSignInModal] = useState(false);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -25,34 +40,29 @@ export const Navbar: React.FC = () => {
     };
   }, []);
 
+  // Sync user state on storage change
+  useEffect(() => {
+    setUser(getStoredUser());
+  }, [location.pathname]);
+
   const changeLanguage = (lang: string) => {
     i18n.changeLanguage(lang);
     localStorage.setItem('elanka_lang', lang);
   };
 
-  const handleRoleSwitch = async (role: string) => {
-    try {
-      const res = await api.login({
-        role,
-        nicNumber: role === 'CITIZEN' ? '199256789012' : undefined,
-        district: 'Colombo',
-        totpToken: role !== 'CITIZEN' ? '123456' : undefined
-      });
-      localStorage.setItem('elanka_auth_token', res.token);
-      setStoredUser(res.user);
-      setUser(res.user);
-      setShowRoleModal(false);
-      window.location.reload();
-    } catch (e) {
-      console.error('Role switch failed', e);
-    }
+  const handleLogout = () => {
+    clearStoredAuth();
+    setUser(null);
+    navigate('/');
   };
+
+  const isAdmin = user && ['PANEL_MODERATOR', 'POLICY_ADMIN', 'SYSTEM_AUDITOR'].includes(user.role);
 
   const navLinks = [
     { to: '/', label: t('nav.home'), icon: Landmark },
     { to: '/petitions', label: t('nav.petitions'), icon: Vote },
     { to: '/dashboard', label: t('nav.dashboard'), icon: UserCheck },
-    { to: '/admin', label: t('nav.admin'), icon: Lock, badge: '2FA' },
+    ...(isAdmin ? [{ to: '/admin', label: t('nav.admin'), icon: Lock, badge: '2FA' }] : []),
     { to: '/academy', label: t('nav.lms'), icon: BookOpen }
   ];
 
@@ -135,7 +145,7 @@ export const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Controls: Language Switcher & Role Selector */}
+          {/* Controls: Language Switcher & Authentication */}
           <div className="hidden sm:flex items-center gap-3">
             {/* Trilingual Pill Switcher */}
             <div className="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
@@ -177,14 +187,43 @@ export const Navbar: React.FC = () => {
               </button>
             </div>
 
-            {/* Role Switcher Pill */}
-            <button
-              onClick={() => setShowRoleModal(true)}
-              className="flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
-            >
-              <span className="w-2 h-2 rounded-full bg-lanka-gold"></span>
-              <span>{user?.role || 'CITIZEN'}</span>
-            </button>
+            {/* Authentication Control: Secure Sign-In or Active Session */}
+            {user ? (
+              <div className="flex items-center gap-2">
+                {isAdmin ? (
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-red-800 bg-red-950/80 text-red-300 hover:bg-red-900 transition-colors"
+                  >
+                    <Lock className="w-3.5 h-3.5 text-amber-400" />
+                    <span>{user.role}</span>
+                  </Link>
+                ) : (
+                  <Link
+                    to="/dashboard"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+                  >
+                    <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="max-w-[130px] truncate">{user.anonymizedAlias || 'Citizen'}</span>
+                  </Link>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+                  title={t('nav.logout') || 'Log Out'}
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowSignInModal(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-lanka-gold hover:bg-amber-400 text-slate-950 transition-colors shadow-sm"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>{t('nav.login') || 'Citizen Sign In'}</span>
+              </button>
+            )}
           </div>
 
           {/* Mobile hamburger button */}
@@ -228,7 +267,7 @@ export const Navbar: React.FC = () => {
             );
           })}
 
-          <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+          <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
             <div className="flex items-center gap-1 text-xs">
               <button
                 onClick={() => changeLanguage('en')}
@@ -249,98 +288,41 @@ export const Navbar: React.FC = () => {
                 த
               </button>
             </div>
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                setShowRoleModal(true);
-              }}
-              className="text-xs text-lanka-gold underline"
-            >
-              Role: {user?.role || 'CITIZEN'}
-            </button>
+
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-300 font-medium">{user.anonymizedAlias || user.role}</span>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="text-xs text-red-400 hover:underline"
+                >
+                  Log Out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  setShowSignInModal(true);
+                }}
+                className="text-xs font-semibold text-lanka-gold hover:underline"
+              >
+                Citizen Sign In
+              </button>
+            )}
           </div>
         </div>
       )}
 
-      {/* Role Switcher Dialog */}
-      {showRoleModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="bg-slate-900 border border-slate-700 rounded-xl max-w-md w-full p-6 text-white shadow-2xl">
-            <h3 className="text-lg font-bold text-lanka-gold flex items-center gap-2">
-              <Shield className="w-5 h-5" />
-              Switch RBAC Identity Role
-            </h3>
-            <p className="text-xs text-slate-400 mt-1 mb-4">
-              Select an identity role to test different workflows across the 5-stage policy consultation lifecycle.
-            </p>
-
-            <div className="space-y-2">
-              <button
-                onClick={() => handleRoleSwitch('CITIZEN')}
-                className="w-full text-left p-3 rounded-lg border border-slate-800 bg-slate-800/60 hover:bg-slate-800 hover:border-slate-600 transition-all flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-semibold text-sm text-white">CITIZEN</div>
-                  <div className="text-xs text-slate-400">Cast survey responses, sign e-petitions, exercise PDPA rights</div>
-                </div>
-                <UserCheck className="w-4 h-4 text-emerald-400" />
-              </button>
-
-              <button
-                onClick={() => handleRoleSwitch('PANEL_MODERATOR')}
-                className="w-full text-left p-3 rounded-lg border border-slate-800 bg-slate-800/60 hover:bg-slate-800 hover:border-slate-600 transition-all flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-semibold text-sm text-white flex items-center gap-1.5">
-                    <span>PANEL_MODERATOR</span>
-                    <span className="text-[10px] bg-red-900 text-red-200 px-1 rounded">2FA</span>
-                  </div>
-                  <div className="text-xs text-slate-400">Review Stage 1 proposals, approve PENDING ➔ APPROVED_PANEL</div>
-                </div>
-                <Lock className="w-4 h-4 text-amber-400" />
-              </button>
-
-              <button
-                onClick={() => handleRoleSwitch('POLICY_ADMIN')}
-                className="w-full text-left p-3 rounded-lg border border-slate-800 bg-slate-800/60 hover:bg-slate-800 hover:border-slate-600 transition-all flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-semibold text-sm text-white flex items-center gap-1.5">
-                    <span>POLICY_ADMIN</span>
-                    <span className="text-[10px] bg-red-900 text-red-200 px-1 rounded">2FA</span>
-                  </div>
-                  <div className="text-xs text-slate-400">Formulate questionnaires, publish active consultations, trigger AI sync</div>
-                </div>
-                <Lock className="w-4 h-4 text-amber-400" />
-              </button>
-
-              <button
-                onClick={() => handleRoleSwitch('SYSTEM_AUDITOR')}
-                className="w-full text-left p-3 rounded-lg border border-slate-800 bg-slate-800/60 hover:bg-slate-800 hover:border-slate-600 transition-all flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-semibold text-sm text-white flex items-center gap-1.5">
-                    <span>SYSTEM_AUDITOR</span>
-                    <span className="text-[10px] bg-red-900 text-red-200 px-1 rounded">2FA</span>
-                  </div>
-                  <div className="text-xs text-slate-400">Inspect immutable PDPA statutory audit ledger & verify HMAC chains</div>
-                </div>
-                <Shield className="w-4 h-4 text-blue-400" />
-              </button>
-            </div>
-
-            <div className="mt-5 flex justify-end">
-              <button
-                onClick={() => setShowRoleModal(false)}
-                className="px-4 py-2 text-xs font-medium rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Citizen Sign In Modal */}
+      <CitizenSignInModal
+        isOpen={showSignInModal}
+        onClose={() => setShowSignInModal(false)}
+        onSuccess={(loggedUser) => setUser(loggedUser)}
+      />
     </header>
   );
 };
-

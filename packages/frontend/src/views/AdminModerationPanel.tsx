@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Lock,
@@ -130,6 +131,31 @@ export const AdminModerationPanel: React.FC = () => {
       console.error('Scrub failed', e);
     }
   };
+
+  const isAdmin = user && ['PANEL_MODERATOR', 'POLICY_ADMIN', 'SYSTEM_AUDITOR'].includes(user.role);
+
+  if (!isAdmin) {
+    return (
+      <div className="max-w-md mx-auto py-16 text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-red-950/80 border border-red-800 text-red-400 flex items-center justify-center mx-auto shadow-inner">
+          <Lock className="w-8 h-8" />
+        </div>
+        <h2 className="text-xl font-bold text-white tracking-tight">Administrative Access Restricted</h2>
+        <p className="text-xs text-slate-400 leading-relaxed max-w-sm mx-auto">
+          The Moderation Gate, AI Opinion Mapping, and PDPA Statutory Audit Ledger are restricted to verified administrative staff with multi-factor authentication (RFC 6238 TOTP).
+        </p>
+        <div className="pt-3">
+          <Link
+            to="/admin/login"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-amber-500/10"
+          >
+            <Lock className="w-3.5 h-3.5" />
+            <span>Access Admin Login Portal</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-16 max-w-6xl mx-auto">
