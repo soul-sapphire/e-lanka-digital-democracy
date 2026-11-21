@@ -134,7 +134,7 @@ export const api = {
     });
     if (live) return live;
 
-    const policies = getClientDemoPolicies();
+    const policies = getClientDemoPolicies(true);
     const count = policies.length + 1;
     const newPolicy: PolicyConsultation = {
       id: `pol_demo_${Date.now()}`,
@@ -165,7 +165,7 @@ export const api = {
     });
     if (live) return live;
 
-    const policies = getClientDemoPolicies();
+    const policies = getClientDemoPolicies(true);
     const policy = policies.find(p => p.id === id);
     if (!policy) throw new Error('Policy not found');
 
@@ -206,7 +206,7 @@ export const api = {
     if (live) return live;
 
     // Standalone fallback: increment submission count
-    const policies = getClientDemoPolicies();
+    const policies = getClientDemoPolicies(true);
     const policy = policies.find(p => p.id === payload.policyId);
     let newCount = 1;
     if (policy) {

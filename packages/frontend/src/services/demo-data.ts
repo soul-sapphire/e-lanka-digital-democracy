@@ -353,7 +353,13 @@ export const DEMO_PUBLIC_AGGREGATE: ZeroPIIPublicAggregate = {
 export function getClientDemoPolicies(includeUnpublished: boolean = false): PolicyConsultation[] {
   try {
     const raw = localStorage.getItem(LOCAL_STORAGE_POLICIES);
-    const list: PolicyConsultation[] = raw ? JSON.parse(raw) : INITIAL_DEMO_POLICIES;
+    let list: PolicyConsultation[] = raw ? JSON.parse(raw) : [...INITIAL_DEMO_POLICIES];
+    // Reconcile: ensure all baseline initial demo policies are present even if previous storage was filtered
+    INITIAL_DEMO_POLICIES.forEach(initP => {
+      if (!list.some(p => p.id === initP.id)) {
+        list.push(initP);
+      }
+    });
     if (includeUnpublished) return list;
     return list.filter(p => p.isPubliclyVisible && p.stage !== PolicyLifecycleStage.STAGE_1_PENDING_REVIEW);
   } catch {
