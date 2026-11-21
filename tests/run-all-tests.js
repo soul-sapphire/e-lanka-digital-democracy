@@ -547,6 +547,60 @@ async function runTestSuite() {
   });
 
   // --------------------------------------------------------------------------
+  // Suite 10 — RFC 6238 TOTP Engine & Hardcoded Bypass Removal (Issue 1.3)
+  // --------------------------------------------------------------------------
+  it('10.1 computeTOTP generates a 6-digit string for the demo secret', () => {
+    const DEMO_SECRET = 'JBSWY3DPEHPK3PXP';
+    const counter = Math.floor(Date.now() / 1000 / 30);
+    const code = computeTOTP(DEMO_SECRET, counter);
+    assert.strictEqual(typeof code, 'string');
+    assert.strictEqual(code.length, 6);
+    assert.match(code, /^\d{6}$/);
+  });
+
+  it('10.2 verifyTOTP accepts the live code for the demo secret', () => {
+    const DEMO_SECRET = 'JBSWY3DPEHPK3PXP';
+    const counter = Math.floor(Date.now() / 1000 / 30);
+    const liveCode = computeTOTP(DEMO_SECRET, counter);
+    const result = verifyTOTP(DEMO_SECRET, liveCode, 1);
+    assert.strictEqual(result, true, 'Live TOTP code must pass verifyTOTP');
+  });
+
+  it('10.3 verifyTOTP rejects the hardcoded "123456" bypass string', () => {
+    // "123456" is the former hardcoded bypass value — it must NOT be accepted by
+    // the real verifyTOTP engine unless it happens to be the live RFC 6238 code
+    // at this exact moment (statistically ~1-in-1,000,000 chance; we guard against
+    // that by also checking that computeTOTP produces something different).
+    const DEMO_SECRET = 'JBSWY3DPEHPK3PXP';
+    const counter = Math.floor(Date.now() / 1000 / 30);
+    const liveCode = computeTOTP(DEMO_SECRET, counter);
+    if (liveCode !== '123456') {
+      // The normal case: static '123456' must be rejected
+      const result = verifyTOTP(DEMO_SECRET, '123456', 1);
+      assert.strictEqual(result, false, 'Hardcoded "123456" must be rejected by verifyTOTP when it is not the live code');
+    }
+    // If by chance liveCode === '123456', skip the rejection assertion (would be false negative)
+  });
+
+  it('10.4 verifyTOTP rejects tokens with wrong length or empty strings', () => {
+    const DEMO_SECRET = 'JBSWY3DPEHPK3PXP';
+    assert.strictEqual(verifyTOTP(DEMO_SECRET, ''), false, 'Empty string must be rejected');
+    assert.strictEqual(verifyTOTP(DEMO_SECRET, '12345'), false, '5-digit code must be rejected');
+    assert.strictEqual(verifyTOTP(DEMO_SECRET, '1234567'), false, '7-digit code must be rejected');
+    assert.strictEqual(verifyTOTP(DEMO_SECRET, 'abcdef'), false, 'Non-numeric string must be rejected');
+  });
+
+  it('10.5 generateOtpauthUri produces a valid otpauth:// URI for the demo secret', () => {
+    const DEMO_SECRET = 'JBSWY3DPEHPK3PXP';
+    const uri = generateOtpauthUri('Admin', 'E-Lanka Democracy', DEMO_SECRET);
+    assert.ok(uri.startsWith('otpauth://totp/'), 'URI must start with otpauth://totp/');
+    assert.ok(uri.includes(DEMO_SECRET), 'URI must contain the secret');
+    assert.ok(uri.includes('algorithm=SHA1'), 'URI must specify SHA1 algorithm');
+    assert.ok(uri.includes('digits=6'), 'URI must specify 6 digits');
+    assert.ok(uri.includes('period=30'), 'URI must specify 30-second period');
+  });
+
+  // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------
   console.log('\n===============================================================');

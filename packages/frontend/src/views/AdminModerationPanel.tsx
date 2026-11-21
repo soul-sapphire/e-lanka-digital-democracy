@@ -37,7 +37,7 @@ export const AdminModerationPanel: React.FC = () => {
   // Moderation Gate Action Modal
   const [selectedProposal, setSelectedProposal] = useState<PolicyConsultation | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [totpToken, setTotpToken] = useState('123456'); // Default demo TOTP code
+  const [totpToken, setTotpToken] = useState(''); // RFC 6238 TOTP code from authenticator app
   const [panelNotes, setPanelNotes] = useState('');
   const [processingAction, setProcessingAction] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -375,7 +375,7 @@ export const AdminModerationPanel: React.FC = () => {
                   type="text"
                   value={totpToken}
                   onChange={(e) => setTotpToken(e.target.value)}
-                  placeholder="123456"
+                  placeholder="6-digit code"
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-lanka-gold"
                 />
               </div>
@@ -572,14 +572,14 @@ export const AdminModerationPanel: React.FC = () => {
               <div>
                 <label className="block font-medium text-slate-300 mb-1 flex items-center justify-between">
                   <span>{t('admin.totpCodeLabel')} *</span>
-                  <span className="text-[10px] text-lanka-gold">RFC 6238 Standard (Default: 123456)</span>
+                  <span className="text-[10px] text-lanka-gold">RFC 6238 Authenticator Code</span>
                 </label>
                 <input
                   type="text"
                   maxLength={6}
                   value={totpToken}
                   onChange={(e) => setTotpToken(e.target.value)}
-                  placeholder="123456"
+                  placeholder="6-digit code"
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono text-center tracking-widest text-base focus:outline-none focus:border-lanka-gold"
                 />
               </div>

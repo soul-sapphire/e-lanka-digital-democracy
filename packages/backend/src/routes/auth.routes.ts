@@ -133,7 +133,8 @@ authRouter.post('/admin-login', (req: Request, res: Response): void => {
     return;
   }
 
-  const isTotpValid = totpToken === '123456' || verifyTOTP(ADMIN_TOTP_SECRET, totpToken);
+  // Validate 2FA TOTP token via RFC 6238 time-step engine
+  const isTotpValid = verifyTOTP(ADMIN_TOTP_SECRET, totpToken);
   if (!isTotpValid) {
     res.status(401).json({
       error: 'INVALID_TOTP',
@@ -197,7 +198,7 @@ authRouter.post('/totp/verify', authenticateToken, (req: Request, res: Response)
 
   const activeSecret = secret || pendingTotpSecrets.get(userId) || ADMIN_TOTP_SECRET;
 
-  const isValid = token === '123456' || verifyTOTP(activeSecret, token);
+  const isValid = verifyTOTP(activeSecret, token);
 
   if (!isValid) {
     res.status(400).json({ error: 'Invalid TOTP verification code' });

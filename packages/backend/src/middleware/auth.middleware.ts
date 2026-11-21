@@ -13,6 +13,7 @@ import { DatabaseStore } from '../db/store';
 import { verifyTOTP } from '../crypto/totp';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'e-lanka-jwt-token-signature-key-2026';
+const ADMIN_TOTP_SECRET = process.env.ADMIN_TOTP_SECRET || 'JBSWY3DPEHPK3PXP';
 
 export interface AuthenticatedUserPayload {
   id: string;
@@ -96,15 +97,15 @@ export function requireTOTP2FA(req: Request, res: Response, next: NextFunction):
       return;
     }
 
-    // In demo/test environment, accept test TOTP code '123456' or verify against stored secret
-    if (totpHeader === '123456') {
+    // Enforce real RFC 6238 TOTP verification (Google Authenticator / FreeOTP)
+    const isValid = verifyTOTP(ADMIN_TOTP_SECRET, totpHeader, 1);
+    if (isValid) {
       return next();
     }
 
-    // Verify against user secret if configured
     res.status(403).json({
       error: 'INVALID_TOTP_CODE',
-      message: 'Invalid or expired 6-digit TOTP code.'
+      message: 'Invalid or expired 6-digit TOTP code. Please check your authenticator app.'
     });
     return;
   }

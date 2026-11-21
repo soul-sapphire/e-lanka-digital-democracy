@@ -22,7 +22,7 @@ export const AdminLoginView: React.FC = () => {
   const [email, setEmail] = useState('admin@cslk.org');
   const [password, setPassword] = useState('E-LankaAdmin2026!');
   const [role, setRole] = useState<'PANEL_MODERATOR' | 'POLICY_ADMIN' | 'SYSTEM_AUDITOR'>('PANEL_MODERATOR');
-  const [totpToken, setTotpToken] = useState('123456');
+  const [totpToken, setTotpToken] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -181,10 +181,28 @@ export const AdminLoginView: React.FC = () => {
             </div>
 
             <div>
-              <label className="block font-medium text-slate-300 mb-1 flex items-center justify-between">
-                <span>RFC 6238 2FA Code (Google Authenticator / FreeOTP) *</span>
-                <span className="text-[10px] text-amber-400 font-mono">Demo: 123456</span>
+              <label className="block font-medium text-slate-300 mb-1">
+                RFC 6238 2FA Code (Google Authenticator / FreeOTP) *
               </label>
+              {/* QR Code Enrollment section for evaluators */}
+              <div className="mb-2 p-2.5 rounded-lg bg-slate-950/60 border border-slate-700/50 text-[10px] text-slate-400 space-y-2">
+                <div className="flex items-center gap-1.5 text-amber-400 font-semibold">
+                  <Shield className="w-3.5 h-3.5 shrink-0" />
+                  <span>Scan into Google Authenticator or FreeOTP to generate your 6-digit code</span>
+                </div>
+                <div className="flex gap-3 items-start">
+                  <img
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=96x96&data=otpauth%3A%2F%2Ftotp%2FE-Lanka%2520Democracy%3AAdmin%3Fsecret%3DJBSWY3DPEHPK3PXP%26issuer%3DE-Lanka%2520Democracy%26algorithm%3DSHA1%26digits%3D6%26period%3D30"
+                    alt="TOTP QR Code"
+                    className="w-24 h-24 rounded border border-slate-600"
+                  />
+                  <div className="space-y-1">
+                    <div className="text-slate-300">Secret key (manual entry):</div>
+                    <div className="font-mono text-white bg-slate-800 px-2 py-1 rounded tracking-widest select-all">JBSWY3DPEHPK3PXP</div>
+                    <div className="text-slate-500 leading-relaxed">Open your authenticator app → Add account → Scan QR, or enter the secret key above. The 6-digit code refreshes every 30 seconds.</div>
+                  </div>
+                </div>
+              </div>
               <div className="relative">
                 <input
                   type="text"
@@ -192,7 +210,7 @@ export const AdminLoginView: React.FC = () => {
                   maxLength={6}
                   value={totpToken}
                   onChange={(e) => setTotpToken(e.target.value.replace(/\D/g, ''))}
-                  placeholder="6-digit code"
+                  placeholder="Enter 6-digit authenticator code"
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 font-mono tracking-widest text-center text-sm"
                 />
                 <Key className="w-4 h-4 text-slate-400 absolute right-3 top-2.5" />
@@ -226,10 +244,12 @@ export const AdminLoginView: React.FC = () => {
               <HelpCircle className="w-3.5 h-3.5 text-lanka-gold" />
               <span>Official Test Administrative Credentials:</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 pt-0.5 text-slate-300 font-mono text-[10px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 pt-0.5 text-slate-300 font-mono text-[10px]">
               <div>Email: <span className="text-white">admin@cslk.org</span></div>
               <div>Password: <span className="text-white">E-LankaAdmin2026!</span></div>
-              <div>2FA Code: <span className="text-white">123456</span></div>
+            </div>
+            <div className="text-[10px] text-amber-400/80 pt-1 leading-relaxed">
+              2FA: Scan the QR code above into Google Authenticator or FreeOTP using secret <span className="font-mono text-white">JBSWY3DPEHPK3PXP</span> to generate a live 6-digit code.
             </div>
           </div>
 
