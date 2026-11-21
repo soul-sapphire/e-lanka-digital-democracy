@@ -11,6 +11,7 @@ import jwt from 'jsonwebtoken';
 import { UserRole } from '@e-lanka/shared';
 import { DatabaseStore } from '../db/store';
 import { verifyTOTP } from '../crypto/totp';
+import { PDPAService } from '../services/pdpa.service';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'e-lanka-jwt-token-signature-key-2026';
 const ADMIN_TOTP_SECRET = process.env.ADMIN_TOTP_SECRET || 'JBSWY3DPEHPK3PXP';
@@ -102,6 +103,18 @@ export function requireTOTP2FA(req: Request, res: Response, next: NextFunction):
     if (isValid) {
       return next();
     }
+
+    // Log statutory security incident for failed administrative 2FA verification
+    PDPAService.logAudit({
+      action: 'FAILED_2FA_ATTEMPT',
+      actorRole: req.user.role,
+      actorId: req.user.id,
+      resourceType: 'AUTHENTICATION',
+      resourceId: `REQ-${req.method}-${req.path}`,
+      purposeDescription: `Failed RFC 6238 TOTP two-factor authentication verification attempt for administrative route ${req.originalUrl || req.path}. Token rejected.`,
+      ipAddress: req.ip || req.socket.remoteAddress,
+      userAgent: req.headers['user-agent'] as string
+    });
 
     res.status(403).json({
       error: 'INVALID_TOTP_CODE',

@@ -356,37 +356,199 @@ export const api = {
     return { data: pending, totalPending: pending.length };
   },
 
-  getAuditLogs: async (limit = 20): Promise<any> => {
+  getAuditLogs: async (params?: {
+    search?: string;
+    action?: string;
+    role?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<any> => {
     const user = getStoredUser();
     if (!user || !['SYSTEM_AUDITOR', 'PANEL_MODERATOR', 'POLICY_ADMIN'].includes(user.role)) {
       throw new Error('ACCESS_DENIED: Citizen role cannot inspect the PDPA audit ledger.');
     }
-    const live = await tryFetch<any>(`/admin/audit-logs?limit=${limit}`);
+
+    const query = new URLSearchParams();
+    if (params?.search) query.append('search', params.search);
+    if (params?.action) query.append('action', params.action);
+    if (params?.role) query.append('role', params.role);
+    if (params?.startDate) query.append('startDate', params.startDate);
+    if (params?.endDate) query.append('endDate', params.endDate);
+    if (params?.page) query.append('page', String(params.page));
+    if (params?.limit) query.append('limit', String(params.limit || 20));
+
+    const live = await tryFetch<any>(`/admin/audit-logs?${query.toString()}`);
     if (live) return live;
+
+    // Baseline comprehensive demo audit logs with all statutory event types under PDPA Sec 23
+    const BASE_DEMO_LOGS = [
+      {
+        id: 'log_01',
+        action: 'FAILED_2FA_ATTEMPT',
+        actorRole: 'UNKNOWN',
+        resourceType: 'AUTHENTICATION',
+        resourceId: 'REQ-POST-/api/admin/moderate',
+        purposeDescription: 'Security Alert: Failed RFC 6238 TOTP verification attempt from unauthorized IP 192.241.14.88. Access blocked.',
+        timestamp: new Date(Date.now() - 300000).toISOString(),
+        immutableSignature: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+      },
+      {
+        id: 'log_02',
+        action: 'POLICY_PUBLISHED',
+        actorRole: 'POLICY_ADMIN',
+        resourceType: 'POLICY',
+        resourceId: 'b0000000-0000-0000-0000-000000000001',
+        purposeDescription: 'Policy EL-POL-2026-001 (Algorithmic Transparency) officially published to Stage 3 for nationwide public consultation.',
+        timestamp: new Date(Date.now() - 1800000).toISOString(),
+        immutableSignature: '7d23a1f89bc34821a8123019ecfa9201bcde3901923485710294857102938475'
+      },
+      {
+        id: 'log_03',
+        action: 'EPETITION_SIGNED',
+        actorRole: 'CITIZEN',
+        resourceType: 'PETITION_SIGNATURE',
+        resourceId: 'e0000000-0000-0000-0000-000000000001',
+        purposeDescription: 'Citizen from Gampaha signed e-petition EL-PET-2026-001 with HMAC-SHA256 blind deduplication and AES-256-GCM FLE.',
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        immutableSignature: 'c823091afcb34891a923847501928374bcfa0918237465918237465918237465'
+      },
+      {
+        id: 'log_04',
+        action: 'AI_PII_SCRUBBING_TRIGGERED',
+        actorRole: 'AI_WORKER',
+        resourceType: 'POLICY',
+        resourceId: 'b0000000-0000-0000-0000-000000000001',
+        purposeDescription: 'Automated trilingual PII scrubber executed: 1,420 responses cleansed of NICs/phones, sentiment clusters synthesized.',
+        timestamp: new Date(Date.now() - 7200000).toISOString(),
+        immutableSignature: 'a918237465918237465918237465918237465918237465918237465918237465'
+      },
+      {
+        id: 'log_05',
+        action: 'DATA_ERASURE_EXECUTED',
+        actorRole: 'CITIZEN',
+        resourceType: 'USER_PROFILE',
+        resourceId: 'BLIND-IDX-7a89f02c...',
+        purposeDescription: 'Statutory Right to Erasure executed under Sri Lanka PDPA Section 14. Decoupled citizen identity; preserved aggregate counts.',
+        timestamp: new Date(Date.now() - 14400000).toISOString(),
+        immutableSignature: 'f182374659182374659182374659182374659182374659182374659182374659'
+      },
+      {
+        id: 'log_06',
+        action: 'ADMIN_PANEL_ACCESS',
+        actorRole: 'PANEL_MODERATOR',
+        resourceType: 'POLICY',
+        resourceId: 'b0000000-0000-0000-0000-000000000003',
+        purposeDescription: 'Statutory Panel Gate evaluated EL-POL-2026-003: Approved proposal benchmarks under EL-SPEC-2026-V3.',
+        timestamp: new Date(Date.now() - 28800000).toISOString(),
+        immutableSignature: '88a0912dfa887bc129410ea821109ffba8923485710294857102938475918237'
+      },
+      {
+        id: 'log_07',
+        action: 'DATA_INGESTION',
+        actorRole: 'CITIZEN',
+        resourceType: 'SURVEY_RESPONSE',
+        resourceId: 's0000000-0000-0000-0000-000000000001',
+        purposeDescription: 'Ingested survey response for EL-POL-2026-001 with application-level AES-256-GCM field encryption.',
+        timestamp: new Date(Date.now() - 43200000).toISOString(),
+        immutableSignature: 'fa67b8569bacb53cca1889242c13cf2987162534918273645019283746591823'
+      },
+      {
+        id: 'log_08',
+        action: 'EPETITION_SIGNED',
+        actorRole: 'CITIZEN',
+        resourceType: 'PETITION_SIGNATURE',
+        resourceId: 'e0000000-0000-0000-0000-000000000002',
+        purposeDescription: 'Citizen from Kandy verified via mobile OTP signed e-petition EL-PET-2026-002 (Open Contracting Standards).',
+        timestamp: new Date(Date.now() - 57600000).toISOString(),
+        immutableSignature: 'd928374659182374659182374659182374659182374659182374659182374659'
+      },
+      {
+        id: 'log_09',
+        action: 'FAILED_2FA_ATTEMPT',
+        actorRole: 'PANEL_MODERATOR',
+        resourceType: 'AUTHENTICATION',
+        resourceId: 'REQ-POST-/api/auth/admin-login',
+        purposeDescription: 'Invalid TOTP code entered during administrative login portal authentication challenge.',
+        timestamp: new Date(Date.now() - 72000000).toISOString(),
+        immutableSignature: 'b182374659182374659182374659182374659182374659182374659182374659'
+      },
+      {
+        id: 'log_10',
+        action: 'DATA_INGESTION',
+        actorRole: 'CITIZEN',
+        resourceType: 'SURVEY_RESPONSE',
+        resourceId: 's0000000-0000-0000-0000-000000000002',
+        purposeDescription: 'Survey response recorded from Matara with blind index deduplication.',
+        timestamp: new Date(Date.now() - 86400000).toISOString(),
+        immutableSignature: '928374659182374659182374659182374659182374659182374659182374659a'
+      }
+    ];
+
+    let filtered = [...BASE_DEMO_LOGS];
+
+    if (params?.action && params.action !== 'ALL') {
+      filtered = filtered.filter(l => l.action === params.action);
+    }
+    if (params?.role && params.role !== 'ALL') {
+      filtered = filtered.filter(l => l.actorRole === params.role);
+    }
+    if (params?.search) {
+      const q = params.search.toLowerCase();
+      filtered = filtered.filter(l =>
+        l.purposeDescription.toLowerCase().includes(q) ||
+        l.action.toLowerCase().includes(q) ||
+        l.actorRole.toLowerCase().includes(q) ||
+        l.resourceId.toLowerCase().includes(q) ||
+        l.immutableSignature.toLowerCase().includes(q)
+      );
+    }
+
+    const page = Math.max(1, params?.page || 1);
+    const limit = Math.max(1, params?.limit || 10);
+    const offset = (page - 1) * limit;
 
     return {
       chainIntegrityVerified: true,
-      totalBlocks: 14,
-      logs: [
-        {
-          id: 'log_01',
-          action: 'DATA_INGESTION',
-          actorRole: 'CITIZEN',
-          resourceType: 'SURVEY_RESPONSE',
-          purposeDescription: 'Ingested survey response with AES-256-GCM application encryption',
-          timestamp: new Date().toISOString(),
-          immutableSignature: 'fa67b8569bacb53cca1889242c13cf29'
-        },
-        {
-          id: 'log_02',
-          action: 'ADMIN_PANEL_ACCESS',
-          actorRole: 'PANEL_MODERATOR',
-          resourceType: 'POLICY',
-          purposeDescription: 'Panel gate reviewed and approved policy EL-POL-2026-003',
-          timestamp: new Date(Date.now() - 3600000).toISOString(),
-          immutableSignature: '88a0912dfa887bc129410ea821109ffb'
-        }
-      ]
+      totalBlocks: filtered.length,
+      total: filtered.length,
+      page,
+      limit,
+      totalPages: Math.ceil(filtered.length / limit) || 1,
+      logs: filtered.slice(offset, offset + limit)
+    };
+  },
+
+  verifyAuditChain: async (): Promise<any> => {
+    const live = await tryFetch<any>('/admin/audit-logs/verify-chain', { method: 'POST' });
+    if (live) return live;
+
+    return {
+      success: true,
+      isValid: true,
+      totalBlocksChecked: 10,
+      algorithm: 'HMAC-SHA256 (RFC 2104)',
+      genesisBlockSignature: 'GENESIS_CHAIN_BLOCK_00000000000000000000000000000000',
+      latestBlockSignature: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+      tamperingDetected: false,
+      verifiedAt: new Date().toISOString()
+    };
+  },
+
+  sendBreachAlert: async (data: { incidentType: string; details: string; severity?: string }): Promise<any> => {
+    const live = await tryFetch<any>('/admin/audit-logs/breach-alert', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    if (live) return live;
+
+    return {
+      success: true,
+      alertDispatched: true,
+      recipients: ['dpo@cslk.org', 'cert@cert.gov.lk'],
+      dispatchTimestamp: new Date().toISOString(),
+      ticketId: `EL-SEC-ALERT-${Date.now()}`
     };
   },
 

@@ -6,11 +6,13 @@
  * 1. Data Minimization verification
  * 2. Immutable Cryptographic Audit Logging (HMAC chained seal)
  * 3. Automated Right to Erasure Pipeline (preserving immutable aggregate census counts)
+ * 4. Chain integrity verification across all blocks
  */
 
 import crypto from 'node:crypto';
 import {
   PDPAActionType,
+  PDPAResourceType,
   PDPAAuditLogRecord,
   RightToErasureRequest,
   ErasureResult
@@ -18,8 +20,20 @@ import {
 
 const AUDIT_SECRET = process.env.PDPA_AUDIT_SECRET || 'e-lanka-pdpa-audit-immutable-chain-2026-secret';
 
+export interface AuditLogFilterOptions {
+  action?: PDPAActionType;
+  actorRole?: string;
+  resourceType?: PDPAResourceType | string;
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
+}
+
 export class PDPAService {
   private static auditLogs: PDPAAuditLogRecord[] = [];
+  private static genesisHash = 'GENESIS_CHAIN_BLOCK_00000000000000000000000000000000';
   private static lastHash = 'GENESIS_CHAIN_BLOCK_00000000000000000000000000000000';
 
   /**
@@ -30,13 +44,14 @@ export class PDPAService {
     action: PDPAActionType;
     actorRole: string;
     actorId: string;
-    resourceType: 'POLICY' | 'SURVEY_RESPONSE' | 'PETITION_SIGNATURE' | 'USER_PROFILE';
+    resourceType: PDPAResourceType;
     resourceId: string;
     purposeDescription: string;
     ipAddress?: string;
     userAgent?: string;
+    timestamp?: string;
   }): PDPAAuditLogRecord {
-    const timestamp = new Date().toISOString();
+    const timestamp = params.timestamp || new Date().toISOString();
 
     // Salt and hash actor ID, IP and User Agent to prevent secondary PII leak in audit table
     const actorIdHash = crypto.createHmac('sha256', AUDIT_SECRET).update(`ACTOR:${params.actorId}`).digest('hex');
@@ -75,33 +90,101 @@ export class PDPAService {
   }
 
   /**
-   * Get immutable audit logs (accessible strictly to SYSTEM_AUDITOR)
+   * Get immutable audit logs (accessible strictly to SYSTEM_AUDITOR, PANEL_MODERATOR, POLICY_ADMIN)
    */
-  public static getAuditLogs(filter?: {
-    action?: PDPAActionType;
-    resourceType?: string;
-    limit?: number;
-  }): PDPAAuditLogRecord[] {
+  public static getAuditLogs(filter?: AuditLogFilterOptions): { logs: PDPAAuditLogRecord[]; total: number } {
     let result = [...this.auditLogs];
+
     if (filter?.action) {
       result = result.filter(log => log.action === filter.action);
+    }
+    if (filter?.actorRole) {
+      result = result.filter(log => log.actorRole.toUpperCase() === filter.actorRole?.toUpperCase());
     }
     if (filter?.resourceType) {
       result = result.filter(log => log.resourceType === filter.resourceType);
     }
+    if (filter?.search) {
+      const q = filter.search.toLowerCase();
+      result = result.filter(log =>
+        log.purposeDescription.toLowerCase().includes(q) ||
+        log.action.toLowerCase().includes(q) ||
+        log.actorRole.toLowerCase().includes(q) ||
+        log.resourceId.toLowerCase().includes(q) ||
+        log.immutableSignature.toLowerCase().includes(q)
+      );
+    }
+    if (filter?.startDate) {
+      const start = new Date(filter.startDate).getTime();
+      result = result.filter(log => new Date(log.timestamp).getTime() >= start);
+    }
+    if (filter?.endDate) {
+      const end = new Date(filter.endDate).getTime();
+      result = result.filter(log => new Date(log.timestamp).getTime() <= end);
+    }
+
+    const total = result.length;
+    const offset = filter?.offset || 0;
     const limit = filter?.limit || 50;
-    return result.slice(0, limit);
+
+    return {
+      logs: result.slice(offset, offset + limit),
+      total
+    };
   }
 
   /**
-   * Verify the cryptographic chain integrity of the immutable audit log
+   * Verify the cryptographic chain integrity of the immutable audit log.
+   * Walks the chain in chronological order verifying that every block's HMAC matches its payload.
    */
-  public static verifyChainIntegrity(): { isValid: boolean; totalBlocksChecked: number } {
-    // In production, traverses database blocks and verifies chained signatures
+  public static verifyChainIntegrity(): {
+    isValid: boolean;
+    totalBlocksChecked: number;
+    tamperedBlockId?: string;
+    genesisBlockSignature: string;
+    latestBlockSignature: string;
+    algorithm: string;
+  } {
+    // Reverse to chronological order (oldest to newest)
+    const chronological = [...this.auditLogs].reverse();
+
+    if (chronological.length === 0) {
+      return {
+        isValid: true,
+        totalBlocksChecked: 0,
+        genesisBlockSignature: this.genesisHash,
+        latestBlockSignature: this.genesisHash,
+        algorithm: 'HMAC-SHA256 (RFC 2104)'
+      };
+    }
+
+    let runningHash = this.genesisHash;
+
+    for (let i = 0; i < chronological.length; i++) {
+      const block = chronological[i];
+      const payload = `${runningHash}|${block.id}|${block.action}|${block.actorIdHash}|${block.resourceType}|${block.resourceId}|${block.timestamp}`;
+      const expectedSignature = crypto.createHmac('sha256', AUDIT_SECRET).update(payload).digest('hex');
+
+      if (expectedSignature !== block.immutableSignature) {
+        return {
+          isValid: false,
+          totalBlocksChecked: i,
+          tamperedBlockId: block.id,
+          genesisBlockSignature: this.genesisHash,
+          latestBlockSignature: runningHash,
+          algorithm: 'HMAC-SHA256 (RFC 2104)'
+        };
+      }
+
+      runningHash = expectedSignature;
+    }
+
     return {
       isValid: true,
-      totalBlocksChecked: this.auditLogs.length
+      totalBlocksChecked: chronological.length,
+      genesisBlockSignature: this.genesisHash,
+      latestBlockSignature: runningHash,
+      algorithm: 'HMAC-SHA256 (RFC 2104)'
     };
   }
 }
-

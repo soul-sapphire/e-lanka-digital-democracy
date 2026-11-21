@@ -203,12 +203,12 @@ export class AIWorkerService {
     store.savePublicAggregate(aggregate);
 
     PDPAService.logAudit({
-      action: 'AI_SCRUBBING_RUN',
+      action: 'AI_PII_SCRUBBING_TRIGGERED',
       actorRole: 'AI_WORKER',
       actorId: 'ai-background-worker',
       resourceType: 'POLICY',
       resourceId: policyId,
-      purposeDescription: `Compiled zero-PII public aggregates and thematic clusters for policy ${policy.code}`
+      purposeDescription: `Executed automated PII scrubbing and compiled zero-PII public aggregates for policy ${policy.code}`
     });
 
     return aggregate;

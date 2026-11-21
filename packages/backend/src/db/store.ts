@@ -512,13 +512,16 @@ export class DatabaseStore {
 
     this.policies.set(policyId, policy);
 
+    const isPublishing = targetStage === PolicyLifecycleStage.STAGE_3_ACTIVE_CONSULTATION;
     PDPAService.logAudit({
-      action: 'ADMIN_PANEL_ACCESS',
+      action: isPublishing ? 'POLICY_PUBLISHED' : 'ADMIN_PANEL_ACCESS',
       actorRole: 'PANEL_MODERATOR',
       actorId: moderatorId,
       resourceType: 'POLICY',
       resourceId: policyId,
-      purposeDescription: `Updated policy ${policy.code} stage to ${targetStage}. Notes: ${moderatorNotes}`
+      purposeDescription: isPublishing
+        ? `Policy ${policy.code} officially published to Stage 3 for public citizen consultation. Notes: ${moderatorNotes}`
+        : `Updated policy ${policy.code} stage to ${targetStage}. Notes: ${moderatorNotes}`
     });
 
     return policy;
@@ -670,7 +673,7 @@ export class DatabaseStore {
     this.petitions.set(params.petitionId, petition);
 
     PDPAService.logAudit({
-      action: 'DATA_INGESTION',
+      action: 'EPETITION_SIGNED',
       actorRole: 'CITIZEN',
       actorId: signerBlindIndex,
       resourceType: 'PETITION_SIGNATURE',
@@ -724,7 +727,7 @@ export class DatabaseStore {
     }
 
     const auditLog = PDPAService.logAudit({
-      action: 'ERASURE_COMPLETED',
+      action: 'DATA_ERASURE_EXECUTED',
       actorRole: 'CITIZEN',
       actorId: request.citizenBlindIndex,
       resourceType: 'USER_PROFILE',

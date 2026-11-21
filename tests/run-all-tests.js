@@ -431,6 +431,81 @@ async function runTestSuite() {
     assert.strictEqual(chainStatus.totalBlocksChecked > 0, true);
   });
 
+  it('7.3 Logs all key statutory PDPA events required under Issue 1.4', () => {
+    // Log FAILED_2FA_ATTEMPT
+    const log1 = PDPAService.logAudit({
+      action: 'FAILED_2FA_ATTEMPT',
+      actorRole: 'UNKNOWN',
+      actorId: '192.168.1.50',
+      resourceType: 'AUTHENTICATION',
+      resourceId: 'REQ-AUTH-FAIL',
+      purposeDescription: 'Security alert: Invalid TOTP token entered'
+    });
+    assert.strictEqual(log1.action, 'FAILED_2FA_ATTEMPT');
+    assert.strictEqual(typeof log1.immutableSignature, 'string');
+
+    // Log DATA_ERASURE_EXECUTED
+    const log2 = PDPAService.logAudit({
+      action: 'DATA_ERASURE_EXECUTED',
+      actorRole: 'CITIZEN',
+      actorId: 'BLIND-IDX-XYZ',
+      resourceType: 'USER_PROFILE',
+      resourceId: 'USER-001',
+      purposeDescription: 'Statutory Right to Erasure executed'
+    });
+    assert.strictEqual(log2.action, 'DATA_ERASURE_EXECUTED');
+
+    // Log AI_PII_SCRUBBING_TRIGGERED
+    const log3 = PDPAService.logAudit({
+      action: 'AI_PII_SCRUBBING_TRIGGERED',
+      actorRole: 'AI_WORKER',
+      actorId: 'worker-01',
+      resourceType: 'POLICY',
+      resourceId: 'POL-001',
+      purposeDescription: 'Executed automated PII scrubbing'
+    });
+    assert.strictEqual(log3.action, 'AI_PII_SCRUBBING_TRIGGERED');
+
+    // Log EPETITION_SIGNED
+    const log4 = PDPAService.logAudit({
+      action: 'EPETITION_SIGNED',
+      actorRole: 'CITIZEN',
+      actorId: 'BLIND-IDX-SIGN',
+      resourceType: 'PETITION_SIGNATURE',
+      resourceId: 'PET-001',
+      purposeDescription: 'Verified citizen signed petition'
+    });
+    assert.strictEqual(log4.action, 'EPETITION_SIGNED');
+
+    // Log POLICY_PUBLISHED
+    const log5 = PDPAService.logAudit({
+      action: 'POLICY_PUBLISHED',
+      actorRole: 'POLICY_ADMIN',
+      actorId: 'admin-01',
+      resourceType: 'POLICY',
+      resourceId: 'POL-001',
+      purposeDescription: 'Policy officially published to Stage 3 consultation'
+    });
+    assert.strictEqual(log5.action, 'POLICY_PUBLISHED');
+  });
+
+  it('7.4 Verifies full HMAC-SHA256 chained integrity across newly logged events', () => {
+    const chainStatus = PDPAService.verifyChainIntegrity();
+    assert.strictEqual(chainStatus.isValid, true, 'HMAC-SHA256 chain must remain unbroken');
+    assert.strictEqual(chainStatus.algorithm, 'HMAC-SHA256 (RFC 2104)');
+    assert.strictEqual(typeof chainStatus.genesisBlockSignature, 'string');
+    assert.strictEqual(typeof chainStatus.latestBlockSignature, 'string');
+  });
+
+  it('7.5 Confirms audit logs filtering by action, actorRole, and search keyword', () => {
+    const failed2fa = PDPAService.getAuditLogs({ action: 'FAILED_2FA_ATTEMPT' });
+    assert.ok(failed2fa.logs.length >= 1, 'Should filter by FAILED_2FA_ATTEMPT');
+    assert.ok(failed2fa.logs.every(l => l.action === 'FAILED_2FA_ATTEMPT'));
+
+    const searchRes = PDPAService.getAuditLogs({ search: 'Security alert' });
+    assert.ok(searchRes.logs.length >= 1, 'Should find search keyword');
+  });
+
   // --------------------------------------------------------------------------
   // SUITE 8: AI Worker PII Scrubbing & Sentiment Mapping
   // --------------------------------------------------------------------------

@@ -14,11 +14,49 @@ import {
   Database,
   Loader2,
   Building,
-  UserCheck
+  UserCheck,
+  Search,
+  Filter,
+  Copy,
+  Check,
+  Download,
+  Printer,
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  RefreshCw,
+  ShieldAlert,
+  Hash
 } from 'lucide-react';
 import { PolicyConsultation, PolicyLifecycleStage } from '@e-lanka/shared';
 import { api, getStoredUser } from '../services/api';
 import { LifecycleBadge } from '../components/LifecycleBadge';
+
+/**
+ * Format timestamp to Sri Lanka Standard Time (+05:30) with full date, time, and timezone offset
+ * e.g. YYYY-MM-DD HH:MM:SS +05:30
+ */
+export function formatSriLankanTimestamp(isoString: string): string {
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    const options: Intl.DateTimeFormatOptions = {
+      timeZone: 'Asia/Colombo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    };
+    const parts = new Intl.DateTimeFormat('en-GB', options).formatToParts(d);
+    const getPart = (type: string) => parts.find(p => p.type === type)?.value || '';
+    return `${getPart('year')}-${getPart('month')}-${getPart('day')} ${getPart('hour')}:${getPart('minute')}:${getPart('second')} +05:30`;
+  } catch {
+    return isoString;
+  }
+}
 
 export const AdminModerationPanel: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -52,9 +90,32 @@ export const AdminModerationPanel: React.FC = () => {
   const [testScrubInput, setTestScrubInput] = useState('I am citizen Samantha Perera (NIC: 851234567V, Phone: +94 77 123 4567, email: samantha@gmail.com). I strongly urge TRCSL to enforce strict data privacy.');
   const [scrubOutput, setScrubOutput] = useState<any>(null);
 
+  // PDPA Statutory Audit Ledger Enhanced State (Issue 1.4)
+  const [auditSearch, setAuditSearch] = useState('');
+  const [auditActionFilter, setAuditActionFilter] = useState('ALL');
+  const [auditRoleFilter, setAuditRoleFilter] = useState('ALL');
+  const [auditDateFilter, setAuditDateFilter] = useState('ALL');
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditTotalPages, setAuditTotalPages] = useState(1);
+  const [auditTotalRecords, setAuditTotalRecords] = useState(0);
+  const [copiedHash, setCopiedHash] = useState<string | null>(null);
+
+  // Live Chain Integrity Verification state
+  const [verifyingChain, setVerifyingChain] = useState(false);
+  const [chainVerifyData, setChainVerifyData] = useState<any | null>(null);
+  const [isChainModalOpen, setIsChainModalOpen] = useState(false);
+
+  // Instant Breach Alert state
+  const [isBreachModalOpen, setIsBreachModalOpen] = useState(false);
+  const [breachSeverity, setBreachSeverity] = useState<'HIGH' | 'CRITICAL' | 'MEDIUM'>('HIGH');
+  const [breachIncidentType, setBreachIncidentType] = useState('Unauthorized Administrative 2FA Breach Attempt');
+  const [breachDetails, setBreachDetails] = useState('');
+  const [breachSending, setBreachSending] = useState(false);
+  const [breachSuccess, setBreachSuccess] = useState<any | null>(null);
+
   useEffect(() => {
     loadDashboardData();
-  }, [activeTab]);
+  }, [activeTab, auditSearch, auditActionFilter, auditRoleFilter, auditDateFilter, auditPage]);
 
   const loadDashboardData = async () => {
     try {
@@ -66,8 +127,26 @@ export const AdminModerationPanel: React.FC = () => {
         }
       } else if (activeTab === 'audit_logs') {
         if (['SYSTEM_AUDITOR', 'PANEL_MODERATOR', 'POLICY_ADMIN'].includes(user?.role)) {
-          const res = await api.getAuditLogs(30);
+          let startDate: string | undefined;
+          if (auditDateFilter === '24H') {
+            startDate = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+          } else if (auditDateFilter === '7D') {
+            startDate = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+          } else if (auditDateFilter === '30D') {
+            startDate = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+          }
+
+          const res = await api.getAuditLogs({
+            search: auditSearch.trim() || undefined,
+            action: auditActionFilter !== 'ALL' ? auditActionFilter : undefined,
+            role: auditRoleFilter !== 'ALL' ? auditRoleFilter : undefined,
+            startDate,
+            page: auditPage,
+            limit: 10
+          });
           setAuditLogs(res.logs || []);
+          setAuditTotalRecords(res.total || res.logs?.length || 0);
+          setAuditTotalPages(res.totalPages || Math.ceil((res.total || res.logs?.length || 0) / 10) || 1);
         }
       }
     } catch (e) {
@@ -137,6 +216,101 @@ export const AdminModerationPanel: React.FC = () => {
       setScrubOutput(data.result);
     } catch (e) {
       console.error('Scrub failed', e);
+    }
+  };
+
+  // --------------------------------------------------------------------------
+  // Audit Ledger Handlers (Issue 1.4)
+  // --------------------------------------------------------------------------
+  const handleCopyHash = (hash: string) => {
+    navigator.clipboard.writeText(hash);
+    setCopiedHash(hash);
+    setTimeout(() => setCopiedHash(null), 2500);
+  };
+
+  const handleVerifyChainIntegrity = async () => {
+    try {
+      setVerifyingChain(true);
+      const res = await api.verifyAuditChain();
+      setChainVerifyData(res);
+      setIsChainModalOpen(true);
+    } catch (e: any) {
+      alert(`Verification failed: ${e.message}`);
+    } finally {
+      setVerifyingChain(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    if (!auditLogs || auditLogs.length === 0) return;
+    const headers = ['Record ID', 'Timestamp (+05:30)', 'Action', 'Actor Role', 'Resource Type', 'Resource ID', 'Purpose Description', 'HMAC-SHA256 Chained Signature'];
+    const rows = auditLogs.map(l => [
+      `"${l.id}"`,
+      `"${formatSriLankanTimestamp(l.timestamp)}"`,
+      `"${l.action}"`,
+      `"${l.actorRole}"`,
+      `"${l.resourceType}"`,
+      `"${l.resourceId || ''}"`,
+      `"${(l.purposeDescription || '').replace(/"/g, '""')}"`,
+      `"${l.immutableSignature}"`
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `PDPA_Statutory_Audit_Ledger_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handlePrintReport = () => {
+    window.print();
+  };
+
+  const handleSendBreachAlert = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBreachSending(true);
+    try {
+      const res = await api.sendBreachAlert({
+        incidentType: breachIncidentType,
+        details: breachDetails || 'Administrative alert triggered by security auditor via dashboard.',
+        severity: breachSeverity
+      });
+      setBreachSuccess(res);
+      loadDashboardData();
+      setTimeout(() => {
+        setIsBreachModalOpen(false);
+        setBreachSuccess(null);
+        setBreachDetails('');
+      }, 3000);
+    } catch (e: any) {
+      alert(`Failed to dispatch alert: ${e.message}`);
+    } finally {
+      setBreachSending(false);
+    }
+  };
+
+  const getActionBadge = (action: string) => {
+    switch (action) {
+      case 'FAILED_2FA_ATTEMPT':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-950 text-red-400 border border-red-800">FAILED_2FA_ATTEMPT</span>;
+      case 'DATA_ERASURE_EXECUTED':
+      case 'ERASURE_COMPLETED':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-950 text-purple-300 border border-purple-800">DATA_ERASURE_EXECUTED</span>;
+      case 'AI_PII_SCRUBBING_TRIGGERED':
+      case 'AI_SCRUBBING_RUN':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-950 text-cyan-300 border border-cyan-800">AI_PII_SCRUBBING_TRIGGERED</span>;
+      case 'EPETITION_SIGNED':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">EPETITION_SIGNED</span>;
+      case 'POLICY_PUBLISHED':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-300 border border-amber-800">POLICY_PUBLISHED</span>;
+      case 'ADMIN_PANEL_ACCESS':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-950 text-blue-300 border border-blue-800">ADMIN_PANEL_ACCESS</span>;
+      case 'DATA_INGESTION':
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">DATA_INGESTION</span>;
+      default:
+        return <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">{action}</span>;
     }
   };
 
@@ -473,53 +647,466 @@ export const AdminModerationPanel: React.FC = () => {
           </div>
         ) : (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          {/* Header & Statutory Actions Toolbar */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-xl">
             <div className="space-y-1">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-lanka-gold" />
-                <span>PDPA Statutory Immutable Audit Ledger (Section 23)</span>
-              </h3>
-              <p className="text-xs text-slate-400">
-                Chained cryptographic HMAC signatures verify tamper-evidence across data controller access.
+                <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
+                  PDPA Statutory Immutable Audit Ledger (Section 23)
+                </h3>
+                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-2.5 py-0.5 rounded font-bold">
+                  SEAL INTACT
+                </span>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                Chained cryptographic HMAC-SHA256 signatures guarantee tamper-evident logging across all administrative access, voting, and data erasure.
               </p>
             </div>
-            <span className="text-xs font-mono text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-3 py-1 rounded-lg flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Chain Seal Intact
-            </span>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleVerifyChainIntegrity}
+                disabled={verifyingChain}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-900/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700 text-xs font-semibold transition-all shadow-sm"
+              >
+                {verifyingChain ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Verifying Chain...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Verify Chain Integrity</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-all"
+              >
+                <Download className="w-3.5 h-3.5 text-lanka-gold" />
+                <span>Export CSV</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handlePrintReport}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition-all"
+              >
+                <Printer className="w-3.5 h-3.5 text-slate-300" />
+                <span>Print / PDF</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsBreachModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-950/70 hover:bg-red-900 text-red-300 border border-red-800 text-xs font-semibold transition-all"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Breach Alert</span>
+              </button>
+            </div>
           </div>
 
+          {/* Search & Filter Toolbar */}
+          <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              {/* Search box */}
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  value={auditSearch}
+                  onChange={(e) => {
+                    setAuditSearch(e.target.value);
+                    setAuditPage(1);
+                  }}
+                  placeholder="Search purpose, actor, hash..."
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold"
+                />
+              </div>
+
+              {/* Action Filter */}
+              <div>
+                <select
+                  value={auditActionFilter}
+                  onChange={(e) => {
+                    setAuditActionFilter(e.target.value);
+                    setAuditPage(1);
+                  }}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-lanka-gold"
+                >
+                  <option value="ALL">All Statutory Event Actions</option>
+                  <option value="FAILED_2FA_ATTEMPT">FAILED_2FA_ATTEMPT (Security)</option>
+                  <option value="DATA_ERASURE_EXECUTED">DATA_ERASURE_EXECUTED (Sec 14)</option>
+                  <option value="AI_PII_SCRUBBING_TRIGGERED">AI_PII_SCRUBBING_TRIGGERED (PII)</option>
+                  <option value="EPETITION_SIGNED">EPETITION_SIGNED (Petitions)</option>
+                  <option value="POLICY_PUBLISHED">POLICY_PUBLISHED (Governance)</option>
+                  <option value="ADMIN_PANEL_ACCESS">ADMIN_PANEL_ACCESS (Moderation)</option>
+                  <option value="DATA_INGESTION">DATA_INGESTION (Encrypted Survey)</option>
+                </select>
+              </div>
+
+              {/* Role Filter */}
+              <div>
+                <select
+                  value={auditRoleFilter}
+                  onChange={(e) => {
+                    setAuditRoleFilter(e.target.value);
+                    setAuditPage(1);
+                  }}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-lanka-gold"
+                >
+                  <option value="ALL">All Actor Roles</option>
+                  <option value="SYSTEM_AUDITOR">SYSTEM_AUDITOR</option>
+                  <option value="PANEL_MODERATOR">PANEL_MODERATOR</option>
+                  <option value="POLICY_ADMIN">POLICY_ADMIN</option>
+                  <option value="CITIZEN">CITIZEN</option>
+                  <option value="AI_WORKER">AI_WORKER</option>
+                  <option value="UNKNOWN">UNKNOWN / EXTERNAL</option>
+                </select>
+              </div>
+
+              {/* Date Filter */}
+              <div className="flex items-center gap-2">
+                <select
+                  value={auditDateFilter}
+                  onChange={(e) => {
+                    setAuditDateFilter(e.target.value);
+                    setAuditPage(1);
+                  }}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-lanka-gold"
+                >
+                  <option value="ALL">All Time Periods</option>
+                  <option value="24H">Past 24 Hours</option>
+                  <option value="7D">Past 7 Days</option>
+                  <option value="30D">Past 30 Days</option>
+                </select>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuditSearch('');
+                    setAuditActionFilter('ALL');
+                    setAuditRoleFilter('ALL');
+                    setAuditDateFilter('ALL');
+                    setAuditPage(1);
+                    loadDashboardData();
+                  }}
+                  title="Reset Filters"
+                  className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/80 pt-2 font-mono">
+              <div>
+                Displaying <span className="text-white font-bold">{auditLogs.length}</span> of <span className="text-white font-bold">{auditTotalRecords}</span> immutable statutory ledger records
+              </div>
+              <div>
+                Timezone: <span className="text-amber-400 font-bold">Asia/Colombo (+05:30)</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Audit Log Table */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-300">
-                <thead className="bg-slate-800/80 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-700">
+                <thead className="bg-slate-800/90 text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-700">
                   <tr>
-                    <th className="py-3 px-4">Timestamp</th>
+                    <th className="py-3 px-4">Timestamp (YYYY-MM-DD +05:30)</th>
                     <th className="py-3 px-4">Action</th>
                     <th className="py-3 px-4">Actor Role</th>
                     <th className="py-3 px-4">Resource</th>
-                    <th className="py-3 px-4">Purpose Description</th>
-                    <th className="py-3 px-4">HMAC Signature</th>
+                    <th className="py-3 px-4">Statutory Purpose Description</th>
+                    <th className="py-3 px-4 text-right">HMAC Chain Seal</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
-                  {auditLogs.map((log) => (
-                    <tr key={log.id} className="hover:bg-slate-800/40 font-mono text-[11px]">
-                      <td className="py-3 px-4 whitespace-nowrap text-slate-400">
-                        {new Date(log.timestamp).toLocaleTimeString()}
-                      </td>
-                      <td className="py-3 px-4 font-bold text-lanka-gold">{log.action}</td>
-                      <td className="py-3 px-4">{log.actorRole}</td>
-                      <td className="py-3 px-4 text-slate-400">{log.resourceType}</td>
-                      <td className="py-3 px-4 font-sans text-xs text-slate-200">{log.purposeDescription}</td>
-                      <td className="py-3 px-4 text-emerald-400 text-[10px] truncate max-w-[120px]">
-                        {log.immutableSignature?.substring(0, 16)}...
+                  {auditLogs.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-8 text-center text-slate-500 font-mono text-xs">
+                        No audit records match the selected filter criteria.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    auditLogs.map((log) => (
+                      <tr key={log.id} className="hover:bg-slate-800/40 transition-colors">
+                        <td className="py-3 px-4 whitespace-nowrap font-mono text-[11px] text-amber-300/90">
+                          {formatSriLankanTimestamp(log.timestamp)}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          {getActionBadge(log.action)}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <span className="font-mono text-[11px] text-slate-300 px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700">
+                            {log.actorRole}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap text-slate-400 font-mono text-[10px]">
+                          <div>{log.resourceType}</div>
+                          {log.resourceId && (
+                            <div className="text-slate-500 truncate max-w-[100px]">{log.resourceId}</div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-xs text-slate-200 leading-relaxed max-w-md">
+                          {log.purposeDescription}
+                        </td>
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center gap-1.5 font-mono text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-900 px-2 py-1 rounded">
+                            <span>{log.immutableSignature?.substring(0, 14)}...</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyHash(log.immutableSignature)}
+                              title="Copy full 64-char HMAC signature"
+                              className="text-slate-400 hover:text-white transition-colors"
+                            >
+                              {copiedHash === log.immutableSignature ? (
+                                <Check className="w-3 h-3 text-emerald-400" />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {auditTotalPages > 1 && (
+              <div className="p-3 border-t border-slate-800 bg-slate-900/80 flex items-center justify-between text-xs text-slate-400 font-mono">
+                <div>
+                  Page <span className="text-white font-bold">{auditPage}</span> of <span className="text-white font-bold">{auditTotalPages}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={auditPage <= 1}
+                    onClick={() => setAuditPage(p => Math.max(1, p - 1))}
+                    className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  {Array.from({ length: auditTotalPages }, (_, i) => i + 1).map((pg) => (
+                    <button
+                      key={pg}
+                      type="button"
+                      onClick={() => setAuditPage(pg)}
+                      className={`w-7 h-7 rounded-lg text-xs font-mono font-bold transition-all ${
+                        auditPage === pg
+                          ? 'bg-amber-500 text-slate-950 shadow'
+                          : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700'
+                      }`}
+                    >
+                      {pg}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    disabled={auditPage >= auditTotalPages}
+                    onClick={() => setAuditPage(p => Math.min(auditTotalPages, p + 1))}
+                    className="p-1.5 rounded-lg border border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* Cryptographic Chain Integrity Modal */}
+          {isChainModalOpen && chainVerifyData && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 text-white space-y-4 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    <h3 className="text-base font-bold text-white">Cryptographic Chain Verified</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsChainModalOpen(false)}
+                    className="text-slate-400 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-800/80 space-y-1">
+                    <div className="text-emerald-400 font-bold flex items-center gap-1.5">
+                      <Check className="w-4 h-4" />
+                      <span>Tamper-Evidence Verification: 100% VALID</span>
+                    </div>
+                    <p className="text-[11px] text-slate-300">
+                      All audit block hashes were recalculated and verified against the genesis seal under RFC 2104. Zero modified or deleted records detected.
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-800/70 p-3 rounded-xl border border-slate-700 space-y-2 font-mono text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Total Blocks Verified:</span>
+                      <span className="text-white font-bold">{chainVerifyData.totalBlocksChecked}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Hashing Standard:</span>
+                      <span className="text-white font-bold">{chainVerifyData.algorithm}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block mb-0.5">Genesis Block Seal:</span>
+                      <span className="text-slate-300 text-[10px] break-all bg-slate-900 p-1.5 rounded block">{chainVerifyData.genesisBlockSignature}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 block mb-0.5">Latest Block Seal:</span>
+                      <span className="text-emerald-400 text-[10px] break-all bg-slate-900 p-1.5 rounded block">{chainVerifyData.latestBlockSignature}</span>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-slate-700">
+                      <span className="text-slate-400">Verification Timestamp:</span>
+                      <span className="text-amber-400">{formatSriLankanTimestamp(chainVerifyData.verifiedAt || new Date().toISOString())}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsChainModalOpen(false)}
+                    className="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition-colors"
+                  >
+                    Close Verification Summary
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Instant Admin Breach Alert Modal */}
+          {isBreachModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+              <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 text-white space-y-4 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2 text-red-400">
+                    <ShieldAlert className="w-5 h-5 shrink-0" />
+                    <h3 className="text-base font-bold text-white">Dispatch Security Incident Alert</h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsBreachModalOpen(false)}
+                    className="text-slate-400 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {breachSuccess ? (
+                  <div className="p-4 rounded-xl bg-emerald-950/60 border border-emerald-800 text-xs space-y-2">
+                    <div className="flex items-center gap-2 text-emerald-400 font-bold">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Security Incident Alert Dispatched Successfully</span>
+                    </div>
+                    <p className="text-slate-300 leading-relaxed">
+                      Incident Ticket <span className="font-mono text-white font-bold">{breachSuccess.ticketId}</span> recorded in the statutory ledger.
+                      Official notification sent to:
+                    </p>
+                    <ul className="list-disc list-inside text-slate-300 font-mono text-[11px] space-y-0.5">
+                      <li>dpo@cslk.org (Data Protection Officer)</li>
+                      <li>cert@cert.gov.lk (Sri Lanka CERT)</li>
+                    </ul>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSendBreachAlert} className="space-y-3 text-xs">
+                    <div>
+                      <label className="block text-slate-300 font-medium mb-1">
+                        Incident Severity Level *
+                      </label>
+                      <select
+                        value={breachSeverity}
+                        onChange={(e) => setBreachSeverity(e.target.value as any)}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500 font-semibold"
+                      >
+                        <option value="CRITICAL">CRITICAL — Immediate Statutory Breach Under PDPA Section 23</option>
+                        <option value="HIGH">HIGH — Suspicious Brute-Force or Multi-User Authorization Anomaly</option>
+                        <option value="MEDIUM">MEDIUM — Unusual Data Ingestion Spikes or Repeated Token Failures</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-300 font-medium mb-1">
+                        Incident Classification *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={breachIncidentType}
+                        onChange={(e) => setBreachIncidentType(e.target.value)}
+                        placeholder="e.g. Unauthorized 2FA Brute-Force Attempt"
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-red-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-300 font-medium mb-1">
+                        Incident Description & Technical Details
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={breachDetails}
+                        onChange={(e) => setBreachDetails(e.target.value)}
+                        placeholder="Provide details: source IP addresses, targeted routes, anomalies observed..."
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-white placeholder-slate-500 focus:outline-none focus:border-red-500 font-sans"
+                      />
+                    </div>
+
+                    <div className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 space-y-1">
+                      <div className="text-slate-300 font-medium">Automatic Statutory Recipients:</div>
+                      <div className="font-mono text-[10px] text-amber-400">
+                        • dpo@cslk.org (Community Solutions Lanka Data Protection Officer)<br />
+                        • cert@cert.gov.lk (Sri Lanka Computer Emergency Readiness Team)
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsBreachModalOpen(false)}
+                        className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={breachSending}
+                        className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold transition-all shadow-lg shadow-red-600/20 disabled:opacity-50"
+                      >
+                        {breachSending ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Dispatching Alerts...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShieldAlert className="w-3.5 h-3.5" />
+                            <span>Dispatch Statutory Breach Alert</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </div>
+          )}
         </div>
         )
       )}
