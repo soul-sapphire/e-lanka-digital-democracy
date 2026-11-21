@@ -26,6 +26,7 @@ import {
   ChevronRight,
   RefreshCw,
   ShieldAlert,
+  ShieldCheck,
   Hash
 } from 'lucide-react';
 import { PolicyConsultation, PolicyLifecycleStage } from '@e-lanka/shared';
@@ -207,13 +208,8 @@ export const AdminModerationPanel: React.FC = () => {
 
   const handleRunScrubTest = async () => {
     try {
-      const res = await fetch('/api/v1/admin/test-scrub', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sampleText: testScrubInput })
-      });
-      const data = await res.json();
-      setScrubOutput(data.result);
+      const data = await api.testScrubPII(testScrubInput);
+      setScrubOutput(data);
     } catch (e) {
       console.error('Scrub failed', e);
     }
@@ -589,44 +585,154 @@ export const AdminModerationPanel: React.FC = () => {
             )}
           </div>
 
-          {/* Real-time PII Scrubbing Regex & Heuristic Inspector */}
+          {/* Real-time Trilingual PII Scrubbing & Heuristic Inspector (Issue 1.5) */}
           <div className="p-6 sm:p-8 rounded-2xl bg-slate-900 border border-slate-800 text-white space-y-4">
-            <h4 className="text-base font-bold text-white flex items-center gap-2">
-              <Shield className="w-4 h-4 text-emerald-400" />
-              <span>Interactive PII Sanitizer & Sri Lankan Identity Redaction Inspector</span>
-            </h4>
-            <p className="text-xs text-slate-300">
-              Test how the backend worker detects and redacts Sri Lankan NICs (both 9+V and 12-digit), telephone numbers, and email addresses from raw citizen submissions.
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h4 className="text-base font-bold text-white flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-emerald-400" />
+                  <span>Trilingual PII Sanitizer & Sri Lankan Identity Redaction Inspector</span>
+                </h4>
+                <p className="text-xs text-slate-300 mt-1">
+                  PDPA-compliant NLP engine: Detects and redacts Sri Lankan NICs (9+V/X & 12-digit), phone numbers, emails, personal names, villages/addresses, and state authorities in <strong>English, Sinhala (සිංහල), and Tamil (தமிழ்)</strong>.
+                </p>
+              </div>
+            </div>
+
+            {/* Language Quick-Fill Presets */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-[11px] font-semibold text-slate-400">Load Test Preset:</span>
+              <button
+                type="button"
+                onClick={() => setTestScrubInput('I am citizen Samantha Perera (NIC: 851234567V, Phone: +94 77 123 4567, email: samantha@gmail.com, living in Kandy). I strongly urge TRCSL to enforce strict data privacy.')}
+                className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium border border-slate-700 transition"
+              >
+                🇬🇧 English Sample
+              </button>
+              <button
+                type="button"
+                onClick={() => setTestScrubInput('මම කමල් පෙරේරා (ජා.හැ.අංකය: 851234567V, දුරකථනය: 0771234567, විද්‍යුත් තැපෑල: kamal.perera@gmail.com). මම පදිංචි මහනුවර දිස්ත්‍රික්කයේ ගන්නෝරුව ගමේ. ලංකා විදුලිබල මණ්ඩලය පිළිබඳ මෙම ප්‍රතිපත්තියට මම එකඟයි.')}
+                className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium border border-slate-700 transition"
+              >
+                🇱🇰 Sinhala (සිංහල) Sample
+              </button>
+              <button
+                type="button"
+                onClick={() => setTestScrubInput('நான் குமார் செல்வா (தேசிய அடையாள அட்டை: 199012345678, தொலைபேசி: +94 71 234 5678, மின்னஞ்சல்: kumar.selva@gmail.com). நான் வசிக்கும் இடம் யாழ்ப்பாணம் நல்லூர் கிராமம். இந்த கொள்கையை நான் முழுமையாக ஆதரிக்கிறேன்.')}
+                className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-medium border border-slate-700 transition"
+              >
+                🇱🇰 Tamil (தமிழ்) Sample
+              </button>
+            </div>
 
             <div className="space-y-2">
               <textarea
                 rows={3}
                 value={testScrubInput}
                 onChange={(e) => setTestScrubInput(e.target.value)}
+                placeholder="Enter feedback in English, Sinhala, or Tamil containing citizen identity attributes..."
                 className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white font-mono focus:outline-none focus:border-lanka-gold"
               />
-              <button
-                type="button"
-                onClick={handleRunScrubTest}
-                className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold"
-              >
-                Inspect Sanitization
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleRunScrubTest}
+                  className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 transition shadow"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  Inspect Sanitization & Sentiment
+                </button>
+                <span className="text-[11px] text-slate-400">Offline & In-Browser Verified</span>
+              </div>
             </div>
 
             {scrubOutput && (
-              <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 text-xs space-y-2">
-                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">
-                  Scrubbed Output (Zero-PII):
-                </span>
-                <p className="font-mono text-slate-200 bg-slate-950 p-3 rounded-lg border border-slate-800">
+              <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 text-xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
+                    Scrubbed Output (Zero-PII Public Surface):
+                  </span>
+                  <span className="text-[10px] text-slate-400">
+                    Original: {scrubOutput.originalLength} chars → Sanitized: {scrubOutput.scrubbedText.length} chars
+                  </span>
+                </div>
+                
+                <p className="font-mono text-slate-200 bg-slate-950 p-3 rounded-lg border border-slate-800 leading-relaxed select-all">
                   {scrubOutput.scrubbedText}
                 </p>
-                <div className="flex items-center gap-3 text-[11px] text-slate-400 pt-1">
-                  <span>Sentiment Score: {scrubOutput.sentiment.score} ({scrubOutput.sentiment.label})</span>
-                  <span>•</span>
-                  <span>Detected PII: {scrubOutput.piiItemsDetected.length} tags</span>
+
+                {/* Detected PII Category Badges */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                    Detected & Redacted Entities ({scrubOutput.piiItemsDetected.reduce((acc: number, item: any) => acc + item.count, 0)} total):
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {scrubOutput.piiItemsDetected.length === 0 ? (
+                      <span className="text-[11px] text-slate-400 italic">No sensitive PII entities detected.</span>
+                    ) : (
+                      scrubOutput.piiItemsDetected.map((item: any, idx: number) => {
+                        let colorClass = 'bg-slate-700 text-slate-200 border-slate-600';
+                        let label = item.type;
+                        if (item.type === 'NIC_NUMBER') {
+                          colorClass = 'bg-amber-950/80 text-amber-300 border-amber-800';
+                          label = 'National ID (NIC)';
+                        } else if (item.type === 'PHONE_NUMBER') {
+                          colorClass = 'bg-blue-950/80 text-blue-300 border-blue-800';
+                          label = 'Phone Number';
+                        } else if (item.type === 'EMAIL') {
+                          colorClass = 'bg-purple-950/80 text-purple-300 border-purple-800';
+                          label = 'Email Address';
+                        } else if (item.type === 'PERSON_NAME') {
+                          colorClass = 'bg-emerald-950/80 text-emerald-300 border-emerald-800';
+                          label = 'Person Name';
+                        } else if (item.type === 'ADDRESS') {
+                          colorClass = 'bg-sky-950/80 text-sky-300 border-sky-800';
+                          label = 'Address / Village';
+                        } else if (item.type === 'ORGANIZATION') {
+                          colorClass = 'bg-rose-950/80 text-rose-300 border-rose-800';
+                          label = 'Organization / Authority';
+                        }
+                        return (
+                          <span
+                            key={idx}
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${colorClass}`}
+                          >
+                            {label}: {item.count}
+                          </span>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+
+                {/* Qualitative Trilingual Sentiment Synthesis */}
+                <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-300 pt-2 border-t border-slate-700/60">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-400">Sentiment Score:</span>
+                    <span className={`font-bold font-mono ${
+                      scrubOutput.sentiment.score > 0 ? 'text-emerald-400' :
+                      scrubOutput.sentiment.score < 0 ? 'text-rose-400' : 'text-slate-300'
+                    }`}>
+                      {scrubOutput.sentiment.score > 0 ? `+${scrubOutput.sentiment.score}` : scrubOutput.sentiment.score}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-400">Classification:</span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      ['POSITIVE', 'VERY_POSITIVE'].includes(scrubOutput.sentiment.label) ? 'bg-emerald-900/60 text-emerald-300' :
+                      ['NEGATIVE', 'VERY_NEGATIVE'].includes(scrubOutput.sentiment.label) ? 'bg-rose-900/60 text-rose-300' :
+                      'bg-slate-700 text-slate-300'
+                    }`}>
+                      {scrubOutput.sentiment.label}
+                      {scrubOutput.sentiment.label === 'POSITIVE' && ' (ධනාත්මක / சாதகமானது)'}
+                      {scrubOutput.sentiment.label === 'NEGATIVE' && ' (සෘණාත්මක / பாதகமானது)'}
+                      {scrubOutput.sentiment.label === 'NEUTRAL' && ' (මධ්‍යස්ථ / நடுநிலை)'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-400">Confidence:</span>
+                    <span className="font-mono text-slate-300">{Math.round(scrubOutput.sentiment.confidence * 100)}%</span>
+                  </div>
                 </div>
               </div>
             )}

@@ -540,6 +540,58 @@ async function runTestSuite() {
     assert.strictEqual(typeof aggregate.sentimentDistribution.positive, 'number');
   });
 
+  it('8.4 Redacts Sinhala personal names, NICs, phones, emails, locations and organizations', () => {
+    const siInput = 'මම කමල් පෙරේරා (ජා.හැ.අංකය: 851234567V, දුරකථනය: 0771234567, විද්‍යුත් තැපෑල: kamal.perera@gmail.com). මම පදිංචි මහනුවර දිස්ත්‍රික්කයේ ගන්නෝරුව ගමේ. ලංකා විදුලිබල මණ්ඩලය පිළිබඳ මෙම ප්‍රතිපත්තියට මම එකඟයි.';
+    const scrubbed = AIWorkerService.scrubPII(siInput);
+
+    assert.strictEqual(scrubbed.scrubbedText.includes('කමල් පෙරේරා'), false, 'Sinhala name must be redacted');
+    assert.strictEqual(scrubbed.scrubbedText.includes('[REDACTED_NAME]'), true);
+    assert.strictEqual(scrubbed.scrubbedText.includes('851234567V'), false, 'Sinhala NIC must be redacted');
+    assert.strictEqual(scrubbed.scrubbedText.includes('[REDACTED_NIC]'), true);
+    assert.strictEqual(scrubbed.scrubbedText.includes('0771234567'), false, 'Sinhala phone must be redacted');
+    assert.strictEqual(scrubbed.scrubbedText.includes('[REDACTED_PHONE]'), true);
+    assert.strictEqual(scrubbed.scrubbedText.includes('kamal.perera@gmail.com'), false, 'Sinhala email must be redacted');
+    assert.strictEqual(scrubbed.scrubbedText.includes('[REDACTED_EMAIL]'), true);
+    assert.strictEqual(scrubbed.scrubbedText.includes('මහනුවර'), false, 'Sinhala location must be redacted');
+    assert.strictEqual(scrubbed.scrubbedText.includes('ලංකා විදුලිබල මණ්ඩලය'), false, 'Sinhala organization must be redacted');
+    assert.strictEqual(scrubbed.scrubbedText.includes('[REDACTED_ORGANIZATION]'), true);
+    assert.strictEqual(scrubbed.scrubbedText.includes('[REDACTED_LOCATION]'), true);
+  });
+
+  it('8.5 Redacts Tamil personal names, modern 12-digit NICs, phones, emails and locations', () => {
+    const taInput = 'நான் குமார் செல்வா (தேசிய அடையாள அட்டை: 199012345678, தொலைபேசி: +94 71 234 5678, மின்னஞ்சல்: kumar.selva@gmail.com). நான் வசிக்கும் இடம் யாழ்ப்பாணம் நல்லூர் கிராமம். இந்த கொள்கையை நான் முழுமையாக ஆதரிக்கிறேன்.';
+    const scrubbed = AIWorkerService.scrubPII(taInput);
+
+    assert.strictEqual(scrubbed.scrubbedText.includes('குமார் செல்வா'), false, 'Tamil name must be redacted');
+    assert.strictEqual(scrubbed.scrubbedText.includes('[REDACTED_NAME]'), true);
+    assert.strictEqual(scrubbed.scrubbedText.includes('199012345678'), false, 'Tamil 12-digit NIC must be redacted');
+    assert.strictEqual(scrubbed.scrubbedText.includes('[REDACTED_NIC]'), true);
+    assert.strictEqual(scrubbed.scrubbedText.includes('+94 71 234 5678'), false, 'Tamil phone must be redacted');
+    assert.strictEqual(scrubbed.scrubbedText.includes('[REDACTED_PHONE]'), true);
+    assert.strictEqual(scrubbed.scrubbedText.includes('kumar.selva@gmail.com'), false, 'Tamil email must be redacted');
+    assert.strictEqual(scrubbed.scrubbedText.includes('[REDACTED_EMAIL]'), true);
+    assert.strictEqual(scrubbed.scrubbedText.includes('யாழ்ப்பாணம்'), false, 'Tamil location must be redacted');
+    assert.strictEqual(scrubbed.scrubbedText.includes('[REDACTED_LOCATION]'), true);
+  });
+
+  it('8.6 Accurately computes sentiment for Sinhala and Tamil qualitative feedback', () => {
+    const siPos = AIWorkerService.scrubPII('මෙම ඩිජිටල් ප්‍රජාතන්ත්‍රවාදී පද්ධතිය ඉතා විශිෂ්ටයි සහ අත්‍යවශ්‍යයි, මම සම්පූර්ණයෙන්ම එකඟයි.');
+    assert.strictEqual(siPos.sentiment.score > 0, true);
+    assert.strictEqual(['POSITIVE', 'VERY_POSITIVE'].includes(siPos.sentiment.label), true);
+
+    const siNeg = AIWorkerService.scrubPII('මෙම ක්‍රියාමාර්ගය ඉතා හානිකරයි සහ අවදානම් සහගතයි, මම දැඩි ලෙස විරුද්ධයි.');
+    assert.strictEqual(siNeg.sentiment.score < 0, true);
+    assert.strictEqual(['NEGATIVE', 'VERY_NEGATIVE'].includes(siNeg.sentiment.label), true);
+
+    const taPos = AIWorkerService.scrubPII('இந்த புதிய திட்டம் மிகவும் சிறப்பானது மற்றும் அவசியமானது, நான் முழுமையாக ஆதரிக்கிறேன்.');
+    assert.strictEqual(taPos.sentiment.score > 0, true);
+    assert.strictEqual(['POSITIVE', 'VERY_POSITIVE'].includes(taPos.sentiment.label), true);
+
+    const taNeg = AIWorkerService.scrubPII('இந்த நடவடிக்கை மிகவும் ஆபத்தானது மற்றும் தீங்கானது, நான் முற்றிலுமாக எதிர்க்கிறேன்.');
+    assert.strictEqual(taNeg.sentiment.score < 0, true);
+    assert.strictEqual(['NEGATIVE', 'VERY_NEGATIVE'].includes(taNeg.sentiment.label), true);
+  });
+
   // --------------------------------------------------------------------------
   // SUITE 9: 3-Tier Sovereign Citizen Verification & Anti-Spoofing Engine
   // --------------------------------------------------------------------------

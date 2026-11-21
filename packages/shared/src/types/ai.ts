@@ -26,7 +26,7 @@ export interface ScrubbedFeedback {
   originalLength: number;
   scrubbedText: string;
   piiItemsDetected: {
-    type: 'NIC_NUMBER' | 'PHONE_NUMBER' | 'EMAIL' | 'PERSON_NAME' | 'ADDRESS';
+    type: 'NIC_NUMBER' | 'PHONE_NUMBER' | 'EMAIL' | 'PERSON_NAME' | 'ADDRESS' | 'ORGANIZATION';
     count: number;
   }[];
   sentiment: SentimentAnalysisResult;

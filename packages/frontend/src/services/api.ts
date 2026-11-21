@@ -19,6 +19,8 @@ import {
   DRPVerificationResult,
   MobileOTPDispatchResult,
   MobileOTPVerifyResult,
+  ScrubbedFeedback,
+  SentimentAnalysisResult,
   decodeAndValidateSriLankanNIC,
   verifyClaimedCitizenDetails
 } from '@e-lanka/shared';
@@ -792,5 +794,201 @@ export const api = {
         message: 'Mobile number verified successfully via TRCSL SIM gateway.'
       }
     };
+  },
+
+  // Interactive Trilingual PII Scrubbing (Issue 1.5)
+  testScrubPII: async (sampleText: string): Promise<ScrubbedFeedback> => {
+    const live = await tryFetch<{ result: ScrubbedFeedback }>('/admin/test-scrub', {
+      method: 'POST',
+      body: JSON.stringify({ sampleText })
+    });
+    if (live && live.result) {
+      return live.result;
+    }
+
+    // Standalone fallback: in-browser trilingual scrubbing engine
+    return clientScrubPII(sampleText);
   }
 };
+
+/**
+ * Client-Side Trilingual PII Sanitization Engine for Offline / Standalone Vercel Demo
+ */
+export function clientScrubPII(rawText: string): ScrubbedFeedback {
+  let scrubbed = rawText;
+  const detected: { type: 'NIC_NUMBER' | 'PHONE_NUMBER' | 'EMAIL' | 'PERSON_NAME' | 'ADDRESS' | 'ORGANIZATION'; count: number }[] = [];
+
+  const recordDetected = (type: 'NIC_NUMBER' | 'PHONE_NUMBER' | 'EMAIL' | 'PERSON_NAME' | 'ADDRESS' | 'ORGANIZATION', count: number) => {
+    if (count <= 0) return;
+    const existing = detected.find(d => d.type === type);
+    if (existing) {
+      existing.count += count;
+    } else {
+      detected.push({ type, count });
+    }
+  };
+
+  // 1. Emails
+  const emailRegex = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g;
+  const emailMatches = scrubbed.match(emailRegex);
+  if (emailMatches && emailMatches.length > 0) {
+    recordDetected('EMAIL', emailMatches.length);
+    scrubbed = scrubbed.replace(emailRegex, '[REDACTED_EMAIL]');
+  }
+
+  // 2. Sri Lankan NICs
+  const nicRegex = /\b([0-9]{9}[vVxX]|[0-9]{12})\b/g;
+  const nicMatches = scrubbed.match(nicRegex);
+  if (nicMatches && nicMatches.length > 0) {
+    recordDetected('NIC_NUMBER', nicMatches.length);
+    scrubbed = scrubbed.replace(nicRegex, '[REDACTED_NIC]');
+  }
+
+  // 3. Sri Lankan Phones
+  const phoneRegex = /(?:\+94[\s\-]?[0-9]{2}[\s\-]?[0-9]{3}[\s\-]?[0-9]{4}|\b07[0-9]{8}\b|\b0[1-9][0-9]{7,8}\b)/g;
+  const phoneMatches = scrubbed.match(phoneRegex);
+  if (phoneMatches && phoneMatches.length > 0) {
+    recordDetected('PHONE_NUMBER', phoneMatches.length);
+    scrubbed = scrubbed.replace(phoneRegex, '[REDACTED_PHONE]');
+  }
+
+  // 4. Sinhala Names
+  const sinhalaNameRegexes = [
+    /(මගේ\s*නම\s+)([\u0D80-\u0DFF]+(?:\s+[\u0D80-\u0DFF]+){0,2})/g,
+    /(මම\s+)(?!පදිංචි|වෙසෙන|මෙම|මෙයට|මෙය|සම්පූර්ණයෙන්ම)([\u0D80-\u0DFF]+(?:\s+[\u0D80-\u0DFF]+){1,2})(?=\s*\((?:ජා|දුරකථන|විද්‍යුත්|NIC)|\s+වන\s*මම|\s+වෙමි)/g,
+    /([\u0D80-\u0DFF]+(?:\s+[\u0D80-\u0DFF]+){0,2})\s+(?=මයා|මිය|මෙනවිය)/g,
+    /(පුරවැසි\s+)([\u0D80-\u0DFF]+(?:\s+[\u0D80-\u0DFF]+){0,2})/g
+  ];
+  let sinhalaNameCount = 0;
+  sinhalaNameRegexes.forEach(rx => {
+    scrubbed = scrubbed.replace(rx, (m, p1, p2) => {
+      sinhalaNameCount++;
+      return p2 ? `${p1}[REDACTED_NAME]` : '[REDACTED_NAME] ';
+    });
+  });
+  if (sinhalaNameCount > 0) recordDetected('PERSON_NAME', sinhalaNameCount);
+
+  // 5. Tamil Names
+  const tamilNameRegexes = [
+    /(என்\s*பெயர்\s+)([\u0B80-\u0BFF]+(?:\s+[\u0B80-\u0BFF]+){0,2})/g,
+    /(நான்\s+)(?!வசிக்கும்|இந்த|இதனை|இங்கு|முழுமையாக)([\u0B80-\u0BFF]+(?:\s+[\u0B80-\u0BFF]+){1,2})(?=\s*\((?:தேசிய|தொலைபேசி|மின்னஞ்சல்|NIC)|\s+ஆகிய\s*நான்)/g,
+    /(?:திரு|திருமதி|செல்வி|டாக்டர்)\.?\s*([\u0B80-\u0BFF]+(?:\s+[\u0B80-\u0BFF]+){0,2})/g,
+    /(?:குடிமகன்|குடிமகள்)\s+([\u0B80-\u0BFF]+(?:\s+[\u0B80-\u0BFF]+){0,2})/g
+  ];
+  let tamilNameCount = 0;
+  tamilNameRegexes.forEach(rx => {
+    scrubbed = scrubbed.replace(rx, (m, p1, p2) => {
+      tamilNameCount++;
+      return p2 ? `${p1}[REDACTED_NAME]` : '[REDACTED_NAME] ';
+    });
+  });
+  if (tamilNameCount > 0) recordDetected('PERSON_NAME', tamilNameCount);
+
+  // 6. English Names
+  const englishNameRegexes = [
+    /(?:I am(?:\s+citizen)?|My name is|Citizen)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})/g,
+    /(?:Mr\.?|Mrs\.?|Ms\.?|Dr\.?|Prof\.?)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})/g
+  ];
+  let englishNameCount = 0;
+  englishNameRegexes.forEach(rx => {
+    scrubbed = scrubbed.replace(rx, (m, name) => {
+      englishNameCount++;
+      return m.replace(name, '[REDACTED_NAME]');
+    });
+  });
+  if (englishNameCount > 0) recordDetected('PERSON_NAME', englishNameCount);
+
+  // 7. Organizations (Sinhala, Tamil, English)
+  const SINHALA_ORG = /([\u0D80-\u0DFF]+(?:\s+[\u0D80-\u0DFF]+){0,3}\s+(?:මණ්ඩලය|සමිතිය|සංවිධානය|පදනම|දෙපාර්තමේන්තුව|අමාත්‍යාංශය|කොමිෂන්\s*සභාව|නියෝජිතායතනය|සභාව))/g;
+  const sinhalaOrgMatches = scrubbed.match(SINHALA_ORG);
+  if (sinhalaOrgMatches) {
+    recordDetected('ORGANIZATION', sinhalaOrgMatches.length);
+    scrubbed = scrubbed.replace(SINHALA_ORG, '[REDACTED_ORGANIZATION]');
+  }
+
+  const TAMIL_ORG = /([\u0B80-\u0BFF]+(?:\s+[\u0B80-\u0BFF]+){0,3}\s+(?:சங்கம்|வாரியம்|நிறுவனம்|அறக்கட்டளை|திணைக்களம்|அமைச்சு|ஆணையம்|சபை))/g;
+  const tamilOrgMatches = scrubbed.match(TAMIL_ORG);
+  if (tamilOrgMatches) {
+    recordDetected('ORGANIZATION', tamilOrgMatches.length);
+    scrubbed = scrubbed.replace(TAMIL_ORG, '[REDACTED_ORGANIZATION]');
+  }
+
+  const ENGLISH_ORG = /\b(?:TRCSL|CEB|SLT|CPC|ICTA|UDA|BOI|RDA|CAA|CBSL)\b|([A-Z][A-Za-z0-9&]+(?:\s+[A-Z][A-Za-z0-9&]+)*\s+(?:Board|Commission|Department|Authority|Corporation|Ministry|Council|Bureau|Foundation|Association))/g;
+  const englishOrgMatches = scrubbed.match(ENGLISH_ORG);
+  if (englishOrgMatches) {
+    recordDetected('ORGANIZATION', englishOrgMatches.length);
+    scrubbed = scrubbed.replace(ENGLISH_ORG, '[REDACTED_ORGANIZATION]');
+  }
+
+  // 8. Addresses & Locations
+  let addressMatches = 0;
+  scrubbed = scrubbed.replace(/([\u0D80-\u0DFF]+)\s+(ගමේ|ගම|දිස්ත්‍රික්කයේ|දිස්ත්‍රික්කය|නගරයේ|නගරය|වසමේ|පාර|වීදිය|මාවත|ලේන්)/g, () => {
+    addressMatches++;
+    return '[REDACTED_LOCATION]';
+  });
+  scrubbed = scrubbed.replace(/(පදිංචි\s+)(?!\[REDACTED)([\u0D80-\u0DFF]+)/g, () => {
+    addressMatches++;
+    return 'පදිංචි [REDACTED_LOCATION]';
+  });
+  scrubbed = scrubbed.replace(/([\u0B80-\u0BFF]+)\s+(கிராமம்|மாவட்டம்|நகரம்|வீதி|தெரு|சாலை|பிரிவு)/g, () => {
+    addressMatches++;
+    return '[REDACTED_LOCATION]';
+  });
+  scrubbed = scrubbed.replace(/(வசிக்கும்\s*இடம்\s+)(?!\[REDACTED)([\u0B80-\u0BFF]+)/g, () => {
+    addressMatches++;
+    return 'வசிக்கும் இடம் [REDACTED_LOCATION]';
+  });
+  scrubbed = scrubbed.replace(/(?:living in|residing at|residing in|from the village of|village of)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*(?:\s*(?:District|Village|Town|City))?)/g, (m, loc) => {
+    addressMatches++;
+    return m.replace(loc, '[REDACTED_LOCATION]');
+  });
+  scrubbed = scrubbed.replace(/\b[0-9]+\s*,\s*([A-Za-z\s]+(?:Road|Street|Mawatha|Avenue|Lane|Drive|Place))\b/g, () => {
+    addressMatches++;
+    return '[REDACTED_LOCATION]';
+  });
+  scrubbed = scrubbed.replace(/\b(Postal\s*Code|ZIP)\s*:?\s*[0-9]{5}\b/gi, () => {
+    addressMatches++;
+    return '[REDACTED_LOCATION]';
+  });
+  if (addressMatches > 0) recordDetected('ADDRESS', addressMatches);
+
+  // Sentiment
+  const lower = scrubbed.toLowerCase();
+  const positiveTokens = [
+    'support', 'agree', 'excellent', 'necessary', 'crucial', 'urgent', 'good', 'positive', 'welcome', 'great', 'essential', 'beneficial',
+    'එකඟයි', 'අනුමත', 'විශිෂ්ට', 'අත්‍යවශ්‍ය', 'සහයෝග', 'සුබදායක', 'හොඳ', 'වැදගත්', 'ප්‍රශංසනීය', 'සාර්ථක',
+    'ஆதரிக்கிறேன்', 'ஏற்கிறேன்', 'சிறப்பானது', 'அவசியம்', 'முக்கியமானது', 'வரவேற்கத்தக்கது', 'நல்லது', 'சாதகமான', 'பயனுள்ளது', 'வெற்றி'
+  ];
+  const negativeTokens = [
+    'oppose', 'danger', 'risk', 'flawed', 'harmful', 'delay', 'reject', 'disagree', 'bad', 'bureaucracy', 'breach', 'corrupt',
+    'විරුද්ධයි', 'හානිකර', 'ප්‍රතික්ෂේප', 'අවදානම්', 'දෝෂ', 'ප්‍රමාද', 'අසතුටු', 'නරක', 'ගැටලු', 'අසාර්ථක',
+    'எதிர்க்கிறேன்', 'நிராகரிக்கிறேன்', 'ஆபத்தானது', 'குறைபாடு', 'தீங்கு', 'தாமதம்', 'தவறு', 'மோசமான', 'சிக்கல்', 'தோல்வி'
+  ];
+
+  let score = 0;
+  positiveTokens.forEach(word => {
+    if (lower.includes(word.toLowerCase())) score += 0.35;
+  });
+  negativeTokens.forEach(word => {
+    if (lower.includes(word.toLowerCase())) score -= 0.35;
+  });
+
+  score = Math.max(-1.0, Math.min(1.0, score));
+
+  let label: SentimentAnalysisResult['label'] = 'NEUTRAL';
+  if (score >= 0.3) label = 'POSITIVE';
+  else if (score >= 0.7) label = 'VERY_POSITIVE';
+  else if (score <= -0.3) label = 'NEGATIVE';
+  else if (score <= -0.7) label = 'VERY_NEGATIVE';
+
+  return {
+    originalLength: rawText.length,
+    scrubbedText: scrubbed,
+    piiItemsDetected: detected,
+    sentiment: {
+      score: Number(score.toFixed(2)),
+      label,
+      confidence: 0.92
+    }
+  };
+}
