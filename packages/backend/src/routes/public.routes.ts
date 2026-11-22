@@ -37,28 +37,22 @@ publicRouter.get('/lms-context', (req: Request, res: Response): void => {
     portalUrl: 'https://www.cslk.org',
     featuredCourses: [
       {
-        id: 'LMS-101',
+        id: 'LMS-CSLK-DDR',
         title: {
-          en: 'Democracy in the Digital Age: Understanding Citizen Participation',
-          si: 'ඩිජිටල් යුගයේ ප්‍රජාතන්ත්‍රවාදය: පුරවැසි සහභාගීත්වය අවබෝධ කර ගැනීම',
-          ta: 'டிஜிட்டல் யுகத்தில் ஜனநாயகம்: குடிமக்கள் பங்களிப்பைப் புரிந்துகொள்ளுதல்'
+          en: 'Digital Democracy and Rights',
+          si: 'ඩිජිටල් ප්‍රජාතන්ත්‍රවාදය සහ අයිතිවාසිකම්',
+          ta: 'டிஜிட்டல் ஜனநாயகம் மற்றும் உரிமைகள்'
         },
-        duration: '2 Hours (Self-paced)',
-        level: 'Introductory',
-        badgeUrl: 'https://www.cslk.org/badges/digital-citizen.png',
-        enrollUrl: 'https://www.cslk.org/courses/digital-democracy-101'
-      },
-      {
-        id: 'LMS-202',
-        title: {
-          en: 'Sri Lanka PDPA No. 9 of 2022: Your Statutory Privacy Rights',
-          si: 'ශ්‍රී ලංකා PDPA 2022 අංක 9: ඔබගේ ව්‍යවස්ථාපිත රහස්‍යතා අයිතිවාසිකම්',
-          ta: 'இலங்கை PDPA 2022 எண் 9: உங்கள் சட்டரீதியான தனியுரிமை உரிமைகள்'
-        },
-        duration: '1.5 Hours',
-        level: 'Intermediate',
-        badgeUrl: 'https://www.cslk.org/badges/privacy-champion.png',
-        enrollUrl: 'https://www.cslk.org/courses/pdpa-privacy-rights'
+        duration: '100% Free • 3 Hours • Self-Paced • Sinhala / தமிழ் / English • Automated E-Certificate',
+        level: 'All Sri Lankan Citizens & Youth',
+        badgeUrl: 'https://www.cslk.org/badges/digital-democracy-rights.png',
+        enrollUrl: 'https://www.cslk.org/courses/digital-democracy-and-rights',
+        modules: [
+          'Module 1: Digital Democracy & Civic Literacy',
+          'Module 2: Digital Safety, Online Safety Act 2024 & PDPA 2022',
+          'Module 3: Practical Guide to E-Lanka'
+        ],
+        youthChampionsHighlight: 'The top 10 graduates will be selected as official CSLK Youth Champions.'
       }
     ]
   });

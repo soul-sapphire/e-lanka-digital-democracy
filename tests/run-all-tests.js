@@ -825,6 +825,38 @@ async function runTestSuite() {
     assert.strictEqual(aboutContent.includes('Centre for Society & Learning'), false, 'AboutContactView must not contain obsolete name');
   });
 
+  it('11.2 Issue 2.2: Verifies single official course "Digital Democracy and Rights" (3 Hours, 3 modules, Youth Champions, direct LifterLMS link)', () => {
+    const fs = require('fs');
+    const path = require('path');
+
+    // 1. Check backend routes
+    const routesContent = fs.readFileSync(path.join(__dirname, '../packages/backend/src/routes/public.routes.ts'), 'utf8');
+    assert.ok(routesContent.includes('Digital Democracy and Rights'), 'public.routes.ts must feature Digital Democracy and Rights');
+    assert.ok(routesContent.includes('3 Hours'), 'public.routes.ts must specify 3 Hours duration');
+    assert.ok(routesContent.includes('Module 1: Digital Democracy & Civic Literacy'), 'public.routes.ts must list Module 1');
+    assert.ok(routesContent.includes('Module 2: Digital Safety, Online Safety Act 2024 & PDPA 2022'), 'public.routes.ts must list Module 2');
+    assert.ok(routesContent.includes('Module 3: Practical Guide to E-Lanka'), 'public.routes.ts must list Module 3');
+    assert.ok(routesContent.includes('Youth Champions'), 'public.routes.ts must highlight Youth Champions');
+    assert.ok(routesContent.includes('https://www.cslk.org/courses/digital-democracy-and-rights'), 'public.routes.ts must link to official LifterLMS course');
+
+    // 2. Check LMSAcademyView.tsx
+    const academyContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/views/LMSAcademyView.tsx'), 'utf8');
+    assert.ok(academyContent.includes('Digital Democracy and Rights'), 'LMSAcademyView must feature official course');
+    assert.ok(academyContent.includes('3 Hours'), 'LMSAcademyView must state 3 Hours');
+    assert.ok(academyContent.includes('Youth Champions'), 'LMSAcademyView must feature Youth Champions highlight box');
+    assert.ok(academyContent.includes('Module 1: Digital Democracy & Civic Literacy'), 'LMSAcademyView must include Module 1');
+    assert.ok(academyContent.includes('Module 2: Digital Safety, Online Safety Act 2024 & PDPA 2022'), 'LMSAcademyView must include Module 2 (OSA 2024)');
+    assert.ok(academyContent.includes('Module 3: Practical Guide to E-Lanka'), 'LMSAcademyView must include Module 3');
+    assert.ok(academyContent.includes('https://www.cslk.org/courses/digital-democracy-and-rights'), 'LMSAcademyView must link to direct course page');
+
+    // 3. Check LMSCard.tsx
+    const cardContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/LMSCard.tsx'), 'utf8');
+    assert.ok(cardContent.includes('Digital Democracy and Rights'), 'LMSCard must default to Digital Democracy and Rights');
+    assert.ok(cardContent.includes('3 Hours'), 'LMSCard must state 3 Hours');
+    assert.ok(cardContent.includes('Youth Champions'), 'LMSCard must mention Youth Champions');
+    assert.ok(cardContent.includes('https://www.cslk.org/courses/digital-democracy-and-rights'), 'LMSCard must link to direct course page');
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------

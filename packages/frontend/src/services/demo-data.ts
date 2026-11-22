@@ -51,13 +51,13 @@ export const INITIAL_DEMO_POLICIES: PolicyConsultation[] = [
     updatedAt: '2026-01-15T09:00:00Z',
     isPubliclyVisible: true,
     lmsCourseRef: {
-      courseId: 'LMS-AI-ETHICS-101',
+      courseId: 'LMS-CSLK-DDR',
       courseTitle: {
-        en: 'Citizen Guide to AI Rights & Algorithmic Due Process',
-        si: 'AI අයිතිවාසිකම් පිළිබඳ පුරවැසි මගපෙන්වීම',
-        ta: 'AI உரிமைகள் மற்றும் அல்காரிதம் குறித்த குடிமக்கள் வழிகாட்டி'
+        en: 'Digital Democracy and Rights',
+        si: 'ඩිජිටල් ප්‍රජාතන්ත්‍රවාදය සහ අයිතිවාසිකම්',
+        ta: 'டிஜிட்டல் ஜனநாயகம் மற்றும் உரிமைகள்'
       },
-      url: 'https://www.cslk.org'
+      url: 'https://www.cslk.org/courses/digital-democracy-and-rights'
     }
   },
   {
@@ -90,13 +90,13 @@ export const INITIAL_DEMO_POLICIES: PolicyConsultation[] = [
     updatedAt: '2026-02-01T00:00:00Z',
     isPubliclyVisible: true,
     lmsCourseRef: {
-      courseId: 'LMS-AGRI-SOLAR-202',
+      courseId: 'LMS-CSLK-DDR',
       courseTitle: {
-        en: 'Smart Farming: IoT & Clean Energy for Rural Sri Lanka',
-        si: 'ස්මාර්ට් ගොවිතැන: IoT සහ පිරිසිදු බලශක්තිය',
-        ta: 'ஸ்மார்ட் விவசாயம்: IoT மற்றும் சுத்தமான ஆற்றல்'
+        en: 'Digital Democracy and Rights',
+        si: 'ඩිජිටල් ප්‍රජාතන්ත්‍රවාදය සහ අයිතිවාසිකම්',
+        ta: 'டிஜிட்டல் ஜனநாயகம் மற்றும் உரிமைகள்'
       },
-      url: 'https://www.cslk.org'
+      url: 'https://www.cslk.org/courses/digital-democracy-and-rights'
     }
   },
   {
