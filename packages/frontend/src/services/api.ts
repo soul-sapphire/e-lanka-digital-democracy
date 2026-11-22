@@ -554,20 +554,76 @@ export const api = {
     };
   },
 
-  triggerAISync: async (policyId: string, totpToken: string): Promise<any> => {
+  triggerAISync: async (targetId: string, totpToken: string): Promise<any> => {
     const user = getStoredUser();
     if (!user || !['POLICY_ADMIN', 'PANEL_MODERATOR'].includes(user.role)) {
       throw new Error('ACCESS_DENIED: Citizen role cannot trigger AI opinion mapping.');
     }
-    const live = await tryFetch<any>(`/admin/ai-sync/${policyId}`, {
+    const cleanId = targetId.replace(/^(pol:|pet:)/, '');
+    const live = await tryFetch<any>(`/admin/ai-sync/${cleanId}`, {
       method: 'POST',
       headers: { 'x-totp-token': totpToken }
     });
     if (live) return live;
 
+    const isPetition = targetId.startsWith('pet:') || cleanId.startsWith('pet_');
+    const now = new Date().toISOString();
+
+    if (isPetition) {
+      return {
+        success: true,
+        aggregate: {
+          policyId: cleanId,
+          code: cleanId.toUpperCase(),
+          totalSubmissions: 3840,
+          lastProcessedAt: now,
+          sentimentDistribution: { positive: 84, neutral: 12, negative: 4 },
+          thematicClusters: [
+            {
+              id: 'thm_pet_1',
+              themeTitle: {
+                en: 'Environmental & Ecological Urgency across Coastal Districts',
+                si: 'වෙරළබඩ දිස්ත්‍රික්කවල පාරිසරික හා පරිසර හිතකාමී හදිසි අවශ්‍යතාවය',
+                ta: 'கடலோர மாவட்டங்களில் சுற்றுச்சூழல் அவசரநிலை'
+              },
+              mentionCount: 2450,
+              percentage: 64,
+              keyConcerns: [
+                { en: 'Marine plastic micro-contamination in fisheries', si: 'ධීවර ක්ෂේත්‍රයේ ක්ෂුද්‍ර ප්ලාස්ටික් දූෂණය', ta: 'மீன்பிடித் தொழிலில் மைக்ரோபிளாஸ்டிக் மாசுபாடு' },
+                { en: 'Strict statutory timeline for phasing out non-biodegradable polymers', si: 'දිරාපත් නොවන පොලිමර් ඉවත් කිරීමේ නෛතික කාලසටහන', ta: 'மக்காத பாலிமர்களை அகற்றுவதற்கான சட்டக் காலக்கெடு' }
+              ],
+              representativeQuotes: [
+                "Sri Lanka's coastal lagoons in Puttalam and Negombo are experiencing severe plastic accumulation; statutory bans are urgently needed.",
+                "Extended producer responsibility (EPR) must be enforced with mandatory recycling deposit benchmarks."
+              ]
+            },
+            {
+              id: 'thm_pet_2',
+              themeTitle: {
+                en: 'Affordable Biodegradable Alternatives for Small Businesses',
+                si: 'කුඩා ව්‍යාපාර සඳහා දැරිය හැකි ජෛව හායනයට ලක්විය හැකි විකල්ප',
+                ta: 'சிறு வணிகங்களுக்கான மலிவு விலையிலான மக்கும் மாற்றீடுகள்'
+              },
+              mentionCount: 1390,
+              percentage: 36,
+              keyConcerns: [
+                { en: 'Subsidies for local banana fiber and bagasse packaging producers', si: 'දේශීය කෙසෙල් කෙඳි සහ බගාස් ඇසුරුම් නිෂ්පාදකයින්ට සහනාධාර', ta: 'உள்ளூர் பேக்கேஜிங் உற்பத்தியாளர்களுக்கு மானியங்கள்' },
+                { en: 'Preventing sudden retail price spikes for daily essentials', si: 'අත්‍යවශ්‍ය භාණ්ඩවල සිල්ලර මිල ඉහළ යාම වැළැක්වීම', ta: 'அத்தியாவசிய பொருட்களின் சில்லறை விலை உயர்வைத் தடுத்தல்' }
+              ],
+              representativeQuotes: [
+                "Micro-enterprises and street vendors need affordable domestic alternatives before severe penalties are imposed.",
+                "Support state credit schemes for young eco-packaging startups."
+              ]
+            }
+          ],
+          syncHash: `synchash_${Date.now()}`
+        }
+      };
+    }
+
     return {
       success: true,
-      aggregate: { ...DEMO_PUBLIC_AGGREGATE, policyId, syncHash: `synchash_${Date.now()}` }
+      aggregate: { ...DEMO_PUBLIC_AGGREGATE, policyId: cleanId, lastProcessedAt: now, syncHash: `synchash_${Date.now()}` }
     };
   },
 

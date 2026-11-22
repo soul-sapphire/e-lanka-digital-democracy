@@ -946,6 +946,57 @@ async function runTestSuite() {
     assert.strictEqual(modalContent.includes('type="date"'), false, 'PetitionSignModal must not use raw browser type="date" which forces US mm/dd/yyyy');
   });
 
+  it('12.2 Issue 3.2: AI Worker Integration - Policy Brief Export (PDF/Word), E-Petitions Support & HITL Workflow', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const panelPath = path.join(__dirname, '../packages/frontend/src/views/AdminModerationPanel.tsx');
+    const panelContent = fs.readFileSync(panelPath, 'utf8');
+
+    // 1. Verify E-Petitions are supported alongside Policy Consultations in AI target selector
+    assert.ok(panelContent.includes('label="✍️ Verified Citizen E-Petitions"'), 'Target dropdown must include E-Petitions optgroup');
+    assert.ok(panelContent.includes('label="🏛️ National Policy Consultations"'), 'Target dropdown must include Policy Consultations optgroup');
+    assert.ok(panelContent.includes('value="pet:pet_01"'), 'Dropdown must list pet:pet_01');
+    assert.ok(panelContent.includes('Statutory Ban on Single-Use Microplastics in Consumer Packaging'), 'Dropdown must show microplastics petition title');
+
+    // 2. Verify display of Last AI Execution Timestamp (+05:30) and Result Summary
+    assert.ok(panelContent.includes('Last AI Execution Timestamp (+05:30):'), 'Must display Sri Lankan timestamp for AI execution');
+    assert.ok(panelContent.includes('formatSriLankanTimestamp'), 'Must format timestamp with formatSriLankanTimestamp');
+    assert.ok(panelContent.includes('Result Summary:'), 'Must display execution result summary');
+    assert.ok(panelContent.includes('totalSubmissions'), 'Must display total submissions analyzed');
+
+    // 3. Verify Human-in-the-Loop (HITL) review card & admin approval
+    assert.ok(panelContent.includes('Human-in-the-Loop (HITL) Review'), 'Must include mandatory HITL review badge');
+    assert.ok(panelContent.includes('APPROVED & PUBLISHED (HITL VERIFIED)'), 'Must include HITL verified state');
+    assert.ok(panelContent.includes('AI Executive Summary & Recommendations (Human-Editable Before Publication):'), 'Must include editable summary textarea');
+    assert.ok(panelContent.includes('Approve & Publish to Public Hub'), 'Must have admin approval button');
+    assert.ok(panelContent.includes('setIsApprovedByAdmin'), 'Must update admin approval state');
+
+    // 4. Verify Export Policy Brief buttons (PDF/Print and Word .doc)
+    assert.ok(panelContent.includes('handleExportPolicyBriefPDF'), 'Must have handleExportPolicyBriefPDF function');
+    assert.ok(panelContent.includes('handleExportPolicyBriefWord'), 'Must have handleExportPolicyBriefWord function');
+    assert.ok(panelContent.includes('Export Policy Brief (PDF / Print)'), 'Must render PDF export button');
+    assert.ok(panelContent.includes('Export Policy Brief (Word / .doc)'), 'Must render Word export button');
+
+    // 5. Verify the 6 Statutory State Institutions in formal submission block
+    const stateInstitutions = [
+      'Parliament Secretariat & Sectoral Oversight Committee on Governance & Digital Rights',
+      'Presidential Secretariat',
+      'Ministry of Technology & Digital Economy of Sri Lanka',
+      'Ministry of Public Administration, Provincial Councils and Local Government',
+      'Data Protection Authority of Sri Lanka (DPA)',
+      'National Youth Services Council (NYSC)'
+    ];
+    for (const inst of stateInstitutions) {
+      assert.ok(panelContent.includes(inst), `Policy Brief must be formally addressed to "${inst}"`);
+    }
+
+    // 6. Verify api.ts triggerAISync supports petitions and returns rich clusters
+    const apiPath = path.join(__dirname, '../packages/frontend/src/services/api.ts');
+    const apiContent = fs.readFileSync(apiPath, 'utf8');
+    assert.ok(apiContent.includes('isPetition'), 'api.triggerAISync must distinguish between policies and petitions');
+    assert.ok(apiContent.includes('Environmental & Ecological Urgency across Coastal Districts'), 'api.triggerAISync must provide petition clusters');
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------
