@@ -43,7 +43,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
       const oldNicRegex = /^[0-9]{9}[VX]$/;
       const newNicRegex = /^[0-9]{12}$/;
       if (!oldNicRegex.test(cleanNIC) && !newNicRegex.test(cleanNIC)) {
-        setError('Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).');
+        setError(t('auth.invalidNic'));
         return;
       }
     }
@@ -63,10 +63,10 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
         onClose();
         navigate('/dashboard');
       } else {
-        setError('Sign in failed. Please verify your details.');
+        setError(t('auth.signInFailed'));
       }
     } catch (err: any) {
-      setError(err.message || 'Citizen sign in error.');
+      setError(err.message || t('auth.signInFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -89,8 +89,8 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
               <UserCheck className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">Citizen Sign In</h3>
-              <p className="text-[11px] text-slate-400">Access your personal civic dashboard & PDPA records</p>
+              <h3 className="text-lg font-bold text-white">{t('auth.citizenSignIn')}</h3>
+              <p className="text-[11px] text-slate-400">{t('auth.citizenSignInDesc')}</p>
             </div>
           </div>
 
@@ -114,7 +114,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
           <form onSubmit={handleSignIn} className="space-y-3.5 text-xs">
             <div>
               <label className="block font-medium text-slate-300 mb-1">
-                National Identity Card (NIC)
+                {t('auth.nicLabel')}
               </label>
               <input
                 type="text"
@@ -124,13 +124,13 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold font-mono"
               />
               <span className="text-[10px] text-slate-400 mt-0.5 block">
-                Leave blank for demo citizen quick-session, or provide NIC to sync signed petitions.
+                {t('auth.nicHint')}
               </span>
             </div>
 
             <div>
               <label className="block font-medium text-slate-300 mb-1">
-                Electoral District
+                {t('auth.districtLabel')}
               </label>
               <select
                 value={district}
@@ -147,7 +147,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
 
             <div>
               <label className="block font-medium text-slate-300 mb-1">
-                Email Address (Optional)
+                {t('auth.emailOptional')}
               </label>
               <input
                 type="email"
@@ -164,7 +164,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                 onClick={onClose}
                 className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
               >
-                Cancel
+                {t('auth.cancel')}
               </button>
               <button
                 type="submit"
@@ -174,11 +174,11 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Signing In...</span>
+                    <span>{t('auth.signingIn')}</span>
                   </>
                 ) : (
                   <>
-                    <span>Sign In to Dashboard</span>
+                    <span>{t('auth.signInBtn')}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
@@ -189,14 +189,14 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
           {/* Secure Administrative Portal Link */}
           <div className="pt-3 border-t border-slate-800 text-center">
             <p className="text-[11px] text-slate-400">
-              Administrative Staff or Panel Moderator?{' '}
+              {t('auth.staffQuestion')}{' '}
               <Link
                 to="/admin/login"
                 onClick={onClose}
                 className="text-amber-400 hover:text-amber-300 font-semibold inline-flex items-center gap-1 underline underline-offset-2 ml-1"
               >
                 <Lock className="w-3 h-3" />
-                <span>Admin Login Portal</span>
+                <span>{t('auth.adminPortalLink')}</span>
               </Link>
             </p>
           </div>

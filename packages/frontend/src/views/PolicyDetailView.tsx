@@ -173,7 +173,7 @@ export const PolicyDetailView: React.FC = () => {
         className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-white transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span>Return to All Policy Consultations</span>
+        <span>{t('policyDetail.returnToHub')}</span>
       </Link>
 
       {/* Header Card */}
@@ -220,16 +220,16 @@ export const PolicyDetailView: React.FC = () => {
           <div className="flex items-center gap-2">
             <Users className="w-4 h-4 text-emerald-400" />
             <div>
-              <span className="block text-[10px] uppercase text-slate-400">Submissions</span>
+              <span className="block text-[10px] uppercase text-slate-400">{t('policyDetail.submissions')}</span>
               <span className="font-semibold text-slate-200">
-                {policy.submissionCount.toLocaleString()} Verified Citizens
+                {policy.submissionCount.toLocaleString()} {t('policyDetail.verifiedCitizens')}
               </span>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-blue-400" />
             <div>
-              <span className="block text-[10px] uppercase text-slate-400">Lifecycle State</span>
+              <span className="block text-[10px] uppercase text-slate-400">{t('policyDetail.lifecycleState')}</span>
               <span className="font-semibold text-slate-200">{policy.stage}</span>
             </div>
           </div>
@@ -272,7 +272,7 @@ export const PolicyDetailView: React.FC = () => {
       <section className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 text-white space-y-4">
         <h3 className="text-lg font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
           <FileCheck className="w-5 h-5 text-lanka-gold" />
-          <span>Statutory Policy Description & Regulatory Scope</span>
+          <span>{t('policyDetail.statutoryScope')}</span>
         </h3>
         <div className="text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line">
           {fullDesc}
@@ -280,7 +280,7 @@ export const PolicyDetailView: React.FC = () => {
         {policy.moderatorPanelNotes && (
           <div className="p-4 rounded-xl bg-slate-800/80 border border-slate-700 text-xs text-slate-300 space-y-1">
             <span className="font-bold text-lanka-gold uppercase text-[10px] tracking-wider block">
-              Statutory Expert Panel Moderation Notes
+              {t('policyDetail.panelNotesTitle')}
             </span>
             <p>{policy.moderatorPanelNotes}</p>
           </div>

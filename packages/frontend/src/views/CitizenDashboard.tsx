@@ -92,31 +92,31 @@ export const CitizenDashboard: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <span className="text-xs bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg text-slate-300 font-medium">
-              District: {engagement?.district || 'Colombo'}
+              {t('dashboard.district')}: {engagement?.district || 'Colombo'}
             </span>
             <span className="text-xs bg-emerald-950/80 border border-emerald-700/80 text-emerald-400 px-3 py-1 rounded-lg font-medium flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Verified Citizen
+              <CheckCircle2 className="w-3.5 h-3.5" /> {t('dashboard.verifiedCitizenBadge')}
             </span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 text-xs">
           <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-1">
-            <span className="text-slate-400 block font-medium">Data Minimization</span>
+            <span className="text-slate-400 block font-medium">{t('dashboard.dataMinimization')}</span>
             <span className="text-emerald-400 font-semibold flex items-center gap-1">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Verified PDPA Sec 3
+              <CheckCircle2 className="w-3.5 h-3.5" /> {t('dashboard.dataMinimizationSec')}
             </span>
           </div>
           <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-1">
-            <span className="text-slate-400 block font-medium">Application Encryption</span>
+            <span className="text-slate-400 block font-medium">{t('dashboard.applicationEncryption')}</span>
             <span className="text-emerald-400 font-semibold flex items-center gap-1">
-              <Lock className="w-3.5 h-3.5" /> AES-256-GCM Active
+              <Lock className="w-3.5 h-3.5" /> {t('dashboard.encryptionActive')}
             </span>
           </div>
           <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-1">
-            <span className="text-slate-400 block font-medium">Identity Coupling</span>
+            <span className="text-slate-400 block font-medium">{t('dashboard.identityProtection')}</span>
             <span className="text-lanka-gold font-semibold flex items-center gap-1">
-              <Key className="w-3.5 h-3.5" /> Salted Blind Index (HMAC)
+              <Key className="w-3.5 h-3.5" /> {t('dashboard.identityDecoupled')}
             </span>
           </div>
         </div>

@@ -60,7 +60,12 @@
     "thematicClusters": "Key Thematic Clusters Synthesized by AI",
     "lmsBannerTitle": "Deepen Your Policy Understanding",
     "lmsBannerDesc": "Access free certified citizen modules hosted on the national democracy portal",
-    "visitLms": "Open Course at www.cslk.org"
+    "visitLms": "Open Course at www.cslk.org",
+    "statutoryScope": "Statutory Policy Description & Regulatory Scope",
+    "panelNotesTitle": "Statutory Expert Panel Moderation Notes",
+    "lifecycleState": "Lifecycle State",
+    "verifiedCitizens": "Verified Citizens",
+    "returnToHub": "Return to All Policy Consultations"
   },
   "survey": {
     "title": "Consultation Questionnaire Runner",
@@ -121,7 +126,14 @@
     "erasureTitle": "Delete My Account & Data (PDPA Section 16)",
     "erasureDesc": "Permanently delete all your personal credentials while retaining your anonymized vote count in national totals.",
     "erasureBtn": "Delete My Account & Data",
-    "confirmErasure": "Are you sure? This will delete all personal credentials while retaining your anonymized vote count in national totals."
+    "confirmErasure": "Are you sure? This will delete all personal credentials while retaining your anonymized vote count in national totals.",
+    "verifiedCitizenBadge": "Verified Citizen",
+    "dataMinimization": "Data Minimization",
+    "dataMinimizationSec": "Verified PDPA Sec 3",
+    "applicationEncryption": "Application Encryption",
+    "encryptionActive": "Military-Grade Security Active",
+    "identityProtection": "Identity Protection",
+    "identityDecoupled": "Decoupled via Pseudonymization"
   },
   "admin": {
     "title": "Statutory Moderation Gate & Admin Portal",
@@ -135,6 +147,21 @@
     "panelNotesLabel": "Statutory Panel Review Findings & Notes",
     "triggerAi": "Trigger AI Opinion Mapping & Scrubbing",
     "auditLedger": "PDPA Statutory Audit Ledger (Immutable Chained Logs)"
+  },
+  "auth": {
+    "citizenSignIn": "Citizen Sign In",
+    "citizenSignInDesc": "Access your personal civic dashboard & PDPA records",
+    "nicLabel": "National Identity Card (NIC)",
+    "nicHint": "Leave blank for demo quick-session, or provide NIC to sync signed petitions.",
+    "districtLabel": "Electoral District",
+    "emailOptional": "Email Address (Optional)",
+    "cancel": "Cancel",
+    "signingIn": "Signing In...",
+    "signInBtn": "Sign In to Dashboard",
+    "staffQuestion": "Administrative Staff or Panel Moderator?",
+    "adminPortalLink": "Admin Login Portal",
+    "invalidNic": "Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).",
+    "signInFailed": "Sign in failed. Please verify your details."
   }
 }
 

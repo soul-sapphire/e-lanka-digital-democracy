@@ -1302,6 +1302,63 @@ async function runTestSuite() {
     assert.ok(modalContent.includes('Statutory Title:'), 'PetitionSignModal must display statutory title subtitle');
   });
 
+  it('13.5 Issue 4.5: Full Trilingual Localization (i18n) Verification (100% parity across EN, SI, TA)', () => {
+    // 1. Load all three locale json files
+    function flattenKeys(obj, prefix = '') {
+      let keys = {};
+      for (const [k, v] of Object.entries(obj)) {
+        const full = prefix ? `${prefix}.${k}` : k;
+        if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+          Object.assign(keys, flattenKeys(v, full));
+        } else {
+          keys[full] = v;
+        }
+      }
+      return keys;
+    }
+
+    const enLoc = flattenKeys(JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/en.json'), 'utf8')));
+    const siLoc = flattenKeys(JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/si.json'), 'utf8')));
+    const taLoc = flattenKeys(JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/ta.json'), 'utf8')));
+
+    const enKeys = Object.keys(enLoc);
+    const siKeys = Object.keys(siLoc);
+    const taKeys = Object.keys(taLoc);
+
+    assert.ok(enKeys.length >= 130, `Expected at least 130 translation keys, found ${enKeys.length}`);
+    assert.strictEqual(enKeys.length, siKeys.length, `Sinhala key count (${siKeys.length}) must match English (${enKeys.length})`);
+    assert.strictEqual(enKeys.length, taKeys.length, `Tamil key count (${taKeys.length}) must match English (${enKeys.length})`);
+
+    // Verify zero missing keys in SI and TA
+    const missingInSi = enKeys.filter(k => !(k in siLoc));
+    const missingInTa = enKeys.filter(k => !(k in taLoc));
+    assert.deepStrictEqual(missingInSi, [], 'Sinhala locale must have zero missing keys compared to English');
+    assert.deepStrictEqual(missingInTa, [], 'Tamil locale must have zero missing keys compared to English');
+
+    // 2. Verify i18n initialization config
+    const i18nConfig = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/index.ts'), 'utf8');
+    assert.ok(i18nConfig.includes('en'), 'i18n must register English resources');
+    assert.ok(i18nConfig.includes('si'), 'i18n must register Sinhala resources');
+    assert.ok(i18nConfig.includes('ta'), 'i18n must register Tamil resources');
+
+    // 3. Verify key UI views import and use useTranslation hook
+    const views = [
+      '../packages/frontend/src/views/PublicPolicyHub.tsx',
+      '../packages/frontend/src/views/EPetitionsView.tsx',
+      '../packages/frontend/src/views/PolicyDetailView.tsx',
+      '../packages/frontend/src/views/CitizenDashboard.tsx',
+      '../packages/frontend/src/components/CitizenSignInModal.tsx',
+      '../packages/frontend/src/components/Navbar.tsx',
+      '../packages/frontend/src/components/PetitionSignModal.tsx'
+    ];
+
+    for (const v of views) {
+      const content = fs.readFileSync(path.join(__dirname, v), 'utf8');
+      assert.ok(content.includes('useTranslation'), `${v} must import useTranslation hook`);
+      assert.ok(content.includes("t('"), `${v} must call t(...) for trilingual text rendering`);
+    }
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------
