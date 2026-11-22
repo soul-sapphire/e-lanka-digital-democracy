@@ -10,7 +10,8 @@ export type PetitionStatus = 'DRAFT' | 'ACTIVE' | 'SUBMITTED_TO_AUTHORITY' | 'AC
 export interface EPetition {
   id: string;
   code: string; // e.g. "PET-2026-089"
-  title: LocalizedString;
+  headline?: LocalizedString; // Action-oriented youth-engaging headline
+  title: LocalizedString;     // Formal statutory gazette title
   objectiveStatement: LocalizedString;
   targetAuthority: string; // e.g. "Ministry of Digital Infrastructure & Technology"
   backgroundDocumentationUrl?: string;

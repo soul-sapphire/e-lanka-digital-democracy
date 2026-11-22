@@ -80,6 +80,7 @@ export const EPetitionsView: React.FC = () => {
           </div>
         ) : (
           petitions.map((petition) => {
+            const headline = petition.headline ? (petition.headline[currentLang] || petition.headline.en) : null;
             const title = petition.title[currentLang] || petition.title.en;
             const objective = petition.objectiveStatement[currentLang] || petition.objectiveStatement.en;
 
@@ -103,9 +104,19 @@ export const EPetitionsView: React.FC = () => {
                       </span>
                     </div>
 
-                    <h2 className="text-xl sm:text-2xl font-bold text-white leading-snug">
-                      {title}
-                    </h2>
+                    <div className="space-y-1">
+                      <h2 className="text-xl sm:text-2xl font-bold text-white leading-snug">
+                        {headline || title}
+                      </h2>
+                      {headline && (
+                        <div className="text-xs sm:text-sm text-slate-400 flex items-center gap-1.5 pt-0.5">
+                          <span className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/60 shrink-0">
+                            Statutory Title
+                          </span>
+                          <span className="italic">{title}</span>
+                        </div>
+                      )}
+                    </div>
 
                     <div className="flex items-center gap-1.5 text-xs text-slate-400">
                       <Building className="w-3.5 h-3.5 text-lanka-gold" />

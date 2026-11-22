@@ -29,7 +29,8 @@ export interface LocalizedString {
 export interface PolicyConsultation {
   id: string;
   code: string; // e.g. "EL-POL-2026-004"
-  title: LocalizedString;
+  headline?: LocalizedString; // Action-oriented youth-engaging headline
+  title: LocalizedString;     // Formal statutory gazette title
   summary: LocalizedString;
   fullDescription: LocalizedString;
   category: PolicyCategory;

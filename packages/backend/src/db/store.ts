@@ -84,6 +84,11 @@ export class DatabaseStore {
       {
         id: 'b0000000-0000-0000-0000-000000000001',
         code: 'EL-POL-2026-001',
+        headline: {
+          en: 'Stop Algorithmic Bias: Safe & Fair AI for Everyone!',
+          si: 'ඇල්ගොරිතම පක්ෂග්‍රාහීත්වය නවතමු: සැමට සාධාරණ AI තාක්ෂණයක්!',
+          ta: 'அல்காரிதம் சார்புநிலையை நிறுத்துங்கள்: அனைவருக்கும் பாதுகாப்பான நியாயமான AI!'
+        },
         title: {
           en: 'National AI Ethics & Algorithmic Accountability Framework',
           si: 'ජාතික කෘතිම බුද්ධි ආචාරධර්ම සහ ඇල්ගොරිතම වගවීම පිළිබඳ රාමුව',
@@ -124,6 +129,11 @@ export class DatabaseStore {
       {
         id: 'b0000000-0000-0000-0000-000000000002',
         code: 'EL-POL-2026-002',
+        headline: {
+          en: 'Power Our Farmers: Modern Agritech & Solar Power for Sri Lanka!',
+          si: 'අපේ ගොවි පරපුර බලගන්වමු: නවීන කෘෂි තාක්ෂණය හා සූර්ය බලශක්තිය!',
+          ta: 'எங்கள் விவசாயிகளை மேம்படுத்துங்கள்: நவீன விவசாய தொழில்நுட்பம் மற்றும் சூரிய சக்தி!'
+        },
         title: {
           en: 'Sustainable Agritech Subsidies & Renewable Solar Farming Policy',
           si: 'තිරසාර කෘෂි තාක්‍ෂණ සහනාධාර සහ සූර්ය බලශක්ති ගොවිතැන් ප්‍රතිපත්තිය',
@@ -163,6 +173,11 @@ export class DatabaseStore {
       {
         id: 'b0000000-0000-0000-0000-000000000003',
         code: 'EL-POL-2026-003',
+        headline: {
+          en: 'End Secret Deals: Full Public Transparency in Government Contracts!',
+          si: 'රහසිගත ගනුදෙනු නවතමු: රජයේ කොන්ත්‍රාත්තු සඳහා පූර්ණ මහජන විනිවිදභාවය!',
+          ta: 'இரகசிய ஒப்பந்தங்களை நிறுத்துங்கள்: அரசாங்க ஒப்பந்தங்களில் முழு பொது வெளிப்படைத்தன்மை!'
+        },
         title: {
           en: 'Civic Transparency in Public Procurement & Asset Declaration Act',
           si: 'රාජ්‍ය ප්‍රසම්පාදන සහ වත්කම් ප්‍රකාශ කිරීමේ විනිවිදභාවය පිළිබඳ පනත',
@@ -192,6 +207,11 @@ export class DatabaseStore {
       {
         id: 'b0000000-0000-0000-0000-000000000004',
         code: 'EL-POL-2026-004',
+        headline: {
+          en: 'Doctors on Demand: Free Telemedicine for Every Rural Clinic!',
+          si: 'ගමට වෛද්‍යවරුන්: සෑම ග්‍රාමීය රෝහලකටම නොමිලේ ටෙලිමෙඩිසින් සේවාව!',
+          ta: 'தேவைக்கேற்ப மருத்துவர்கள்: ஒவ்வொரு கிராமப்புற கிளினிக்குக்கும் இலவச டெலிமெடிசின்!'
+        },
         title: {
           en: 'Decentralized Healthcare Telemedicine Network for Rural Hospitals',
           si: 'ග්‍රාමීය රෝහල් සඳහා විමධ්‍යගත ටෙලිමෙඩිසින් සෞඛ්‍ය ජාලය',
@@ -300,6 +320,11 @@ export class DatabaseStore {
       {
         id: 'e0000000-0000-0000-0000-000000000001',
         code: 'PET-2026-012',
+        headline: {
+          en: 'Provide High-Speed Internet to All Rural Schools!',
+          si: 'සියලුම ග්‍රාමීය පාසල්වලට අධිවේගී අන්තර්ජාලය ලබාදෙන්න!',
+          ta: 'அனைத்து கிராமப்புறப் பள்ளிகளுக்கும் அதிவேக இணையத்தை வழங்குங்கள்!'
+        },
         title: {
           en: 'Mandate Open Fiber Access & Universal High-Speed Broadband across Rural Schools',
           si: 'ග්‍රාමීය පාසල් පුරා විවෘත ෆයිබර් ප්‍රවේශය සහ අධිවේගී බ්‍රෝඩ්බෑන්ඩ් අනිවාර්ය කිරීම',
@@ -322,6 +347,11 @@ export class DatabaseStore {
       {
         id: 'e0000000-0000-0000-0000-000000000002',
         code: 'PET-2026-018',
+        headline: {
+          en: 'Protect Our Beaches: Ban Single-Use Plastics Now!',
+          si: 'අපේ වෙරළ තීරය සුරකිමු: තනි භාවිත ප්ලාස්ටික් වහාම තහනම් කරනු!',
+          ta: 'எங்கள் கடற்கரைகளைப் பாதுகாப்போம்: ஒருமுறை பயன்படுத்தும் பிளாஸ்டிக்கை உடனே தடை செய்யுங்கள்!'
+        },
         title: {
           en: 'Statutory Ban on Single-Use Non-Biodegradable Polythene in Coastal Sanctuaries',
           si: 'වෙරළබඩ අභයභූමිවල තනි භාවිත නොදිරන පොලිතීන් භාවිතය නීතියෙන් තහනම් කිරීම',

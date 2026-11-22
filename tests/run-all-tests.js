@@ -1247,6 +1247,61 @@ async function runTestSuite() {
     assert.ok(dashboardContent.includes('My Citizen Dashboard'), 'CitizenDashboard must display My Citizen Dashboard');
   });
 
+  it('13.4 Issue 4.4: Overly Formal Titles - Two-Tier Title Layout (Action Headline + Statutory Subtitle)', () => {
+    // 1. Verify shared types contain headline?: LocalizedString
+    const policyTypes = fs.readFileSync(path.join(__dirname, '../packages/shared/src/types/policy.ts'), 'utf8');
+    const petitionTypes = fs.readFileSync(path.join(__dirname, '../packages/shared/src/types/petition.ts'), 'utf8');
+    assert.ok(policyTypes.includes('headline?: LocalizedString'), 'PolicyConsultation must support optional headline');
+    assert.ok(petitionTypes.includes('headline?: LocalizedString'), 'EPetition must support optional headline');
+
+    // 2. Verify backend store contains two-tier titles
+    const store = new DatabaseStore();
+    const fiberPetition = store.getPetitions().find(p => p.code === 'PET-2026-012');
+    assert.ok(fiberPetition, 'PET-2026-012 must exist');
+    assert.strictEqual(
+      fiberPetition.headline.en,
+      'Provide High-Speed Internet to All Rural Schools!',
+      'PET-2026-012 must have action headline'
+    );
+    assert.ok(
+      fiberPetition.title.en.includes('Mandate Open Fiber Access'),
+      'PET-2026-012 must retain formal statutory title'
+    );
+
+    const plasticPetition = store.getPetitions().find(p => p.code === 'PET-2026-018');
+    assert.ok(plasticPetition, 'PET-2026-018 must exist');
+    assert.strictEqual(
+      plasticPetition.headline.en,
+      'Protect Our Beaches: Ban Single-Use Plastics Now!',
+      'PET-2026-018 must have action headline'
+    );
+
+    const aiPolicy = store.getPolicies().find(p => p.code === 'EL-POL-2026-001');
+    assert.ok(aiPolicy, 'EL-POL-2026-001 must exist');
+    assert.strictEqual(
+      aiPolicy.headline.en,
+      'Stop Algorithmic Bias: Safe & Fair AI for Everyone!',
+      'EL-POL-2026-001 must have action headline'
+    );
+
+    // 3. Verify UI components implement two-tier title presentation
+    const petitionsViewContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/views/EPetitionsView.tsx'), 'utf8');
+    assert.ok(petitionsViewContent.includes('headline || title'), 'EPetitionsView must display headline as primary title');
+    assert.ok(petitionsViewContent.includes('Statutory Title'), 'EPetitionsView must display statutory title badge');
+
+    const policyHubContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/views/PublicPolicyHub.tsx'), 'utf8');
+    assert.ok(policyHubContent.includes('headline || title'), 'PublicPolicyHub must display headline as primary title');
+    assert.ok(policyHubContent.includes('Statutory Title'), 'PublicPolicyHub must display statutory title badge');
+
+    const detailContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/views/PolicyDetailView.tsx'), 'utf8');
+    assert.ok(detailContent.includes('headline || title'), 'PolicyDetailView must display headline as primary title');
+    assert.ok(detailContent.includes('Gazette Statutory Description'), 'PolicyDetailView must display statutory subtitle');
+
+    const modalContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/PetitionSignModal.tsx'), 'utf8');
+    assert.ok(modalContent.includes('petitionHeadline || petitionTitle'), 'PetitionSignModal must display headline as primary title');
+    assert.ok(modalContent.includes('Statutory Title:'), 'PetitionSignModal must display statutory title subtitle');
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------

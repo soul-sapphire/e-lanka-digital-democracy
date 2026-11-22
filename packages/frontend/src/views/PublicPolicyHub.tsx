@@ -242,6 +242,7 @@ export const PublicPolicyHub: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredPolicies.map((policy) => {
+              const headline = policy.headline ? (policy.headline[currentLang] || policy.headline.en) : null;
               const title = policy.title[currentLang] || policy.title.en;
               const summary = policy.summary[currentLang] || policy.summary.en;
 
@@ -258,9 +259,19 @@ export const PublicPolicyHub: React.FC = () => {
                       <LifecycleBadge stage={policy.stage} size="sm" />
                     </div>
 
-                    <h3 className="text-lg font-bold text-white group-hover:text-lanka-gold transition-colors leading-snug">
-                      <Link to={`/policies/${policy.id}`}>{title}</Link>
-                    </h3>
+                    <div className="space-y-1">
+                      <h3 className="text-lg font-bold text-white group-hover:text-lanka-gold transition-colors leading-snug">
+                        <Link to={`/policies/${policy.id}`}>{headline || title}</Link>
+                      </h3>
+                      {headline && (
+                        <div className="text-xs font-medium text-slate-400 flex items-center gap-1.5 pt-0.5">
+                          <span className="text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/60 shrink-0">
+                            Statutory Title
+                          </span>
+                          <span className="italic line-clamp-1">{title}</span>
+                        </div>
+                      )}
+                    </div>
 
                     <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed">
                       {summary}

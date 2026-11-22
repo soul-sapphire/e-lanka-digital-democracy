@@ -234,6 +234,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
     }
   };
 
+  const petitionHeadline = petition.headline ? (petition.headline[currentLang] || petition.headline.en) : null;
   const petitionTitle = petition.title[currentLang] || petition.title.en;
 
   return (
@@ -301,9 +302,16 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                 <ShieldCheck className="w-5 h-5 text-lanka-gold" />
                 <h3 className="text-lg font-bold text-white">{t('petitions.modalTitle')}</h3>
               </div>
-              <p className="text-xs text-slate-300 font-medium line-clamp-1 border-l-2 border-lanka-gold pl-2.5 py-0.5 mt-2">
-                {petitionTitle}
-              </p>
+              <div className="border-l-2 border-lanka-gold pl-2.5 py-0.5 mt-2 space-y-0.5">
+                <p className="text-xs text-white font-bold leading-tight">
+                  {petitionHeadline || petitionTitle}
+                </p>
+                {petitionHeadline && (
+                  <p className="text-[11px] text-slate-400 italic">
+                    Statutory Title: {petitionTitle}
+                  </p>
+                )}
+              </div>
             </div>
 
             {/* Step Wizard Indicators */}

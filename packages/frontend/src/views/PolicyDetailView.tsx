@@ -145,6 +145,7 @@ export const PolicyDetailView: React.FC = () => {
     );
   }
 
+  const headline = policy.headline ? (policy.headline[currentLang] || policy.headline.en) : null;
   const title = policy.title[currentLang] || policy.title.en;
   const summary = policy.summary[currentLang] || policy.summary.en;
   const fullDesc = policy.fullDescription[currentLang] || policy.fullDescription.en;
@@ -189,9 +190,19 @@ export const PolicyDetailView: React.FC = () => {
           <LifecycleBadge stage={policy.stage} />
         </div>
 
-        <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
-          {title}
-        </h1>
+        <div className="space-y-1.5">
+          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+            {headline || title}
+          </h1>
+          {headline && (
+            <div className="text-xs sm:text-sm text-slate-400 flex items-center gap-2 pt-1">
+              <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 shrink-0">
+                Gazette Statutory Description
+              </span>
+              <span className="italic">{title}</span>
+            </div>
+          )}
+        </div>
 
         <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-4xl">
           {summary}
