@@ -78,6 +78,13 @@ export const Footer: React.FC = () => {
                 <ExternalLink className="w-3.5 h-3.5" />
                 <span>Democracy Academy (LMS)</span>
               </Link>
+              <Link
+                to="/collector"
+                className="text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition-colors font-medium"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Youth Champions Field Mode</span>
+              </Link>
               <div className="text-[11px] text-slate-400 pt-0.5">
                 Official Course: <strong className="text-slate-300">"Digital Democracy and Rights"</strong> (100% Free • 3 Hours • Sinhala / தமிழ் / English • Automated E-Certificate)
               </div>

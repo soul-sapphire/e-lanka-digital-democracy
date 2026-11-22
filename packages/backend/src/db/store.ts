@@ -689,6 +689,82 @@ export class DatabaseStore {
     };
   }
 
+  /**
+   * Batch sign petitions for offline field enumerations (Youth Champions)
+   */
+  public batchSignPetitions(
+    signatures: Array<{
+      petitionId: string;
+      nicNumber?: string;
+      signerBlindIndex?: string;
+      anonymizedAlias?: string;
+      district: string;
+      collectorId?: string;
+      signedAt?: string;
+    }>
+  ): {
+    totalProcessed: number;
+    syncedCount: number;
+    skippedCount: number;
+    results: Array<{ petitionId: string; success: boolean; message: string }>;
+  } {
+    let syncedCount = 0;
+    let skippedCount = 0;
+    const results: Array<{ petitionId: string; success: boolean; message: string }> = [];
+
+    for (const item of signatures) {
+      const petition = this.petitions.get(item.petitionId);
+      if (!petition) {
+        results.push({ petitionId: item.petitionId, success: false, message: 'Petition not found' });
+        skippedCount++;
+        continue;
+      }
+
+      const signerBlindIndex = item.signerBlindIndex || (item.nicNumber ? computeBlindHash(item.nicNumber, 'NIC') : '');
+      if (!signerBlindIndex) {
+        results.push({ petitionId: item.petitionId, success: false, message: 'Invalid or missing blind hash' });
+        skippedCount++;
+        continue;
+      }
+
+      const alreadySigned = this.petitionSignatures.some(
+        sig => sig.petitionId === item.petitionId && sig.signerBlindIndex === signerBlindIndex && !sig.isErased
+      );
+
+      if (alreadySigned) {
+        results.push({ petitionId: item.petitionId, success: false, message: 'Duplicate signature skipped' });
+        skippedCount++;
+        continue;
+      }
+
+      const alias = item.anonymizedAlias || generateCitizenAlias(item.district, signerBlindIndex);
+      const encryptedSignerData = encryptJson({
+        district: item.district,
+        anonymizedAlias: alias,
+        signedTimestamp: item.signedAt || new Date().toISOString(),
+        collectorId: item.collectorId || 'FIELD_CHAMPION_COLLECTOR'
+      });
+
+      const signatureRecord: VerifiedSignatureRecord = {
+        id: crypto.randomUUID(),
+        petitionId: item.petitionId,
+        signerBlindIndex,
+        encryptedSignerData,
+        signedAt: item.signedAt || new Date().toISOString(),
+        isErased: false
+      };
+
+      this.petitionSignatures.push(signatureRecord);
+      petition.currentSignatures += 1;
+      this.petitions.set(item.petitionId, petition);
+
+      syncedCount++;
+      results.push({ petitionId: item.petitionId, success: true, message: 'Signature recorded' });
+    }
+
+    return { totalProcessed: signatures.length, syncedCount, skippedCount, results };
+  }
+
   // --------------------------------------------------------------------------
   // Sri Lanka PDPA Right-to-Erasure Pipeline
   // Preserves immutable aggregate counts while decoupling/erasing all PII

@@ -164,6 +164,31 @@ export function formatSriLankanDate(dateStr?: string): string {
 }
 
 /**
+ * Format an ISO timestamp string to Sri Lankan standard YYYY-MM-DD HH:MM:SS +05:30
+ */
+export function formatSriLankanTimestamp(isoString?: string): string {
+  if (!isoString) return '';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    // Offset +05:30 (330 minutes)
+    const utc = d.getTime() + (d.getTimezoneOffset() * 60000);
+    const slDate = new Date(utc + (330 * 60000));
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const yyyy = slDate.getFullYear();
+    const mm = pad(slDate.getMonth() + 1);
+    const dd = pad(slDate.getDate());
+    const hh = pad(slDate.getHours());
+    const min = pad(slDate.getMinutes());
+    const ss = pad(slDate.getSeconds());
+    return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss} +05:30`;
+  } catch {
+    return isoString;
+  }
+}
+
+
+/**
  * Parses birth year from either DD/MM/YYYY, YYYY/MM/DD, or YYYY-MM-DD format
  */
 export function parseBirthYearFromDOB(dob?: string): number | null {

@@ -14,6 +14,7 @@ import { PrivacyPolicyView } from './views/PrivacyPolicyView';
 import { CodeOfConductView } from './views/CodeOfConductView';
 import { SecurityIncidentView } from './views/SecurityIncidentView';
 import { AboutContactView } from './views/AboutContactView';
+import { FieldCollectorView } from './views/FieldCollectorView';
 import { OfflineQueueManager } from './services/offline-queue';
 import { Wifi, WifiOff, CheckCircle2 } from 'lucide-react';
 
@@ -77,6 +78,7 @@ export const App: React.FC = () => {
             <Route path="/admin" element={<AdminModerationPanel />} />
             <Route path="/admin/login" element={<AdminLoginView />} />
             <Route path="/academy" element={<LMSAcademyView />} />
+            <Route path="/collector" element={<FieldCollectorView />} />
             <Route path="/privacy" element={<PrivacyPolicyView />} />
             <Route path="/code-of-conduct" element={<CodeOfConductView />} />
             <Route path="/security" element={<SecurityIncidentView />} />

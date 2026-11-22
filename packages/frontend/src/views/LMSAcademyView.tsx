@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { BookOpen, ExternalLink, Award, CheckCircle2, Clock, ShieldCheck, Sparkles, Trophy, Users, Globe2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { BookOpen, ExternalLink, Award, CheckCircle2, Clock, ShieldCheck, Sparkles, Trophy, Users, Globe2, ArrowRight } from 'lucide-react';
 
 export const LMSAcademyView: React.FC = () => {
   const { t } = useTranslation();
@@ -122,7 +123,7 @@ export const LMSAcademyView: React.FC = () => {
         </div>
 
         {/* Youth Champions Highlight Box */}
-        <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-amber-950/60 border border-amber-600/50 shadow-lg space-y-2">
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/60 via-slate-900 to-amber-950/60 border border-amber-600/50 shadow-lg space-y-3">
           <div className="flex items-center gap-2 text-lanka-gold font-bold text-sm">
             <Trophy className="w-5 h-5 text-amber-400 shrink-0" />
             <span>Special Opportunity: Youth Champions Selection</span>
@@ -130,6 +131,15 @@ export const LMSAcademyView: React.FC = () => {
           <p className="text-xs text-slate-200 leading-relaxed">
             The <strong>top 10 graduates</strong> of the <em>Digital Democracy and Rights</em> course will be selected as official <strong>"CSLK Youth Champions"</strong>. Youth Champions will receive specialized leadership mentorship, a digital stipend, and will co-lead civic consultation drives in their home districts across Sri Lanka.
           </p>
+          <div className="pt-1">
+            <Link
+              to="/collector"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-lanka-gold/20 hover:bg-lanka-gold/30 border border-lanka-gold/50 text-lanka-gold hover:text-white font-bold text-xs uppercase tracking-wider transition-all"
+            >
+              <span>Launch Youth Champion Field Collector Mode</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
         {/* The 3 Core Modules */}

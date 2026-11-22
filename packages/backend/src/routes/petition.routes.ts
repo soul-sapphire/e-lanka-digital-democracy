@@ -12,6 +12,7 @@ import { Router, Request, Response } from 'express';
 import { DatabaseStore } from '../db/store';
 import { isValidSriLankanNIC } from '../crypto/blind-index';
 import { decodeAndValidateSriLankanNIC } from '../crypto/nic-validator';
+import { PDPAService } from '../services/pdpa.service';
 
 export const petitionRouter = Router();
 
@@ -128,4 +129,50 @@ petitionRouter.post('/:id/sign', (req: Request, res: Response): void => {
     res.status(500).json({ error: err.message });
   }
 });
+
+/**
+ * Offline Batch Synchronization for Field Agents / Youth Champions
+ * Atomically verifies and records queued offline signatures
+ */
+petitionRouter.post('/batch-sync', (req: Request, res: Response): void => {
+  const store = DatabaseStore.getInstance();
+  const { queue, collectorId } = req.body;
+
+  if (!queue || !Array.isArray(queue)) {
+    res.status(400).json({ error: 'Queue array required for batch synchronization' });
+    return;
+  }
+
+  const batchResult = store.batchSignPetitions(
+    queue.map((item: any) => ({
+      petitionId: item.petitionId,
+      nicNumber: item.nicNumber,
+      signerBlindIndex: item.nicBlindIndex || item.signerBlindIndex,
+      anonymizedAlias: item.anonymizedAlias,
+      district: item.district || 'Colombo',
+      collectorId: collectorId || item.collectorId || 'FIELD_CHAMPION_OFFLINE',
+      signedAt: item.collectedAt || item.signedAt
+    }))
+  );
+
+  PDPAService.logAudit({
+    action: 'EPETITION_SIGNED',
+    actorRole: 'FIELD_CHAMPION',
+    actorId: collectorId || 'CSLK-YOUTH-CHAMPION-FIELD',
+    resourceType: 'PETITION_SIGNATURE',
+    resourceId: `BATCH-${Date.now()}`,
+    purposeDescription: `Batch synchronized ${batchResult.syncedCount} offline citizen petition signatures from rural field collection (${batchResult.skippedCount} duplicates skipped).`,
+    ipAddress: req.ip || req.socket.remoteAddress,
+    userAgent: req.headers['user-agent'] as string
+  });
+
+  res.json({
+    success: true,
+    totalProcessed: batchResult.totalProcessed,
+    syncedSignatures: batchResult.syncedCount,
+    skippedDuplicates: batchResult.skippedCount,
+    message: `Successfully synchronized ${batchResult.syncedCount} offline petition signatures.`
+  });
+});
+
 

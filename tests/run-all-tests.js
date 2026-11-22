@@ -997,6 +997,76 @@ async function runTestSuite() {
     assert.ok(apiContent.includes('Environmental & Ecological Urgency across Coastal Districts'), 'api.triggerAISync must provide petition clusters');
   });
 
+  it('12.3 Issue 3.3: Offline Data Collection Engine for Field Agents (Youth Champions / FIELD_CHAMPION Role)', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const store = DatabaseStore.getInstance();
+    const petitionId = 'e0000000-0000-0000-0000-000000000001';
+    const initialSignatures = store.getPetitionById(petitionId).currentSignatures;
+
+    // 1. Verify DatabaseStore.batchSignPetitions handles rural batch collection with atomic increments
+    const batchResult = store.batchSignPetitions([
+      {
+        petitionId,
+        nicNumber: '199855501111',
+        district: 'Nuwara Eliya',
+        collectorId: 'YC-2026-001'
+      },
+      {
+        petitionId,
+        nicNumber: '199855502222',
+        district: 'Nuwara Eliya',
+        collectorId: 'YC-2026-001'
+      },
+      {
+        petitionId,
+        nicNumber: '199855501111', // Duplicate in batch
+        district: 'Nuwara Eliya',
+        collectorId: 'YC-2026-001'
+      }
+    ]);
+
+    assert.strictEqual(batchResult.totalProcessed, 3, 'Must process all 3 batch items');
+    assert.strictEqual(batchResult.syncedCount, 2, 'Must sync 2 valid unique signatures');
+    assert.strictEqual(batchResult.skippedCount, 1, 'Must skip 1 duplicate signature');
+    assert.strictEqual(store.getPetitionById(petitionId).currentSignatures, initialSignatures + 2, 'Petition count must increment by exactly 2');
+
+    // 2. Verify FIELD_CHAMPION is defined in shared UserRole
+    const sharedTypesPath = path.join(__dirname, '../packages/shared/src/types/user.ts');
+    const sharedContent = fs.readFileSync(sharedTypesPath, 'utf8');
+    assert.ok(sharedContent.includes("'FIELD_CHAMPION'"), "UserRole must include 'FIELD_CHAMPION'");
+    assert.ok(sharedContent.includes('QueuedOfflineSignature'), 'Must define QueuedOfflineSignature interface');
+    assert.ok(sharedContent.includes('QueuedOfflineSurvey'), 'Must define QueuedOfflineSurvey interface');
+
+    // 3. Verify backend routes support batch-sync and Youth Champion login
+    const petitionRoutesPath = path.join(__dirname, '../packages/backend/src/routes/petition.routes.ts');
+    const petitionRoutesContent = fs.readFileSync(petitionRoutesPath, 'utf8');
+    assert.ok(petitionRoutesContent.includes("petitionRouter.post('/batch-sync'"), 'Petition routes must support POST /batch-sync');
+    assert.ok(petitionRoutesContent.includes("actorRole: 'FIELD_CHAMPION'"), 'Petition batch sync must log FIELD_CHAMPION audit event');
+
+    const authRoutesPath = path.join(__dirname, '../packages/backend/src/routes/auth.routes.ts');
+    const authRoutesContent = fs.readFileSync(authRoutesPath, 'utf8');
+    assert.ok(authRoutesContent.includes("authRouter.post('/field-champion-login'"), 'Auth routes must support POST /field-champion-login');
+    assert.ok(authRoutesContent.includes('YC-2026-'), 'Auth routes must validate Youth Champion ID format');
+
+    // 4. Verify FieldCollectorView UI exists with rapid collectors and checkpoint defense
+    const collectorViewPath = path.join(__dirname, '../packages/frontend/src/views/FieldCollectorView.tsx');
+    const collectorViewContent = fs.readFileSync(collectorViewPath, 'utf8');
+    assert.ok(collectorViewContent.includes('Rapid Citizen Petition Collector'), 'Must render rapid petition collector form');
+    assert.ok(collectorViewContent.includes('Rapid Policy Survey Collector'), 'Must render rapid survey collector form');
+    assert.ok(collectorViewContent.includes('Checkpoint Seizure Safeguard'), 'Must render DAL checkpoint seizure safeguard');
+    assert.ok(collectorViewContent.includes('Save Signature & Next Citizen'), 'Must include rapid sequential submission action');
+
+    // 5. Verify App.tsx routing and navigation integration
+    const appPath = path.join(__dirname, '../packages/frontend/src/App.tsx');
+    const appContent = fs.readFileSync(appPath, 'utf8');
+    assert.ok(appContent.includes('path="/collector"'), 'App.tsx must route /collector to FieldCollectorView');
+
+    const academyPath = path.join(__dirname, '../packages/frontend/src/views/LMSAcademyView.tsx');
+    const academyContent = fs.readFileSync(academyPath, 'utf8');
+    assert.ok(academyContent.includes('Launch Youth Champion Field Collector Mode'), 'LMS Academy must link to field collector mode');
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------

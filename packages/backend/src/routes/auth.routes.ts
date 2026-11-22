@@ -210,3 +210,47 @@ authRouter.post('/totp/verify', authenticateToken, (req: Request, res: Response)
     message: 'Two-Factor Authentication successfully enrolled.'
   });
 });
+
+/**
+ * Youth Champion / Field Collector Session Authentication
+ * Provides an authorized FIELD_CHAMPION token for offline rural enumerations
+ */
+authRouter.post('/field-champion-login', (req: Request, res: Response): void => {
+  const { championId, district } = req.body;
+  const cleanId = (championId || '').trim().toUpperCase();
+
+  // Validate official CSLK Youth Champion ID pattern (YC-2026-001 through YC-2026-010 or demo)
+  const isValidChampion = /^YC-2026-(00[1-9]|010)$/.test(cleanId) || cleanId === 'FIELD_DEMO';
+  if (!cleanId || !isValidChampion) {
+    res.status(400).json({
+      error: 'INVALID_CHAMPION_ID',
+      message: 'Invalid Youth Champion ID. Must be an official credential (e.g. YC-2026-001 to YC-2026-010).'
+    });
+    return;
+  }
+
+  const token = jwt.sign(
+    {
+      id: cleanId,
+      role: 'FIELD_CHAMPION' as UserRole,
+      anonymizedAlias: `YouthChampion-${cleanId}`,
+      district: district || 'Central'
+    },
+    JWT_SECRET,
+    { expiresIn: '72h' } // 72-hour operational window for multi-day rural village fieldwork
+  );
+
+  res.json({
+    success: true,
+    token,
+    user: {
+      id: cleanId,
+      role: 'FIELD_CHAMPION',
+      anonymizedAlias: `YouthChampion-${cleanId}`,
+      district: district || 'Central',
+      isVerifiedCitizen: true
+    },
+    message: `Authenticated as Official CSLK Youth Champion ${cleanId} in Field Collector Mode.`
+  });
+});
+

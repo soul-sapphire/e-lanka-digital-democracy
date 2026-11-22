@@ -35,6 +35,13 @@ import {
   DEMO_PUBLIC_AGGREGATE
 } from './demo-data';
 
+export {
+  getClientDemoPolicies,
+  saveClientDemoPolicies,
+  getClientDemoPetitions,
+  saveClientDemoPetitions
+};
+
 const API_BASE = '/api/v1';
 
 export function getAuthToken(): string | null {
@@ -864,6 +871,67 @@ export const api = {
 
     // Standalone fallback: in-browser trilingual scrubbing engine
     return clientScrubPII(sampleText);
+  },
+
+  // Youth Champion / Field Collector Operations (Issue 3.3)
+  fieldChampionLogin: async (championId: string, district: string = 'Central'): Promise<any> => {
+    const cleanId = (championId || '').trim().toUpperCase();
+    const live = await tryFetch<any>('/auth/field-champion-login', {
+      method: 'POST',
+      body: JSON.stringify({ championId: cleanId, district })
+    });
+    if (live) {
+      OfflineQueueManager.setChampionSession({
+        championId: cleanId,
+        championName: `Youth Champion ${cleanId}`,
+        district,
+        token: live.token
+      });
+      return live;
+    }
+
+    // Client-side demo fallback for Vercel
+    const demoToken = `fc_token_${cleanId}_${Date.now()}`;
+    const demoUser = {
+      id: cleanId,
+      role: 'FIELD_CHAMPION' as UserRole,
+      anonymizedAlias: `YouthChampion-${cleanId}`,
+      district,
+      isVerifiedCitizen: true
+    };
+    OfflineQueueManager.setChampionSession({
+      championId: cleanId,
+      championName: `Youth Champion ${cleanId}`,
+      district,
+      token: demoToken
+    });
+    setAuthToken(demoToken);
+    setStoredUser(demoUser);
+    return {
+      success: true,
+      token: demoToken,
+      user: demoUser,
+      message: `Authenticated as Official CSLK Youth Champion ${cleanId} in Field Collector Mode.`
+    };
+  },
+
+  batchSyncOfflineData: async (): Promise<{
+    syncedSurveys: number;
+    syncedSignatures: number;
+    totalSynced: number;
+    remaining: number;
+    success: boolean;
+  }> => {
+    return OfflineQueueManager.drainAllQueues((syncedPetitions, syncedSurveys) => {
+      // If any signatures synced, increment local mock petition counts so UI updates live
+      if (syncedPetitions > 0) {
+        const petitions = getClientDemoPetitions();
+        if (petitions && petitions.length > 0) {
+          petitions[0].currentSignatures += syncedPetitions;
+          saveClientDemoPetitions(petitions);
+        }
+      }
+    });
   }
 };
 
