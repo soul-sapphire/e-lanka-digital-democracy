@@ -145,11 +145,49 @@ export function decodeAndValidateSriLankanNIC(rawNIC: string): SriLankanNICDetai
 }
 
 /**
+ * Format an ISO or ambiguous date string to Sri Lankan standard DD/MM/YYYY
+ */
+export function formatSriLankanDate(dateStr?: string): string {
+  if (!dateStr) return '';
+  const clean = dateStr.trim();
+  // Already in DD/MM/YYYY format
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(clean)) return clean;
+  // If in YYYY-MM-DD or YYYY/MM/DD format
+  const isoMatch = clean.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+  if (isoMatch) {
+    const y = isoMatch[1];
+    const m = isoMatch[2].padStart(2, '0');
+    const d = isoMatch[3].padStart(2, '0');
+    return `${d}/${m}/${y}`;
+  }
+  return clean;
+}
+
+/**
+ * Parses birth year from either DD/MM/YYYY, YYYY/MM/DD, or YYYY-MM-DD format
+ */
+export function parseBirthYearFromDOB(dob?: string): number | null {
+  if (!dob) return null;
+  const clean = dob.trim();
+  // Check for DD/MM/YYYY or DD-MM-YYYY
+  const dmyMatch = clean.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+  if (dmyMatch) {
+    return parseInt(dmyMatch[3], 10);
+  }
+  // Check for YYYY-MM-DD or YYYY/MM/DD
+  const ymdMatch = clean.match(/^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/);
+  if (ymdMatch) {
+    return parseInt(ymdMatch[1], 10);
+  }
+  return null;
+}
+
+/**
  * Cross-check claimed Date of Birth and Gender against mathematically decoded NIC
  */
 export function verifyClaimedCitizenDetails(params: {
   nicNumber: string;
-  claimedDOB?: string; // YYYY-MM-DD
+  claimedDOB?: string; // Supports DD/MM/YYYY or YYYY-MM-DD
   claimedGender?: 'MALE' | 'FEMALE';
 }): { verified: boolean; nicDetails: SriLankanNICDetails; reason?: string } {
   const nicDetails = decodeAndValidateSriLankanNIC(params.nicNumber);
@@ -167,8 +205,8 @@ export function verifyClaimedCitizenDetails(params: {
   }
 
   if (params.claimedDOB) {
-    const claimedYear = parseInt(params.claimedDOB.split('-')[0], 10);
-    if (claimedYear !== nicDetails.birthYear) {
+    const claimedYear = parseBirthYearFromDOB(params.claimedDOB);
+    if (claimedYear !== null && claimedYear !== nicDetails.birthYear) {
       return {
         verified: false,
         nicDetails,

@@ -92,7 +92,7 @@
     "tier1Title": "Tier 1: NIC Mathematical Checksum & Decoding",
     "tier2Title": "Tier 2: DRP National Identity Gateway",
     "tier3Title": "Tier 3: TRCSL Mobile SIM Verification",
-    "dobLabel": "Claimed Date of Birth",
+    "dobLabel": "Date of Birth (DD/MM/YYYY)",
     "genderLabel": "Claimed Gender",
     "male": "Male",
     "female": "Female",

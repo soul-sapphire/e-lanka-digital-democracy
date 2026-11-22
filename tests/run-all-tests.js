@@ -899,6 +899,54 @@ async function runTestSuite() {
   });
 
   // --------------------------------------------------------------------------
+  // SUITE 12: Priority 03 - Functional & Feature Gaps
+  // --------------------------------------------------------------------------
+  console.log('\n📦 SUITE 12: Priority 03 - Functional & Feature Gaps');
+
+  it('12.1 Issue 3.1: Enforces Sri Lankan date format (DD/MM/YYYY) in DOB inputs, parsing, and cross-validation', () => {
+    const {
+      formatSriLankanDate,
+      parseBirthYearFromDOB,
+      verifyClaimedCitizenDetails
+    } = require('../packages/shared/dist');
+
+    // 1. Verify formatSriLankanDate transforms ISO (YYYY-MM-DD) to DD/MM/YYYY
+    assert.strictEqual(formatSriLankanDate('1990-05-24'), '24/05/1990', 'Should format YYYY-MM-DD to DD/MM/YYYY');
+    assert.strictEqual(formatSriLankanDate('2001-12-05'), '05/12/2001', 'Should pad single digits in DD/MM/YYYY');
+    assert.strictEqual(formatSriLankanDate('24/05/1990'), '24/05/1990', 'Should preserve existing DD/MM/YYYY');
+
+    // 2. Verify parseBirthYearFromDOB handles DD/MM/YYYY, YYYY/MM/DD, and YYYY-MM-DD
+    assert.strictEqual(parseBirthYearFromDOB('24/05/1990'), 1990, 'Should extract year from DD/MM/YYYY');
+    assert.strictEqual(parseBirthYearFromDOB('05-12-2001'), 2001, 'Should extract year from DD-MM-YYYY');
+    assert.strictEqual(parseBirthYearFromDOB('1985-08-14'), 1985, 'Should extract year from YYYY-MM-DD');
+
+    // 3. Verify cross-validation with Sri Lankan format
+    // 901451234V is a 1990 male NIC
+    const validMatch = verifyClaimedCitizenDetails({
+      nicNumber: '901451234V',
+      claimedDOB: '24/05/1990',
+      claimedGender: 'MALE'
+    });
+    assert.strictEqual(validMatch.verified, true, 'Claimed DOB in DD/MM/YYYY format must verify successfully against 1990 NIC');
+
+    const invalidMatch = verifyClaimedCitizenDetails({
+      nicNumber: '901451234V',
+      claimedDOB: '24/05/1985',
+      claimedGender: 'MALE'
+    });
+    assert.strictEqual(invalidMatch.verified, false, 'Mismatched birth year in DD/MM/YYYY format must be rejected');
+    assert.ok(invalidMatch.reason.includes('Claimed birth year (1985) does not match'), 'Reason must specify birth year mismatch');
+
+    // 4. Verify PetitionSignModal uses DD/MM/YYYY format
+    const fs = require('fs');
+    const path = require('path');
+    const modalContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/PetitionSignModal.tsx'), 'utf8');
+    assert.ok(modalContent.includes('DD/MM/YYYY'), 'PetitionSignModal must display DD/MM/YYYY format');
+    assert.ok(modalContent.includes('formatSriLankanDate'), 'PetitionSignModal must use formatSriLankanDate');
+    assert.strictEqual(modalContent.includes('type="date"'), false, 'PetitionSignModal must not use raw browser type="date" which forces US mm/dd/yyyy');
+  });
+
+  // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------
   console.log('\n===============================================================');

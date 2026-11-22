@@ -11,9 +11,10 @@ import {
   Binary,
   ArrowRight,
   ArrowLeft,
-  KeyRound
+  KeyRound,
+  Calendar
 } from 'lucide-react';
-import { EPetition, SriLankanNICDetails, DRPVerificationResult } from '@e-lanka/shared';
+import { EPetition, SriLankanNICDetails, DRPVerificationResult, formatSriLankanDate } from '@e-lanka/shared';
 import { api } from '../services/api';
 
 interface PetitionSignModalProps {
@@ -86,7 +87,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
         setLiveNicDetails(res.nicDetails);
         if (res.nicDetails.isValid) {
           if (!claimedDOB) {
-            setClaimedDOB(res.nicDetails.calculatedDOB);
+            setClaimedDOB(formatSriLankanDate(res.nicDetails.calculatedDOB));
           }
           setClaimedGender(res.nicDetails.gender);
         }
@@ -362,7 +363,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                         <div className="text-[11px] text-slate-300 grid grid-cols-2 gap-2 pt-1">
                           <div>Decoded Birth Year: <span className="font-mono text-white">{liveNicDetails.birthYear}</span></div>
                           <div>Decoded Gender: <span className="font-mono text-white">{liveNicDetails.gender}</span></div>
-                          <div>Calculated DOB: <span className="font-mono text-white">{liveNicDetails.calculatedDOB}</span></div>
+                          <div>Calculated DOB: <span className="font-mono text-white">{formatSriLankanDate(liveNicDetails.calculatedDOB)} (DD/MM/YYYY)</span></div>
                           <div>Day of Year: <span className="font-mono text-white">{liveNicDetails.dayOfYear} / 366</span></div>
                         </div>
                       </div>
@@ -394,16 +395,41 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block font-medium text-slate-300 mb-1">
-                      {t('petitions.dobLabel')} *
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={claimedDOB}
-                      onChange={(e) => setClaimedDOB(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-lanka-gold"
-                    />
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block font-medium text-slate-300">
+                        {t('petitions.dobLabel')} *
+                      </label>
+                      <span className="text-[10px] text-lanka-gold font-mono font-semibold">
+                        DD/MM/YYYY
+                      </span>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        required
+                        placeholder="DD/MM/YYYY (e.g. 24/05/1990)"
+                        value={claimedDOB}
+                        onChange={(e) => {
+                          let val = e.target.value;
+                          const digits = val.replace(/\D/g, '');
+                          if (digits.length <= 8 && !val.includes('-')) {
+                            if (digits.length > 4) {
+                              val = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+                            } else if (digits.length > 2) {
+                              val = `${digits.slice(0, 2)}/${digits.slice(2, 4)}`;
+                            } else {
+                              val = digits;
+                            }
+                          }
+                          setClaimedDOB(val);
+                        }}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-lg pl-3 pr-9 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold font-mono"
+                      />
+                      <Calendar className="absolute right-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      Sri Lankan Standard: Day / Month / Year
+                    </span>
                   </div>
 
                   <div>
