@@ -10,6 +10,10 @@ import { CitizenDashboard } from './views/CitizenDashboard';
 import { AdminModerationPanel } from './views/AdminModerationPanel';
 import { AdminLoginView } from './views/AdminLoginView';
 import { LMSAcademyView } from './views/LMSAcademyView';
+import { PrivacyPolicyView } from './views/PrivacyPolicyView';
+import { CodeOfConductView } from './views/CodeOfConductView';
+import { SecurityIncidentView } from './views/SecurityIncidentView';
+import { AboutContactView } from './views/AboutContactView';
 import { OfflineQueueManager } from './services/offline-queue';
 import { Wifi, WifiOff, CheckCircle2 } from 'lucide-react';
 
@@ -73,6 +77,10 @@ export const App: React.FC = () => {
             <Route path="/admin" element={<AdminModerationPanel />} />
             <Route path="/admin/login" element={<AdminLoginView />} />
             <Route path="/academy" element={<LMSAcademyView />} />
+            <Route path="/privacy" element={<PrivacyPolicyView />} />
+            <Route path="/code-of-conduct" element={<CodeOfConductView />} />
+            <Route path="/security" element={<SecurityIncidentView />} />
+            <Route path="/about" element={<AboutContactView />} />
           </Routes>
         </main>
 

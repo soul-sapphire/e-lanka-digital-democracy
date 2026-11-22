@@ -59,9 +59,11 @@
 * ☑️ **Website or web platform** — YES (Mobile-friendly web platform that works on any phone, tablet, or PC without needing an app store download).
 * ☑️ **AI feature (writing, classifying, answering questions...)** — YES (AI reads citizen feedback, removes names/numbers, and summarizes public opinion).
 * ☑️ **Data dashboard or open data** — YES (Public visual charts showing how citizens voted across districts, with zero personal data shown).
+* ☑️ **Map or reporting tool** — YES (Interactive 25-district map breakdown of Sri Lanka and citizen petition reporting tools).
 * ☑️ **Online course or learning platform** — YES (Youth can take civic education lessons on CSLK's Democracy Academy).
 * ⬜ **Mobile app** — *Leave Unchecked* (We chose a web app instead so rural users don't have to waste expensive mobile data downloading a large app).
-* ⬜ **Chatbot or messaging service** — *Leave Unchecked* (We use one-click WhatsApp sharing links rather than an automated bot).
+* ⬜ **Chatbot or messaging service (WhatsApp, Telegram...)** — *Leave Unchecked* (We use direct WhatsApp sharing links rather than an automated bot).
+* ⬜ **Other** — *Leave Unchecked*.
 
 ---
 

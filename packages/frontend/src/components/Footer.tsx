@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Shield, Lock, ExternalLink, Cpu, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Shield, Lock, ExternalLink, Cpu, Heart, AlertTriangle, FileText, Users, HelpCircle } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   const { t } = useTranslation();
@@ -26,54 +27,87 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Column 2: PDPA Compliance */}
+          {/* Column 2: Legal & Statutory Protection */}
           <div className="space-y-2">
             <h4 className="text-white font-semibold text-sm flex items-center gap-1.5">
               <Shield className="w-4 h-4 text-emerald-400" />
-              Statutory Privacy Protection
+              Legal & Statutory
             </h4>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Fully compliant with Sri Lanka Personal Data Protection Act (PDPA), No. 9 of 2022. Guarantees data minimization, right to erasure (Section 16), right to withdraw consent (Section 14), and statutory audit logging (Sections 12 & 21).
+              Compliant with Sri Lanka Personal Data Protection Act (PDPA), No. 9 of 2022. Guarantees data minimization, right to erasure (Section 16), and statutory auditability (Sections 12 & 21).
             </p>
-            <div className="text-[11px] text-slate-300 font-mono space-y-0.5">
-              <div>• AES-256-GCM Application Layer FLE</div>
-              <div>• HMAC-SHA256 Salted Blind Indexing</div>
-              <div>• RFC 6238 TOTP 2FA Verification</div>
+            <div className="pt-1 flex flex-col space-y-1.5 font-medium">
+              <Link
+                to="/privacy"
+                className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 transition-colors"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Privacy Policy & PDPA Notice</span>
+              </Link>
+              <Link
+                to="/code-of-conduct"
+                className="text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span>Civic Code of Conduct</span>
+              </Link>
             </div>
           </div>
 
-          {/* Column 3: Democracy Academy & LMS */}
+          {/* Column 3: Security & Incident Reporting */}
           <div className="space-y-2">
             <h4 className="text-white font-semibold text-sm flex items-center gap-1.5">
-              <ExternalLink className="w-4 h-4 text-lanka-gold" />
-              Educational Linkage
+              <AlertTriangle className="w-4 h-4 text-amber-400" />
+              Security & Integrity
             </h4>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Integrated with the Centre for Society & Learning Sri Lanka online learning portal.
+              Field-level AES-256-GCM encryption, blind indexing, and transparent PDPA Section 23 incident disclosure protocols.
             </p>
-            <a
-              href="https://www.cslk.org"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-lanka-gold hover:text-amber-300 font-medium text-xs underline"
-            >
-              <span>Visit www.cslk.org</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
-            <p className="text-[11px] text-slate-400">
-              Free civic certificates in AI Governance, Constitutional Due Process, and Digital Democracy.
-            </p>
+            <div className="pt-1 flex flex-col space-y-1.5 font-medium">
+              <Link
+                to="/security"
+                className="text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition-colors"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Report Vulnerability / Incident</span>
+              </Link>
+              <Link
+                to="/academy"
+                className="text-lanka-gold hover:text-amber-300 flex items-center gap-1.5 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Democracy Academy (LMS)</span>
+              </Link>
+            </div>
           </div>
 
-          {/* Column 4: Trilingual Status */}
+          {/* Column 4: About & Organization */}
           <div className="space-y-2">
-            <h4 className="text-white font-semibold text-sm">Trilingual Accessibility</h4>
-            <p className="text-xs text-slate-400 font-sinhala">
-              සිංහල, தமிழ் සහ English භාෂා ත්‍රිත්වයෙන්ම සම ප්‍රවේශය සහතික කර ඇත.
+            <h4 className="text-white font-semibold text-sm flex items-center gap-1.5">
+              <Users className="w-4 h-4 text-sky-400" />
+              About & Contact
+            </h4>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Convened by the Centre for Society and Learning Sri Lanka (CSLK) in collaboration with civic and digital partners.
             </p>
-            <p className="text-xs text-slate-400 font-tamil">
-              அனைத்து குடிமக்களுக்கும் மும்மொழி சமத்துவ அணுகல் உத்தரவாதம் அளிக்கப்பட்டுள்ளது.
-            </p>
+            <div className="pt-1 flex flex-col space-y-1.5 font-medium">
+              <Link
+                to="/about"
+                className="text-sky-400 hover:text-sky-300 flex items-center gap-1.5 transition-colors"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>About CSLK & Contact Us</span>
+              </Link>
+              <a
+                href="https://www.cslk.org"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Official Site: cslk.org</span>
+              </a>
+            </div>
             <p className="text-[11px] text-emerald-400 flex items-center gap-1 pt-1">
               <Lock className="w-3 h-3" />
               Non-retaliation citizen protections active
@@ -81,12 +115,35 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
+        {/* Essential Legal & Security Quick Links Bar */}
+        <div className="py-4 border-t border-slate-800/80 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-400">
+          <Link to="/privacy" className="hover:text-lanka-gold transition-colors">
+            Privacy Policy (PDPA)
+          </Link>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <Link to="/code-of-conduct" className="hover:text-lanka-gold transition-colors">
+            Civic Code of Conduct
+          </Link>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <Link to="/security" className="hover:text-lanka-gold transition-colors">
+            Security & Incident Protocol
+          </Link>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <Link to="/about" className="hover:text-lanka-gold transition-colors">
+            About CSLK & Contact
+          </Link>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <Link to="/academy" className="hover:text-lanka-gold transition-colors">
+            Democracy Academy
+          </Link>
+        </div>
+
         {/* Bottom copyright & build note */}
-        <div className="pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-2">
+        <div className="pt-4 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-2">
           <div>
             © 2026 E-Lanka Digital Democracy Platform (EL-SPEC-2026-V3). Open Civic Architecture.
           </div>
-          <div className="flex items-center gap-1 text-slate-400">
+          <div className="flex items-center gap-1 text-slate-500">
             <span>Built for the Citizens of Sri Lanka with</span>
             <Heart className="w-3 h-3 text-red-500 fill-red-500 inline" />
           </div>
