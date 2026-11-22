@@ -16,7 +16,7 @@ The platform implements a three-tier decoupled architecture guaranteeing complet
 │   (Vite + React 18 + Tailwind CSS + i18next Trilingual + Recharts)      │
 │   - Ultra-low bandwidth PWA Service Worker (Cache-First / Stale-While) │
 │   - Offline survey response queue (Local IndexedDB/localStorage)       │
-│   - LMS Context Integration with Centre for Society & Learning         │
+│   - LMS Context Integration with Community Solutions Lanka (CSLK)      │
 │     (www.cslk.org)                                                     │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │ TLS 1.3 / REST JSON
@@ -183,7 +183,7 @@ E-Lanka/
 │           │   ├── EPetitionsView.tsx      # E-petitions with live counters
 │           │   ├── CitizenDashboard.tsx    # Privacy tracker & Right to Erasure
 │           │   ├── AdminModerationPanel.tsx# 5-Stage Moderation Gate & Audit Ledger
-│           │   └── LMSAcademyView.tsx      # Centre for Society & Learning integration
+│           │   └── LMSAcademyView.tsx      # Community Solutions Lanka (CSLK) integration
 │           ├── services/
 │           │   ├── api.ts                  # API client with cache fallbacks
 │           │   └── offline-queue.ts        # Offline submission queue manager

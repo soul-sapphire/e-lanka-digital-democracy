@@ -30,7 +30,7 @@ export const PrivacyPolicyView: React.FC = () => {
           Privacy Policy & Statutory PDPA Notice
         </h1>
         <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-3xl">
-          The E-Lanka Digital Democracy Platform is operated by the Centre for Society & Learning (CSLK). This notice outlines how citizen data is protected, minimized, and decoupled under Sri Lanka's Personal Data Protection Act (PDPA), No. 9 of 2022.
+          The E-Lanka Digital Democracy Platform is operated by Community Solutions Lanka (CSLK). This notice outlines how citizen data is protected, minimized, and decoupled under Sri Lanka's Personal Data Protection Act (PDPA), No. 9 of 2022.
         </p>
         <div className="flex flex-wrap items-center gap-3 pt-2 text-[11px] text-slate-400 font-mono">
           <span>Effective Date: January 1, 2026</span>
@@ -186,7 +186,7 @@ export const PrivacyPolicyView: React.FC = () => {
         </p>
         <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs space-y-1">
           <div>Data Protection Officer: <strong>dpo@cslk.org</strong></div>
-          <div>Statutory Entity: <strong>Centre for Society & Learning (CSLK)</strong></div>
+          <div>Statutory Entity: <strong>Community Solutions Lanka (CSLK)</strong></div>
           <div>Regulatory Appeal: <strong>Data Protection Authority of Sri Lanka (DPA)</strong></div>
         </div>
       </div>

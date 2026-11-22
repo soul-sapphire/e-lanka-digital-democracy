@@ -5,7 +5,7 @@
 **Document Version:** 1.0  
 **Date:** November 22, 2026  
 **Compliance Standard:** Sri Lanka Personal Data Protection Act (PDPA), No. 9 of 2022  
-**Target Organization:** Centre for Society & Learning (CSLK) / Digital Action Lab (DAL)  
+**Target Organization:** Community Solutions Lanka (CSLK) / Digital Action Lab (DAL)  
 
 ---
 

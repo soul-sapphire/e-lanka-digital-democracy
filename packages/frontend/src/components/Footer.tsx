@@ -88,7 +88,7 @@ export const Footer: React.FC = () => {
               About & Contact
             </h4>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Convened by the Centre for Society and Learning Sri Lanka (CSLK) in collaboration with civic and digital partners.
+              Convened by Community Solutions Lanka (CSLK) in collaboration with civic and digital partners.
             </p>
             <div className="pt-1 flex flex-col space-y-1.5 font-medium">
               <Link

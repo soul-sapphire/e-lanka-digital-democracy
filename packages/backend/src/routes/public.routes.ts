@@ -33,7 +33,7 @@ publicRouter.get('/aggregates/:policyId', (req: Request, res: Response): void =>
  */
 publicRouter.get('/lms-context', (req: Request, res: Response): void => {
   res.json({
-    portalName: 'Centre for Society & Learning Sri Lanka (CSLK)',
+    portalName: 'Community Solutions Lanka (CSLK)',
     portalUrl: 'https://www.cslk.org',
     featuredCourses: [
       {

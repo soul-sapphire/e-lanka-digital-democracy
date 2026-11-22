@@ -45,10 +45,10 @@ export const AboutContactView: React.FC = () => {
           <span>Civil Society Organisation • Sri Lanka</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-          About Centre for Society & Learning (CSLK) & Contact Us
+          About Community Solutions Lanka (CSLK) & Contact Us
         </h1>
         <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-3xl">
-          The Centre for Society & Learning (CSLK) is a dedicated civil society institution committed to participatory democracy, rule of law, and digital constitutionalism across all communities and districts in Sri Lanka.
+          Community Solutions Lanka (CSLK) is a dedicated civil society institution committed to participatory democracy, rule of law, and digital constitutionalism across all communities and districts in Sri Lanka.
         </p>
         <div className="flex flex-wrap items-center gap-3 pt-2 text-[11px] text-slate-400 font-mono">
           <a
@@ -109,7 +109,7 @@ export const AboutContactView: React.FC = () => {
             <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-1">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Headquarters Address</span>
               <p className="text-slate-200 leading-relaxed">
-                Centre for Society & Learning (CSLK)<br />
+                Community Solutions Lanka (CSLK)<br />
                 Colombo & Kandy Secretariat<br />
                 Sri Lanka
               </p>
@@ -162,7 +162,7 @@ export const AboutContactView: React.FC = () => {
                 <span>Message Received Successfully</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Thank you for reaching out to the Centre for Society & Learning. A representative will contact you via email shortly.
+                Thank you for reaching out to Community Solutions Lanka (CSLK). A representative will contact you via email shortly.
               </p>
               <button
                 type="button"

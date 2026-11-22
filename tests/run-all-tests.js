@@ -797,6 +797,35 @@ async function runTestSuite() {
   });
 
   // --------------------------------------------------------------------------
+  // SUITE 11: Priority 02 - Institutional Branding & Integrity
+  // --------------------------------------------------------------------------
+  console.log('\n📦 SUITE 11: Priority 02 - Institutional Branding & Integrity');
+
+  it('11.1 Issue 2.1: Enforces "Community Solutions Lanka (CSLK)" organization naming across platform', () => {
+    const fs = require('fs');
+    const path = require('path');
+
+    // Check backend routes source file
+    const routesContent = fs.readFileSync(path.join(__dirname, '../packages/backend/src/routes/public.routes.ts'), 'utf8');
+    assert.ok(routesContent.includes('Community Solutions Lanka (CSLK)'), 'public.routes.ts must cite Community Solutions Lanka (CSLK)');
+    assert.strictEqual(routesContent.includes('Centre for Society & Learning'), false, 'public.routes.ts must not contain obsolete name');
+
+    // Check frontend footer source file
+    const footerContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/Footer.tsx'), 'utf8');
+    assert.ok(footerContent.includes('Community Solutions Lanka (CSLK)'), 'Footer must cite Community Solutions Lanka (CSLK)');
+    assert.strictEqual(footerContent.includes('Centre for Society and Learning'), false, 'Footer must not contain obsolete name');
+
+    // Check Privacy Policy and About views
+    const privacyContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/views/PrivacyPolicyView.tsx'), 'utf8');
+    assert.ok(privacyContent.includes('Community Solutions Lanka (CSLK)'), 'PrivacyPolicyView must cite Community Solutions Lanka (CSLK)');
+    assert.strictEqual(privacyContent.includes('Centre for Society & Learning'), false, 'PrivacyPolicyView must not contain obsolete name');
+
+    const aboutContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/views/AboutContactView.tsx'), 'utf8');
+    assert.ok(aboutContent.includes('Community Solutions Lanka (CSLK)'), 'AboutContactView must cite Community Solutions Lanka (CSLK)');
+    assert.strictEqual(aboutContent.includes('Centre for Society & Learning'), false, 'AboutContactView must not contain obsolete name');
+  });
+
+  // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------
   console.log('\n===============================================================');

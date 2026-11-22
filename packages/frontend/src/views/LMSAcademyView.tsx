@@ -63,7 +63,7 @@ export const LMSAcademyView: React.FC = () => {
           Democracy Academy & Civic Learning Platform
         </h1>
         <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
-          Connecting policy awareness to formal educational modules hosted by the Centre for Society & Learning Sri Lanka (CSLK). Earn certified credentials in algorithmic ethics, data rights, and constitutional consultation.
+          Connecting policy awareness to formal educational modules hosted by Community Solutions Lanka (CSLK). Earn certified credentials in algorithmic ethics, data rights, and constitutional consultation.
         </p>
       </div>
 
