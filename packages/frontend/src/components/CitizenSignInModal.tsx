@@ -100,7 +100,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
               <span>Sri Lanka PDPA No. 9 of 2022 Protected</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              Your credentials are never stored in raw plaintext. Your civic activity is decoupled using HMAC-SHA256 blind indexing to ensure statutory non-retaliation.
+              Your signature and identity are 100% secure. Protected under Sri Lanka PDPA No. 9 of 2022 with statutory non-retaliation safeguards.
             </p>
           </div>
 

@@ -63,7 +63,7 @@ export const CitizenDashboard: React.FC = () => {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-10 text-white space-y-3 shadow-xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-800 text-xs font-semibold text-emerald-400">
           <Shield className="w-3.5 h-3.5" />
-          <span>Section 3.3 Privacy-Preserving Citizen Tracker</span>
+          <span>My Citizen Dashboard</span>
         </div>
         <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
           {t('dashboard.title')}
@@ -127,7 +127,7 @@ export const CitizenDashboard: React.FC = () => {
         <div className="p-5 rounded-2xl bg-emerald-950/60 border border-emerald-800 text-emerald-200 text-xs space-y-2">
           <div className="flex items-center gap-2 font-bold text-sm text-emerald-300">
             <CheckCircle2 className="w-4 h-4" />
-            Statutory Right to Erasure Executed under PDPA Section 16 (read with Section 14)
+            Account & Data Successfully Deleted under PDPA Section 16
           </div>
           <p>
             Your personal identifiable records have been scrubbed. Anonymized survey records: {erasureResult.anonymizedSurveyResponses}, Petition signatures decoupled: {erasureResult.anonymizedSignatures}. Immutable aggregate count preserved: {erasureResult.preservedAggregateCount}.
@@ -233,7 +233,7 @@ export const CitizenDashboard: React.FC = () => {
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 text-white space-y-4 shadow-2xl">
             <h3 className="text-lg font-bold text-red-400 flex items-center gap-2">
               <AlertTriangle className="w-5 h-5" />
-              Statutory Right to Erasure Request
+              Delete My Account & Data Request (PDPA Section 16)
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed">
               {t('dashboard.confirmErasure')}
@@ -271,7 +271,7 @@ export const CitizenDashboard: React.FC = () => {
                     <span>Processing...</span>
                   </>
                 ) : (
-                  <span>Confirm Erasure</span>
+                  <span>Confirm Delete My Account & Data</span>
                 )}
               </button>
             </div>

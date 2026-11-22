@@ -23,7 +23,7 @@ export const Footer: React.FC = () => {
             </p>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] text-lanka-gold font-mono">
               <Cpu className="w-3.5 h-3.5" />
-              <span>Pure React PWA • Zero-PHP Engine</span>
+              <span>Sovereign Civic Platform • Verified & Secure</span>
             </div>
           </div>
 
@@ -61,7 +61,7 @@ export const Footer: React.FC = () => {
               Security & Integrity
             </h4>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Field-level AES-256-GCM encryption, blind indexing, and transparent PDPA Section 23 incident disclosure protocols.
+              Your signature and identity are 100% secure. Protected by military-grade privacy safeguards and statutory PDPA disclosure protocols.
             </p>
             <div className="pt-1 flex flex-col space-y-1.5 font-medium">
               <Link

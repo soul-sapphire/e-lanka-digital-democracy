@@ -133,7 +133,7 @@ export const PrivacyPolicyView: React.FC = () => {
               <span className="text-[10px] text-emerald-400 bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800">ENFORCEABLE</span>
             </h4>
             <p className="text-xs text-slate-300 leading-relaxed">
-              You have the right to inspect all records held in connection with your anonymous participation alias via the <Link to="/dashboard" className="text-lanka-gold underline">Citizen Tracker Dashboard</Link>.
+              You have the right to inspect all records held in connection with your anonymous participation alias via the <Link to="/dashboard" className="text-lanka-gold underline">My Citizen Dashboard</Link>.
             </p>
           </div>
 

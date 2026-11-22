@@ -60,13 +60,13 @@ export const EPetitionsView: React.FC = () => {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-10 text-white space-y-3 shadow-xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-lanka-maroon/80 border border-lanka-gold/30 text-xs font-semibold text-lanka-gold">
           <Vote className="w-3.5 h-3.5" />
-          <span>Sovereign Citizen E-Petitioning Engine (Section 3.2)</span>
+          <span>Sovereign Citizen E-Petitions</span>
         </div>
         <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
           {t('petitions.title')}
         </h1>
         <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
-          {t('petitions.subtitle')} Backed by duplicate-submission prevention via HMAC-SHA256 blind indexing and Field-Level Encryption.
+          {t('petitions.subtitle')} Your signature and identity are 100% secure and confidential.
         </p>
       </div>
 

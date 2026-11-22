@@ -38,8 +38,8 @@ export const LMSAcademyView: React.FC = () => {
         title: 'Module 3: Practical Guide to E-Lanka',
         topics: [
           'Step-by-step citizen submission guide: Proposing policies and signing verified e-petitions',
-          'How Field-Level Encryption and Blind Indexing protect your personal anonymity',
-          'Exercising your statutory Right to Erasure (PDPA Section 16) and verifying audit ledgers'
+          'How military-grade encryption protects your identity and ensures 100% security',
+          'How to delete your account and data (PDPA Section 16) and verify privacy records'
         ]
       }
     ]

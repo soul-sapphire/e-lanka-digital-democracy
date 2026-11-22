@@ -3,13 +3,13 @@
     "name": "E-Lanka Digital Democracy",
     "tagline": "Civic Participation, Transparent Policy Consultations & E-Petitions",
     "pdpaBadge": "Sri Lanka PDPA No. 9 of 2022 Compliant",
-    "encryptionBadge": "AES-256-GCM Application Layer Encrypted",
+    "encryptionBadge": "Your Identity & Signature Are 100% Secure",
     "lowBandwidth": "Ultra-Low Bandwidth PWA"
   },
   "nav": {
     "home": "Policy Hub",
     "petitions": "E-Petitions",
-    "dashboard": "Citizen Tracker",
+    "dashboard": "My Citizen Dashboard",
     "admin": "Moderation Gate",
     "lms": "Academy",
     "login": "Citizen Login",
@@ -67,12 +67,12 @@
     "step": "Question {{current}} of {{total}}",
     "prev": "Previous",
     "next": "Next Question",
-    "submit": "Submit Encrypted Feedback",
-    "submitting": "Encrypting with AES-256-GCM...",
+    "submit": "Submit Secure Feedback",
+    "submitting": "Securing & Submitting...",
     "offlineNotice": "You are offline. Submission saved to local queue and will sync automatically upon reconnection.",
-    "privacyNotice": "Protected under Sri Lanka PDPA No. 9 of 2022. Open-text answers are encrypted with AES-256-GCM before transmission.",
+    "privacyNotice": "Protected under Sri Lanka PDPA No. 9 of 2022. Your feedback and identity are 100% secure with statutory non-retaliation protections.",
     "successTitle": "Civic Feedback Ingested!",
-    "successDesc": "Your response has been cryptographically recorded. Identity is decoupled via HMAC-SHA256 blind indexing to ensure complete non-retaliation."
+    "successDesc": "Your response has been recorded. Your signature and identity are 100% secure with complete non-retaliation protections."
   },
   "petitions": {
     "title": "Verified Civic E-Petitions",
@@ -95,11 +95,11 @@
     "tier2Title": "Tier 2: DRP National Identity Gateway",
     "tier3Title": "Tier 3: TRCSL Mobile SIM Verification",
     "dobLabel": "Date of Birth (DD/MM/YYYY)",
-    "genderLabel": "Claimed Gender",
+    "genderLabel": "Gender",
     "male": "Male",
     "female": "Female",
     "decodedNotice": "NIC Decoded: {{gender}}, Born {{dob}} (Voter Eligible: {{eligible}})",
-    "mismatchNotice": "Demographic mismatch detected. Claimed details do not match NIC encoded math.",
+    "mismatchNotice": "Demographic mismatch detected. Entered details do not match NIC records.",
     "drpVerified": "DRP e-ID Verified: Active Living Citizen in {{district}} (Ref: {{ref}})",
     "mobileLabel": "Sri Lankan Mobile SIM (Dialog / Mobitel / Airtel / Hutch)",
     "sendOtp": "Send Verification Code",
@@ -111,16 +111,16 @@
     "step3Next": "Verify Mobile SIM"
   },
   "dashboard": {
-    "title": "Privacy-Preserving Citizen Tracker",
-    "subtitle": "Your civic participation history is linked via hashed identifiers, keeping public records completely anonymous.",
+    "title": "My Citizen Dashboard",
+    "subtitle": "Your civic participation history is kept completely anonymous and confidential.",
     "aliasLabel": "Your Anonymized Civic Identity",
     "district": "Registered District",
     "signedPetitions": "E-Petitions You Have Signed",
     "submittedSurveys": "Policy Consultations You Contributed To",
     "pdpaRights": "Your Statutory Rights (PDPA No. 9 of 2022)",
-    "erasureTitle": "Automated Right to Erasure (Section 14)",
-    "erasureDesc": "Exercising this right wipes your personal identity and decouples foreign keys while preserving immutable quantitative aggregate counts.",
-    "erasureBtn": "Exercise Right to Erasure",
+    "erasureTitle": "Delete My Account & Data (PDPA Section 16)",
+    "erasureDesc": "Permanently delete all your personal credentials while retaining your anonymized vote count in national totals.",
+    "erasureBtn": "Delete My Account & Data",
     "confirmErasure": "Are you sure? This will delete all personal credentials while retaining your anonymized vote count in national totals."
   },
   "admin": {

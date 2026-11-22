@@ -1205,6 +1205,48 @@ async function runTestSuite() {
     assert.ok(hubContent.includes('id="consultations"'), 'PublicPolicyHub must have #consultations target section');
   });
 
+  it('13.3 Issue 4.3: Overly Technical & Legal Jargon Replacement with Plain Language Assurances', () => {
+    const enLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/en.json'), 'utf8'));
+    const siLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/si.json'), 'utf8'));
+    const taLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/ta.json'), 'utf8'));
+
+    // 1. Claimed Gender -> Gender
+    assert.strictEqual(enLoc.petitions.genderLabel, 'Gender', 'Claimed Gender must be replaced by plain Gender');
+    assert.ok(!enLoc.petitions.genderLabel.includes('Claimed'), 'No Claimed prefix allowed in gender label');
+
+    // 2. Privacy-Preserving Citizen Tracker -> My Citizen Dashboard
+    assert.strictEqual(enLoc.nav.dashboard, 'My Citizen Dashboard', 'nav.dashboard must be My Citizen Dashboard');
+    assert.strictEqual(enLoc.dashboard.title, 'My Citizen Dashboard', 'dashboard.title must be My Citizen Dashboard');
+    assert.strictEqual(siLoc.nav.dashboard, 'මගේ පුරවැසි පුවරුව', 'Sinhala nav.dashboard must be My Citizen Dashboard');
+    assert.strictEqual(siLoc.dashboard.title, 'මගේ පුරවැසි පුවරුව', 'Sinhala dashboard.title must be My Citizen Dashboard');
+    assert.strictEqual(taLoc.nav.dashboard, 'எனது குடிமக்கள் பலகை', 'Tamil nav.dashboard must be My Citizen Dashboard');
+    assert.strictEqual(taLoc.dashboard.title, 'எனது குடிமக்கள் பலகை', 'Tamil dashboard.title must be My Citizen Dashboard');
+
+    // 3. EXERCISE RIGHT TO ERASURE -> Delete My Account & Data
+    assert.strictEqual(enLoc.dashboard.erasureBtn, 'Delete My Account & Data', 'Erasure button must be plain Delete My Account & Data');
+    assert.strictEqual(siLoc.dashboard.erasureBtn, 'මගේ ගිණුම සහ දත්ත මකාදමන්න', 'Sinhala erasure button must be plain language');
+    assert.strictEqual(taLoc.dashboard.erasureBtn, 'எனது கணக்கு மற்றும் தரவை நீக்கு', 'Tamil erasure button must be plain language');
+
+    // 4. Plain assurances on public pages
+    assert.strictEqual(enLoc.app.encryptionBadge, 'Your Identity & Signature Are 100% Secure', 'Header badge must be plain security assurance');
+    assert.strictEqual(siLoc.app.encryptionBadge, 'ඔබගේ අනන්‍යතාව සහ අත්සන 100% ක් සුරක්ෂිතයි', 'Sinhala header badge must be plain security assurance');
+    assert.strictEqual(taLoc.app.encryptionBadge, 'உங்கள் அடையாளம் மற்றும் கையொப்பம் 100% பாதுகாப்பானது', 'Tamil header badge must be plain security assurance');
+
+    // 5. Verify UI files replaced technical jargon with plain assurances
+    const footerContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/Footer.tsx'), 'utf8');
+    assert.ok(!footerContent.includes('Zero-PHP Engine'), 'Footer must not contain Zero-PHP Engine');
+    assert.ok(footerContent.includes('Sovereign Civic Platform • Verified & Secure'), 'Footer must display verified civic platform badge');
+    assert.ok(footerContent.includes('Your signature and identity are 100% secure'), 'Footer must give plain assurance');
+
+    const petitionsContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/views/EPetitionsView.tsx'), 'utf8');
+    assert.ok(!petitionsContent.includes('(Section 3.2)'), 'EPetitionsView must not display Section 3.2 code');
+    assert.ok(petitionsContent.includes('Your signature and identity are 100% secure and confidential'), 'EPetitionsView must give plain assurance');
+
+    const dashboardContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/views/CitizenDashboard.tsx'), 'utf8');
+    assert.ok(!dashboardContent.includes('Section 3.3'), 'CitizenDashboard must not display Section 3.3 code');
+    assert.ok(dashboardContent.includes('My Citizen Dashboard'), 'CitizenDashboard must display My Citizen Dashboard');
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------
