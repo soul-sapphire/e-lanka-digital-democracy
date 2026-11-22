@@ -146,6 +146,10 @@ export const Footer: React.FC = () => {
           <Link to="/academy" className="hover:text-lanka-gold transition-colors">
             Democracy Academy
           </Link>
+          <span className="text-slate-700 hidden sm:inline">•</span>
+          <Link to="/admin/login" className="hover:text-amber-400 transition-colors text-slate-500">
+            Moderator Portal
+          </Link>
         </div>
 
         {/* Bottom copyright & build note */}

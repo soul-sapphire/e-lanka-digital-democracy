@@ -6,6 +6,7 @@
 
 const assert = require('assert');
 const path = require('path');
+const fs = require('fs');
 const dotenv = require('dotenv');
 
 // Load environment configuration
@@ -1134,6 +1135,43 @@ async function runTestSuite() {
     const petitionsViewContent = fs.readFileSync(petitionsViewPath, 'utf8');
     assert.ok(petitionsViewContent.includes('currentSignatures: newCount'), 'EPetitionsView must update currentSignatures to newCount');
     assert.ok(petitionsViewContent.includes('handleSignatureSuccess'), 'EPetitionsView must handle signature success callback');
+  });
+
+  // ==========================================================================
+  // 13. Priority 04: UI/UX & Copywriting Improvements
+  // ==========================================================================
+  console.log('\n--- Section 13: Priority 04: UI/UX & Copywriting Improvements ---');
+
+  it('13.1 Issue 4.1: Cluttered Navigation Bar - remove Moderation Gate 2FA, shorten Academy, enforce single-row CSS', () => {
+    // 1. Verify Navbar.tsx navLinks does not expose /admin or 2FA
+    const navbarPath = path.join(__dirname, '../packages/frontend/src/components/Navbar.tsx');
+    const navbarContent = fs.readFileSync(navbarPath, 'utf8');
+    
+    // Check navLinks array structure
+    const navLinksSection = navbarContent.substring(
+      navbarContent.indexOf('const navLinks = ['),
+      navbarContent.indexOf('];', navbarContent.indexOf('const navLinks = [')) + 2
+    );
+    assert.ok(!navLinksSection.includes('/admin'), 'Public navLinks must not contain /admin');
+    assert.ok(!navLinksSection.includes('2FA'), 'Public navLinks must not contain 2FA badge');
+
+    // 2. Verify whitespace-nowrap and flex-nowrap to keep menu items on a single row
+    assert.ok(navbarContent.includes('whitespace-nowrap'), 'Navbar must include whitespace-nowrap');
+    assert.ok(navbarContent.includes('flex-nowrap'), 'Navbar must include flex-nowrap to prevent row wrapping');
+
+    // 3. Verify shortened Academy labels in trilingual locales
+    const enLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/en.json'), 'utf8'));
+    const siLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/si.json'), 'utf8'));
+    const taLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/ta.json'), 'utf8'));
+
+    assert.strictEqual(enLoc.nav.lms, 'Academy', 'English nav.lms must be shortened to Academy');
+    assert.strictEqual(siLoc.nav.lms, 'ඇකඩමිය', 'Sinhala nav.lms must be shortened to ඇකඩමිය');
+    assert.strictEqual(taLoc.nav.lms, 'அகாடமி', 'Tamil nav.lms must be shortened to அகாடமி');
+
+    // 4. Verify Footer retains subtle link to Moderator Portal
+    const footerPath = path.join(__dirname, '../packages/frontend/src/components/Footer.tsx');
+    const footerContent = fs.readFileSync(footerPath, 'utf8');
+    assert.ok(footerContent.includes('/admin/login'), 'Footer must provide access to /admin/login for moderators');
   });
 
   // --------------------------------------------------------------------------

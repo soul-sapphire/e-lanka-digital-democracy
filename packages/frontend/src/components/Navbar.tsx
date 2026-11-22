@@ -62,7 +62,6 @@ export const Navbar: React.FC = () => {
     { to: '/', label: t('nav.home'), icon: Landmark },
     { to: '/petitions', label: t('nav.petitions'), icon: Vote },
     { to: '/dashboard', label: t('nav.dashboard'), icon: UserCheck },
-    ...(isAdmin ? [{ to: '/admin', label: t('nav.admin'), icon: Lock, badge: '2FA' }] : []),
     { to: '/academy', label: t('nav.lms'), icon: BookOpen }
   ];
 
@@ -99,27 +98,27 @@ export const Navbar: React.FC = () => {
 
       {/* Main navigation header */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 gap-2 lg:gap-4 flex-nowrap">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-lanka-maroon via-lanka-emerald to-slate-900 border border-lanka-gold/40 flex items-center justify-center shadow-inner">
-              <Landmark className="w-5 h-5 text-lanka-gold group-hover:scale-110 transition-transform" />
+          <Link to="/" className="flex items-center gap-2.5 sm:gap-3 group shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-lanka-maroon via-lanka-emerald to-slate-900 border border-lanka-gold/40 flex items-center justify-center shadow-inner shrink-0">
+              <Landmark className="w-4 h-4 sm:w-5 sm:h-5 text-lanka-gold group-hover:scale-110 transition-transform" />
             </div>
-            <div>
+            <div className="shrink-0">
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-lg tracking-tight text-white">E-LANKA</span>
-                <span className="text-[10px] uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded bg-lanka-gold text-slate-950">
+                <span className="font-bold text-base sm:text-lg tracking-tight text-white whitespace-nowrap">E-LANKA</span>
+                <span className="text-[9px] sm:text-[10px] uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded bg-lanka-gold text-slate-950 whitespace-nowrap">
                   DEMOCRACY
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-sinhala leading-none mt-0.5">
+              <p className="text-[10px] sm:text-[11px] text-slate-400 font-sinhala leading-none mt-0.5 whitespace-nowrap">
                 ඩිජිටල් ප්‍රජාතන්ත්‍රවාදය • டிஜிட்டல் ஜனநாயகம்
               </p>
             </div>
           </Link>
 
           {/* Desktop Links */}
-          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
+          <nav className="hidden md:flex items-center space-x-1 lg:space-x-2 whitespace-nowrap shrink-0">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = location.pathname === link.to;
@@ -127,26 +126,21 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-xs lg:text-sm font-medium whitespace-nowrap transition-colors ${
                     isActive
                       ? 'bg-slate-800 text-lanka-gold border border-slate-700'
                       : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span>{link.label}</span>
-                  {link.badge && (
-                    <span className="text-[9px] bg-red-900/60 text-red-300 border border-red-700/50 px-1 rounded font-mono">
-                      {link.badge}
-                    </span>
-                  )}
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span className="whitespace-nowrap">{link.label}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* Controls: Language Switcher & Authentication */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 lg:gap-3 shrink-0 whitespace-nowrap">
             {/* Trilingual Pill Switcher */}
             <div className="flex items-center bg-slate-800 p-0.5 rounded-lg border border-slate-700 text-xs">
               <button
@@ -258,11 +252,6 @@ export const Navbar: React.FC = () => {
                   <Icon className="w-4 h-4" />
                   <span>{link.label}</span>
                 </div>
-                {link.badge && (
-                  <span className="text-[9px] bg-red-900/60 text-red-300 px-1 rounded font-mono">
-                    {link.badge}
-                  </span>
-                )}
               </Link>
             );
           })}
