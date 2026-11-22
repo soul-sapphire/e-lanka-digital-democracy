@@ -1067,6 +1067,36 @@ async function runTestSuite() {
     assert.ok(academyContent.includes('Launch Youth Champion Field Collector Mode'), 'LMS Academy must link to field collector mode');
   });
 
+  it('12.4 Issue 3.4: Public Visualization of AI Insights - Infographics, Sentiment Splits & Thematic Clusters', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const detailViewPath = path.join(__dirname, '../packages/frontend/src/views/PolicyDetailView.tsx');
+    const detailContent = fs.readFileSync(detailViewPath, 'utf8');
+
+    // 1. Verify AI Public Consensus & Executive Synthesis Infographic Box
+    assert.ok(detailContent.includes('AI Public Consensus & Executive Synthesis'), 'Must display AI Public Consensus executive box');
+    assert.ok(detailContent.includes('Statutory Policy Panel Verified'), 'Must display statutory panel verification badge');
+    assert.ok(detailContent.includes('getAiExecutiveSummary'), 'Must include tailored trilingual AI executive summary function');
+
+    // 2. Verify Sentiment Splits Infographic with multi-segment bar and 3 metric cards
+    assert.ok(detailContent.includes('Public Sentiment Splits & Citizen Stance Infographic'), 'Must display Sentiment Splits infographic section');
+    assert.ok(detailContent.includes('Strong Civic Support'), 'Must render Strong Civic Support card');
+    assert.ok(detailContent.includes('Deliberative / Inquiries'), 'Must render Deliberative / Inquiries card');
+    assert.ok(detailContent.includes('Critical / Amendments'), 'Must render Critical / Amendments card');
+
+    // 3. Verify view toggle between Infographic Bar & Cards and Interactive Charts
+    assert.ok(detailContent.includes('Infographic Bar & Cards'), 'Must provide Infographic view mode button');
+    assert.ok(detailContent.includes('Interactive Charts'), 'Must provide Interactive Charts view mode button');
+
+    // 4. Verify Thematic Clusters with visual weight progress bar & PDPA protection seal
+    assert.ok(detailContent.includes('Core Public Priorities'), 'Must display thematic cluster priorities');
+    assert.ok(detailContent.includes('PII-Scrubbed Citizen Excerpt (PDPA Protected)'), 'Must include PDPA protected citizen excerpt badge');
+    assert.ok(detailContent.includes('Key Citizen Concerns'), 'Must display key citizen concerns list');
+
+    // 5. Verify citizen-friendly transparency label
+    assert.ok(detailContent.includes('Public AI Transparency • Zero Personal Identifiers Stored'), 'Must display zero personal data assurance label');
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------
