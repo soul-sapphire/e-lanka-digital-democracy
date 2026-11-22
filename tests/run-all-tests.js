@@ -405,11 +405,11 @@ async function runTestSuite() {
     const prePolicyCount = store.getPolicyById('b0000000-0000-0000-0000-000000000001').submissionCount;
     const prePetitionCount = store.getPetitionById('e0000000-0000-0000-0000-000000000002').currentSignatures;
 
-    // Execute statutory erasure
+    // Execute statutory erasure under Section 16 (read with Section 14)
     const erasure = store.executeRightToErasure({
       citizenBlindIndex,
       erasureScope: 'ALL_PII',
-      reason: 'Citizen invoked PDPA Sec 14',
+      reason: 'Citizen invoked PDPA Section 16 (read with Section 14)',
       acknowledgedImmutableRetention: true
     });
 
@@ -504,6 +504,75 @@ async function runTestSuite() {
 
     const searchRes = PDPAService.getAuditLogs({ search: 'Security alert' });
     assert.ok(searchRes.logs.length >= 1, 'Should find search keyword');
+  });
+
+  it('7.6 Workstream 6 Anonymity Audit: Verifies zero personal data stored in petition signature rows', () => {
+    const store = DatabaseStore.getInstance();
+    const testNic = '912345678V';
+    const testName = 'Vulnerable Human Rights Activist';
+    const testEmail = 'activist@cslk.org';
+    const testDistrict = 'Jaffna';
+
+    const signRes = store.signPetition({
+      petitionId: 'e0000000-0000-0000-0000-000000000001',
+      nicNumber: testNic,
+      fullName: testName,
+      email: testEmail,
+      district: testDistrict
+    });
+    assert.strictEqual(signRes.success, true);
+
+    // Retrieve internal signatures matching this specific blind index
+    const signerBlindIndex = computeBlindHash(testNic, 'NIC');
+    const sig = store.petitionSignatures.find(s => s.petitionId === 'e0000000-0000-0000-0000-000000000001' && s.signerBlindIndex === signerBlindIndex);
+    assert.ok(sig, 'Signature record must exist');
+
+    // Decrypt the signer payload with the master FLE key
+    const decryptedData = decryptJson(sig.encryptedSignerData);
+
+    // CRITICAL: Ensure neither real name, email, nor raw NIC is persisted anywhere
+    assert.strictEqual(decryptedData.fullName, undefined, 'Raw full name must NEVER be persisted in signature row');
+    assert.strictEqual(decryptedData.email, undefined, 'Raw email must NEVER be persisted in signature row');
+    assert.strictEqual(decryptedData.nicNumber, undefined, 'Raw NIC must NEVER be persisted in signature row');
+    assert.strictEqual(decryptedData.district, testDistrict, 'District demographic counter is retained');
+    assert.strictEqual(typeof decryptedData.anonymizedAlias, 'string', 'Pseudonymous citizen alias is retained');
+
+    // Check raw JSON string across entire signature record
+    const rawSigJson = JSON.stringify(sig);
+    assert.strictEqual(rawSigJson.includes(testName), false, 'Activist name must not appear in signature record');
+    assert.strictEqual(rawSigJson.includes(testEmail), false, 'Activist email must not appear in signature record');
+    assert.strictEqual(rawSigJson.includes(testNic), false, 'Activist NIC must not appear in signature record');
+  });
+
+  it('7.7 Validates statutory PDPA Section citations (Section 16 Erasure, Section 14 Withdrawal, Sections 12 & 21 Audit, Section 23 Breach)', () => {
+    const store = DatabaseStore.getInstance();
+    const testNic = '198812345678';
+    const blindIndex = computeBlindHash(testNic, 'NIC');
+
+    store.ingestSurveyResponse({
+      surveyId: 's0000000-0000-0000-0000-000000000001',
+      policyId: 'b0000000-0000-0000-0000-000000000001',
+      citizenBlindIndex: blindIndex,
+      answers: [{ questionId: 'q003', questionType: 'OPEN_TEXT', rawOpenText: 'Statutory test feedback' }],
+      clientLanguage: 'en'
+    });
+
+    const erasure = store.executeRightToErasure({
+      citizenBlindIndex: blindIndex,
+      erasureScope: 'ALL_PII',
+      reason: 'Statutory Section 16 verification',
+      acknowledgedImmutableRetention: true
+    });
+
+    assert.strictEqual(erasure.success, true);
+
+    // Check that erased survey response has the updated Section 16 decoupling token
+    const erasedResp = store.surveyResponses.find(r => r.isErased && r.citizenBlindIndex === 'ERASED_PDPA_SEC_16');
+    assert.ok(erasedResp, 'Erased response must be marked with ERASED_PDPA_SEC_16 token');
+
+    // Check statutory audit log description
+    const erasureLog = PDPAService.getAuditLogs({ action: 'DATA_ERASURE_EXECUTED' }).logs[0];
+    assert.ok(erasureLog.purposeDescription.includes('Section 16, read with Section 14'), 'Audit log must cite Section 16 and Section 14');
   });
 
   // --------------------------------------------------------------------------

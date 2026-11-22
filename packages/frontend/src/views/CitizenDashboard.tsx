@@ -127,7 +127,7 @@ export const CitizenDashboard: React.FC = () => {
         <div className="p-5 rounded-2xl bg-emerald-950/60 border border-emerald-800 text-emerald-200 text-xs space-y-2">
           <div className="flex items-center gap-2 font-bold text-sm text-emerald-300">
             <CheckCircle2 className="w-4 h-4" />
-            Statutory Right to Erasure Executed under PDPA Section 14
+            Statutory Right to Erasure Executed under PDPA Section 16 (read with Section 14)
           </div>
           <p>
             Your personal identifiable records have been scrubbed. Anonymized survey records: {erasureResult.anonymizedSurveyResponses}, Petition signatures decoupled: {erasureResult.anonymizedSignatures}. Immutable aggregate count preserved: {erasureResult.preservedAggregateCount}.

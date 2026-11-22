@@ -94,7 +94,7 @@ export const AdminLoginView: React.FC = () => {
               <span>Multi-Factor Administrative Access Control Enforced</span>
             </div>
             <p className="text-[11px] text-slate-400 leading-relaxed">
-              In accordance with Sri Lanka PDPA Section 23 and security specifications, access to administrative functions requires verified staff credentials and RFC 6238 TOTP two-factor authentication.
+              In accordance with Sri Lanka PDPA Sections 12 & 21 (Technical & Organisational Security Measures) and specifications, access to administrative functions requires verified staff credentials and RFC 6238 TOTP two-factor authentication.
             </p>
           </div>
 

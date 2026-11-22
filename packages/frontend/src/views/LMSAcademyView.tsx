@@ -29,7 +29,7 @@ export const LMSAcademyView: React.FC = () => {
       level: 'Beginner to Intermediate',
       modules: [
         'Data Minimization and Purpose Limitation Principles',
-        'Exercising Statutory Right to Erasure (Section 14)',
+        'Exercising Statutory Right to Erasure (Section 16, read with Section 14)',
         'Understanding Application-Layer Field Encryption & Blind Indexing',
         'Filing Statutory Complaints with the Data Protection Authority'
       ],

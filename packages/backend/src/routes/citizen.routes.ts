@@ -85,7 +85,7 @@ citizenRouter.get('/engagement', authenticateToken, (req: Request, res: Response
 });
 
 /**
- * Exercise Right to Erasure (Sri Lanka PDPA No. 9 of 2022 Section 14)
+ * Exercise Right to Erasure (Sri Lanka PDPA No. 9 of 2022 Section 16, read with Section 14)
  * Nullifies foreign keys and encrypted PII while preserving immutable aggregate counts
  */
 citizenRouter.post('/erasure', authenticateToken, (req: Request, res: Response): void => {
@@ -104,7 +104,7 @@ citizenRouter.post('/erasure', authenticateToken, (req: Request, res: Response):
     const result = store.executeRightToErasure({
       citizenBlindIndex,
       erasureScope: erasureScope || 'ALL_PII',
-      reason: reason || 'Citizen requested statutory erasure under PDPA Section 14',
+      reason: reason || 'Citizen requested statutory erasure under PDPA Section 16 (read with Section 14)',
       acknowledgedImmutableRetention: true
     });
 

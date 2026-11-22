@@ -26,7 +26,7 @@ The platform implements a three-tier decoupled architecture guaranteeing complet
 │   - Application-Layer Field-Level Encryption (AES-256-GCM)             │
 │   - Salted HMAC-SHA256 Blind Indexing (O(1) duplicate NIC detection)   │
 │   - RFC 6238 Time-Based One-Time Password (TOTP) 2FA Engine           │
-│   - Sri Lanka PDPA Section 14 Automated Right-to-Erasure Pipeline      │
+│   - Sri Lanka PDPA Section 16 Automated Right-to-Erasure Pipeline      │
 │   - Multi-Channel Dispatcher (WhatsApp wa.me deep links + tokens)      │
 └──────────────┬──────────────────────────────────────────┬──────────────┘
                │                                          │
@@ -36,7 +36,7 @@ The platform implements a three-tier decoupled architecture guaranteeing complet
 │  - Row-Level Security (RLS)   │     │   - Gemini / Groq LLM API client  │
 │  - Blind-indexed NIC & Signers│     │   - Sri Lankan NIC/Phone/Email    │
 │  - Immutable Chained PDPA     │     │     regex redaction & scrubbing   │
-│    Audit Ledger (Section 23)  │     │   - Thematic clustering           │
+│    Audit Ledger (Sec 12 & 21) │     │   - Thematic clustering           │
 └───────────────────────────────┘     │   - Zero-PII public JSON compiler │
                                       └───────────────────────────────────┘
 ```
@@ -101,9 +101,9 @@ The platform implements a three-tier decoupled architecture guaranteeing complet
 * Generates 20-byte Base32 secrets, standard `otpauth://totp/...` URIs compatible with Google Authenticator, FreeOTP, and Aegis.
 * Enforces time-drift window of ±1 step (90 seconds tolerance) for administrative access.
 
-### Sri Lanka PDPA No. 9 of 2022 Right to Erasure
+### Sri Lanka PDPA No. 9 of 2022 Right to Erasure (Section 16, read with Section 14)
 * Located in: `packages/backend/src/services/pdpa.service.ts` and `packages/backend/src/db/store.ts`
-* Exercising `/api/v1/citizen/erasure` wipes encrypted open-text feedback and signer credentials, decouples citizen blind indexes (`ERASED_PDPA_SEC_14`), and nullifies foreign keys.
+* Exercising `/api/v1/citizen/erasure` wipes encrypted open-text feedback and signer credentials, decouples citizen blind indexes (`ERASED_PDPA_SEC_16`), and nullifies foreign keys.
 * **Preserves immutable quantitative aggregate counts** to prevent statistical census corruption while upholding non-retaliation.
 
 ---

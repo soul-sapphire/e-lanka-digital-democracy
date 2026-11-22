@@ -651,11 +651,12 @@ export class DatabaseStore {
       };
     }
 
-    // Encrypt PII with AES-256-GCM
+    // Anonymity Guarantee (Workstream 6): Do NOT persist raw name or email in signature row.
+    // Store only district, anonymized citizen alias, and timestamp to ensure not even an admin can link identity.
+    const anonymizedAlias = generateCitizenAlias(params.district, signerBlindIndex);
     const encryptedSignerData = encryptJson({
-      fullName: params.fullName,
-      email: params.email,
       district: params.district,
+      anonymizedAlias,
       signedTimestamp: new Date().toISOString()
     });
 
@@ -701,7 +702,7 @@ export class DatabaseStore {
       if (resp.citizenBlindIndex === request.citizenBlindIndex) {
         resp.isErased = true;
         resp.encryptedOpenTextPayload = undefined; // Wipe ciphertext
-        resp.citizenBlindIndex = 'ERASED_PDPA_SEC_14'; // Decouple identity
+        resp.citizenBlindIndex = 'ERASED_PDPA_SEC_16'; // Decouple identity (Section 16 Right to Erasure)
         anonymizedSurveyResponses++;
       }
     }
@@ -711,7 +712,7 @@ export class DatabaseStore {
       if (sig.signerBlindIndex === request.citizenBlindIndex) {
         sig.isErased = true;
         sig.encryptedSignerData = encryptJson({ erased: true, timestamp: new Date().toISOString() });
-        sig.signerBlindIndex = `ERASED_${crypto.randomUUID()}`;
+        sig.signerBlindIndex = `ERASED_PDPA_SEC_16_${crypto.randomUUID()}`;
         anonymizedSignatures++;
       }
     }
@@ -732,7 +733,7 @@ export class DatabaseStore {
       actorId: request.citizenBlindIndex,
       resourceType: 'USER_PROFILE',
       resourceId: request.citizenBlindIndex,
-      purposeDescription: `Exercised statutory Right to Erasure under Sri Lanka PDPA No. 9 of 2022 (Sec 14). Preserved immutable aggregate counters.`
+      purposeDescription: `Exercised statutory Right to Erasure under Sri Lanka PDPA No. 9 of 2022 (Section 16, read with Section 14). Preserved immutable aggregate counters.`
     });
 
     return {

@@ -759,7 +759,7 @@ export const AdminModerationPanel: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-lanka-gold" />
                 <h3 className="text-base sm:text-lg font-bold text-white tracking-tight">
-                  PDPA Statutory Immutable Audit Ledger (Section 23)
+                  PDPA Statutory Immutable Audit Ledger (Sections 12 & 21)
                 </h3>
                 <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 border border-emerald-800 px-2.5 py-0.5 rounded font-bold">
                   SEAL INTACT
@@ -1141,7 +1141,7 @@ export const AdminModerationPanel: React.FC = () => {
                         onChange={(e) => setBreachSeverity(e.target.value as any)}
                         className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-red-500 font-semibold"
                       >
-                        <option value="CRITICAL">CRITICAL — Immediate Statutory Breach Under PDPA Section 23</option>
+                        <option value="CRITICAL">CRITICAL — Immediate Statutory Breach Notification Under PDPA Section 23</option>
                         <option value="HIGH">HIGH — Suspicious Brute-Force or Multi-User Authorization Anomaly</option>
                         <option value="MEDIUM">MEDIUM — Unusual Data Ingestion Spikes or Repeated Token Failures</option>
                       </select>

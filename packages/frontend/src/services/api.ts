@@ -332,9 +332,9 @@ export const api = {
 
     return {
       success: true,
-      message: 'Statutory Right to Erasure executed under PDPA Section 14.',
+      message: 'Statutory Right to Erasure executed under PDPA Section 16 (read with Section 14).',
       result: {
-        citizenBlindIndex: 'ERASED_PDPA_SEC_14',
+        citizenBlindIndex: 'ERASED_PDPA_SEC_16',
         anonymizedSurveyResponses: 1,
         anonymizedSignatures: 1,
         preservedAggregateCount: 2,
@@ -432,7 +432,7 @@ export const api = {
         actorRole: 'CITIZEN',
         resourceType: 'USER_PROFILE',
         resourceId: 'BLIND-IDX-7a89f02c...',
-        purposeDescription: 'Statutory Right to Erasure executed under Sri Lanka PDPA Section 14. Decoupled citizen identity; preserved aggregate counts.',
+        purposeDescription: 'Statutory Right to Erasure executed under Sri Lanka PDPA Section 16 (read with Section 14). Decoupled citizen identity; preserved aggregate counts.',
         timestamp: new Date(Date.now() - 14400000).toISOString(),
         immutableSignature: 'f182374659182374659182374659182374659182374659182374659182374659'
       },

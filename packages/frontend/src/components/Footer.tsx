@@ -33,7 +33,7 @@ export const Footer: React.FC = () => {
               Statutory Privacy Protection
             </h4>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Fully compliant with Sri Lanka Personal Data Protection Act (PDPA), No. 9 of 2022. Guarantees data minimization, right to erasure (Section 14), and immutable audit logging.
+              Fully compliant with Sri Lanka Personal Data Protection Act (PDPA), No. 9 of 2022. Guarantees data minimization, right to erasure (Section 16), right to withdraw consent (Section 14), and statutory audit logging (Sections 12 & 21).
             </p>
             <div className="text-[11px] text-slate-300 font-mono space-y-0.5">
               <div>• AES-256-GCM Application Layer FLE</div>
