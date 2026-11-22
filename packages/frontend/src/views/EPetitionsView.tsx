@@ -38,6 +38,7 @@ export const EPetitionsView: React.FC = () => {
 
   const handleSignatureSuccess = (newCount: number) => {
     if (selectedPetition) {
+      setSelectedPetition((prev) => (prev ? { ...prev, currentSignatures: newCount } : null));
       setPetitions((prev) =>
         prev.map((p) =>
           p.id === selectedPetition.id ? { ...p, currentSignatures: newCount } : p

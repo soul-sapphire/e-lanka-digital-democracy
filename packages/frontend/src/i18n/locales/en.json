@@ -85,7 +85,7 @@
     "nameLabel": "Full Legal Name",
     "emailLabel": "Email Address (Optional)",
     "districtLabel": "Electoral District",
-    "consentCheckbox": "I consent to processing my citizenship credentials under Sri Lanka PDPA No. 9 of 2022 to prevent duplicate voting.",
+    "consentCheckbox": "Your personal data is 100% confidential and will not be made public.",
     "agreeCheckbox": "I solemnly declare my support for this civic petition.",
     "confirmSign": "Confirm & Record Verified Signature",
     "duplicateError": "This NIC has already recorded a signature for this petition.",

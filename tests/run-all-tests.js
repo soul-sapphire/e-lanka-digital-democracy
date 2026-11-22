@@ -1097,6 +1097,45 @@ async function runTestSuite() {
     assert.ok(detailContent.includes('Public AI Transparency • Zero Personal Identifiers Stored'), 'Must display zero personal data assurance label');
   });
 
+  it('12.5 Issue 3.5: Live Signature Counter & Plain PDPA Consent Checkbox', () => {
+    const fs = require('fs');
+    const path = require('path');
+
+    // 1. Verify plain language PDPA consent prompt across all 3 official languages
+    const enLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/en.json'), 'utf8'));
+    const siLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/si.json'), 'utf8'));
+    const taLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/ta.json'), 'utf8'));
+
+    assert.strictEqual(
+      enLoc.petitions.consentCheckbox,
+      'Your personal data is 100% confidential and will not be made public.',
+      'English consent text must match exact required plain-language prompt'
+    );
+    assert.strictEqual(
+      siLoc.petitions.consentCheckbox,
+      'ඔබගේ පෞද්ගලික දත්ත 100% රහසිගත වන අතර ප්‍රසිද්ධියට පත් නොකෙරේ.',
+      'Sinhala consent text must match exact plain-language prompt'
+    );
+    assert.strictEqual(
+      taLoc.petitions.consentCheckbox,
+      'உங்கள் தனிப்பட்ட தரவு 100% ரகசியமானது மற்றும் பகிரங்கப்படுத்தப்படாது.',
+      'Tamil consent text must match exact plain-language prompt'
+    );
+
+    // 2. Verify PetitionSignModal displays LiveCounterWidget on success
+    const modalPath = path.join(__dirname, '../packages/frontend/src/components/PetitionSignModal.tsx');
+    const modalContent = fs.readFileSync(modalPath, 'utf8');
+    assert.ok(modalContent.includes('LiveCounterWidget'), 'PetitionSignModal must import LiveCounterWidget');
+    assert.ok(modalContent.includes('currentSignatures={latestCount}'), 'PetitionSignModal must pass latestCount to LiveCounterWidget');
+    assert.ok(modalContent.includes('setLatestCount(res.currentSignatures)'), 'Must update latestCount immediately on sign response');
+
+    // 3. Verify EPetitionsView immediately updates state on signature success
+    const petitionsViewPath = path.join(__dirname, '../packages/frontend/src/views/EPetitionsView.tsx');
+    const petitionsViewContent = fs.readFileSync(petitionsViewPath, 'utf8');
+    assert.ok(petitionsViewContent.includes('currentSignatures: newCount'), 'EPetitionsView must update currentSignatures to newCount');
+    assert.ok(petitionsViewContent.includes('handleSignatureSuccess'), 'EPetitionsView must handle signature success callback');
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------

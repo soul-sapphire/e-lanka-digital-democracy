@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { EPetition, SriLankanNICDetails, DRPVerificationResult, formatSriLankanDate } from '@e-lanka/shared';
 import { api } from '../services/api';
+import { LiveCounterWidget } from './LiveCounterWidget';
 
 interface PetitionSignModalProps {
   petition: EPetition;
@@ -73,6 +74,13 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
   // Consent Fields
   const [agreeToDemands, setAgreeToDemands] = useState(false);
   const [consentDataProcessing, setConsentDataProcessing] = useState(false);
+
+  // Live count state for immediate counter & progress bar update (Issue 3.5)
+  const [latestCount, setLatestCount] = useState(petition.currentSignatures);
+
+  useEffect(() => {
+    setLatestCount(petition.currentSignatures);
+  }, [petition.currentSignatures]);
 
   // Submission Status
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -213,6 +221,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
       });
 
       if (res.success) {
+        setLatestCount(res.currentSignatures);
         setSignedSuccess(true);
         onSuccess(res.currentSignatures);
       } else {
@@ -244,6 +253,16 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
               <CheckCircle2 className="w-10 h-10" />
             </div>
             <h3 className="text-xl font-bold text-white">Signature Verified & Counted!</h3>
+
+            {/* Live Progress Bar & Counter Updated Immediately (Issue 3.5) */}
+            <div className="py-2 text-left">
+              <LiveCounterWidget
+                currentSignatures={latestCount}
+                requiredSignatures={petition.requiredSignatures}
+                showDetails={true}
+              />
+            </div>
+
             <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-4 text-left space-y-2 text-xs">
               <div className="flex items-center justify-between text-slate-300">
                 <span className="text-slate-400">Tier 1 Mathematical Check:</span>
@@ -678,26 +697,27 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                 </div>
 
                 <div className="space-y-2.5 pt-1">
-                  <label className="flex items-start gap-2.5 cursor-pointer">
+                  <label className="flex items-start gap-2.5 cursor-pointer p-3 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 transition-all">
                     <input
                       type="checkbox"
                       checked={agreeToDemands}
                       onChange={(e) => setAgreeToDemands(e.target.checked)}
                       className="mt-0.5 rounded border-slate-700 text-lanka-gold focus:ring-0"
                     />
-                    <span className="text-[11px] text-slate-300">
+                    <span className="text-xs text-slate-300">
                       {t('petitions.agreeCheckbox')}
                     </span>
                   </label>
 
-                  <label className="flex items-start gap-2.5 cursor-pointer">
+                  <label className="flex items-start gap-2.5 cursor-pointer p-3 rounded-xl bg-slate-950/60 border border-emerald-900/50 hover:border-emerald-700/60 transition-all">
                     <input
                       type="checkbox"
                       checked={consentDataProcessing}
                       onChange={(e) => setConsentDataProcessing(e.target.checked)}
-                      className="mt-0.5 rounded border-slate-700 text-lanka-gold focus:ring-0"
+                      className="mt-0.5 rounded border-slate-700 text-emerald-400 focus:ring-0"
                     />
-                    <span className="text-[11px] text-slate-300">
+                    <span className="text-xs text-slate-200 leading-relaxed">
+                      <strong className="text-emerald-400 block mb-0.5">PDPA Consent Checkbox:</strong>
                       {t('petitions.consentCheckbox')}
                     </span>
                   </label>
