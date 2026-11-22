@@ -159,7 +159,7 @@ export const AdminModerationPanel: React.FC = () => {
 
   const handleOpenModeration = (policy: PolicyConsultation) => {
     setSelectedProposal(policy);
-    setPanelNotes(`Reviewed and assessed by statutory panel. Proposal satisfies governance benchmarks under EL-SPEC-2026-V3.`);
+    setPanelNotes(`Reviewed and assessed by statutory panel. Proposal satisfies statutory governance and constitutional benchmarks.`);
     setActionError(null);
     setActionSuccess(null);
     setIsModalOpen(true);
@@ -511,7 +511,7 @@ export const AdminModerationPanel: React.FC = () => {
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-lanka-gold" />
               <h3 className="text-lg font-bold text-white">
-                Asynchronous AI Opinion Mapping & Scrubbing Worker (Workstream 4)
+                Asynchronous AI Opinion Mapping & Scrubbing Engine
               </h3>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed max-w-3xl">

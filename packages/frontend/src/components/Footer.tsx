@@ -144,7 +144,7 @@ export const Footer: React.FC = () => {
         {/* Bottom copyright & build note */}
         <div className="pt-4 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 gap-2">
           <div>
-            © 2026 E-Lanka Digital Democracy Platform (EL-SPEC-2026-V3). Open Civic Architecture.
+            © 2026 E-Lanka Digital Democracy Platform. Open Civic Architecture.
           </div>
           <div className="flex items-center gap-1 text-slate-500">
             <span>Built for the Citizens of Sri Lanka with</span>

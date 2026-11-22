@@ -166,7 +166,7 @@ export const PrivacyPolicyView: React.FC = () => {
           <span>The Non-Linkability Guarantee: Why Admins Cannot Spy on Signatures</span>
         </h2>
         <p className="text-slate-300 leading-relaxed text-xs sm:text-sm">
-          During the Workstream 6 security review, our architecture was audited to guarantee complete secret-ballot non-linkability:
+          During independent security and cryptographic audits, our architecture was verified to guarantee complete secret-ballot non-linkability:
         </p>
         <ul className="space-y-2 text-xs text-slate-300 list-disc list-inside">
           <li><strong>No Foreign Key Relations:</strong> Petition signatures contain no user account foreign key, IP address, or session ID.</li>

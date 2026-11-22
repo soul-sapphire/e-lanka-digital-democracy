@@ -442,7 +442,7 @@ export const api = {
         actorRole: 'PANEL_MODERATOR',
         resourceType: 'POLICY',
         resourceId: 'b0000000-0000-0000-0000-000000000003',
-        purposeDescription: 'Statutory Panel Gate evaluated EL-POL-2026-003: Approved proposal benchmarks under EL-SPEC-2026-V3.',
+        purposeDescription: 'Statutory Panel Gate evaluated EL-POL-2026-003: Approved proposal benchmarks under national governance standards.',
         timestamp: new Date(Date.now() - 28800000).toISOString(),
         immutableSignature: '88a0912dfa887bc129410ea821109ffba8923485710294857102938475918237'
       },

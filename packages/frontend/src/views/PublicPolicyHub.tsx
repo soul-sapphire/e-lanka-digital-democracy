@@ -13,7 +13,7 @@ import {
   Share2,
   Users
 } from 'lucide-react';
-import { PolicyConsultation, PolicyLifecycleStage } from '@e-lanka/shared';
+import { PolicyConsultation, PolicyLifecycleStage, EPetition } from '@e-lanka/shared';
 import { api } from '../services/api';
 import { LifecycleBadge } from '../components/LifecycleBadge';
 import { LMSCard } from '../components/LMSCard';
@@ -23,22 +23,27 @@ export const PublicPolicyHub: React.FC = () => {
   const currentLang = (i18n.language as 'en' | 'si' | 'ta') || 'en';
 
   const [policies, setPolicies] = useState<PolicyConsultation[]>([]);
+  const [petitions, setPetitions] = useState<EPetition[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedStage, setSelectedStage] = useState<string>('ALL');
 
   useEffect(() => {
-    loadPolicies();
+    loadData();
   }, []);
 
-  const loadPolicies = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const data = await api.getPolicies();
-      setPolicies(data);
+      const [policiesData, petitionsData] = await Promise.all([
+        api.getPolicies(),
+        api.getPetitions()
+      ]);
+      setPolicies(policiesData);
+      setPetitions(petitionsData);
     } catch (e) {
-      console.error('Failed to load policies', e);
+      console.error('Failed to load civic data', e);
     } finally {
       setLoading(false);
     }
@@ -67,6 +72,15 @@ export const PublicPolicyHub: React.FC = () => {
     return matchesCategory && matchesStage && matchesSearch;
   });
 
+  const activeConsultationsCount = policies.filter(
+    (p) => p.stage === PolicyLifecycleStage.STAGE_3_ACTIVE_CONSULTATION
+  ).length;
+
+  const totalVerifiedSignatures = petitions.reduce(
+    (acc, p) => acc + (p.currentSignatures || 0),
+    0
+  );
+
   return (
     <div className="space-y-10 pb-12">
       {/* Hero Civic Banner */}
@@ -77,7 +91,7 @@ export const PublicPolicyHub: React.FC = () => {
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs text-lanka-gold font-medium">
             <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span>Sri Lanka 2026 Digital Democracy Standard (EL-SPEC-2026-V3)</span>
+            <span>Sri Lanka Sovereign Digital Democracy Platform</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
@@ -88,14 +102,18 @@ export const PublicPolicyHub: React.FC = () => {
             {t('hero.subtitle')}
           </p>
 
-          {/* Quick Metrics */}
+          {/* Quick Metrics (Dynamic Live Counts) */}
           <div className="pt-4 grid grid-cols-2 sm:grid-cols-3 gap-4 border-t border-slate-800/80">
             <div>
-              <div className="text-2xl sm:text-3xl font-extrabold text-white">4</div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-white">
+                {loading ? '...' : activeConsultationsCount}
+              </div>
               <div className="text-xs text-slate-400 font-medium">{t('hero.activeConsultations')}</div>
             </div>
             <div>
-              <div className="text-2xl sm:text-3xl font-extrabold text-lanka-gold">11,310+</div>
+              <div className="text-2xl sm:text-3xl font-extrabold text-lanka-gold">
+                {loading ? '...' : `${totalVerifiedSignatures.toLocaleString()}+`}
+              </div>
               <div className="text-xs text-slate-400 font-medium">{t('hero.verifiedSignatures')}</div>
             </div>
             <div className="col-span-2 sm:col-span-1">
@@ -172,7 +190,7 @@ export const PublicPolicyHub: React.FC = () => {
             <FileText className="w-5 h-5 text-lanka-gold" />
             <span>Policy Consultation Initiatives</span>
             <span className="text-xs font-normal text-slate-400">
-              ({filteredPolicies.length} available)
+              ({filteredPolicies.length} available • {activeConsultationsCount} active in Stage 3)
             </span>
           </h2>
         </div>

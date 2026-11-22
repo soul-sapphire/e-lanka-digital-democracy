@@ -857,6 +857,47 @@ async function runTestSuite() {
     assert.ok(cardContent.includes('https://www.cslk.org/courses/digital-democracy-and-rights'), 'LMSCard must link to direct course page');
   });
 
+  it('11.3 Issue 2.3: Verifies no internal specification codes (EL-SPEC-2026-V3, Workstream 4, Section 3.4) exposed in frontend UI', () => {
+    const fs = require('fs');
+    const path = require('path');
+
+    const filesToCheck = [
+      '../packages/frontend/src/views/PublicPolicyHub.tsx',
+      '../packages/frontend/src/components/Footer.tsx',
+      '../packages/frontend/src/views/AdminModerationPanel.tsx',
+      '../packages/frontend/src/views/PrivacyPolicyView.tsx',
+      '../packages/frontend/src/views/LMSAcademyView.tsx'
+    ];
+
+    for (const relPath of filesToCheck) {
+      const content = fs.readFileSync(path.join(__dirname, relPath), 'utf8');
+      assert.strictEqual(content.includes('EL-SPEC-2026-V3'), false, `${relPath} must not contain EL-SPEC-2026-V3`);
+      assert.strictEqual(content.includes('Workstream 4'), false, `${relPath} must not contain Workstream 4`);
+      assert.strictEqual(content.includes('Workstream 6'), false, `${relPath} must not contain Workstream 6`);
+      assert.strictEqual(content.includes('Section 3.4'), false, `${relPath} must not contain Section 3.4`);
+    }
+  });
+
+  it('11.4 Issue 2.4: Verifies homepage metrics calculate dynamically from live database consultations and petition counts', () => {
+    const fs = require('fs');
+    const path = require('path');
+
+    const hubContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/views/PublicPolicyHub.tsx'), 'utf8');
+
+    // 1. Must calculate active consultations dynamically based on STAGE_3_ACTIVE_CONSULTATION
+    assert.ok(hubContent.includes('policies.filter'), 'PublicPolicyHub must dynamically filter policies');
+    assert.ok(hubContent.includes('PolicyLifecycleStage.STAGE_3_ACTIVE_CONSULTATION'), 'PublicPolicyHub must filter by STAGE_3_ACTIVE_CONSULTATION');
+    assert.ok(hubContent.includes('activeConsultationsCount'), 'PublicPolicyHub must compute activeConsultationsCount');
+
+    // 2. Must calculate total verified signatures dynamically from petitions
+    assert.ok(hubContent.includes('totalVerifiedSignatures'), 'PublicPolicyHub must compute totalVerifiedSignatures');
+    assert.ok(hubContent.includes('petitions.reduce'), 'PublicPolicyHub must sum currentSignatures from petitions');
+
+    // 3. Must NOT hardcode static "4" or "11,310+" in the metrics JSX
+    assert.strictEqual(hubContent.includes('>4</div>'), false, 'PublicPolicyHub must not hardcode static 4 active consultations');
+    assert.strictEqual(hubContent.includes('>11,310+</div>'), false, 'PublicPolicyHub must not hardcode static 11,310+ signatures');
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------
