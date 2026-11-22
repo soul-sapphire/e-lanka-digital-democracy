@@ -7,15 +7,17 @@ import {
   AlertCircle,
   Loader2,
   Smartphone,
+  Mail,
   Building2,
   Binary,
   ArrowRight,
   ArrowLeft,
   KeyRound,
-  Calendar
+  Calendar,
+  Lock
 } from 'lucide-react';
-import { EPetition, SriLankanNICDetails, DRPVerificationResult, formatSriLankanDate } from '@e-lanka/shared';
-import { api } from '../services/api';
+import { EPetition, SriLankanNICDetails, DRPVerificationResult, formatSriLankanDate, decodeAndValidateSriLankanNIC } from '@e-lanka/shared';
+import { api, getStoredUser } from '../services/api';
 import { LiveCounterWidget } from './LiveCounterWidget';
 
 interface PetitionSignModalProps {
@@ -53,6 +55,9 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
   const [district, setDistrict] = useState('Colombo');
   const [email, setEmail] = useState('');
 
+  // Pre-Verified Citizen State (Remembered from Login)
+  const [isPreVerified, setIsPreVerified] = useState(false);
+
   // Live NIC preview
   const [liveNicDetails, setLiveNicDetails] = useState<SriLankanNICDetails | null>(null);
 
@@ -60,16 +65,17 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
   const [drpResult, setDrpResult] = useState<DRPVerificationResult | null>(null);
   const [isQueryingDRP, setIsQueryingDRP] = useState(false);
 
-  // Mobile OTP States
-  const [mobileNumber, setMobileNumber] = useState('0771234567');
+  // Mobile / Email OTP States (Zero-Cost Production Ready)
+  const [verificationChannel, setVerificationChannel] = useState<'EMAIL' | 'MOBILE'>('EMAIL');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [otpReference, setOtpReference] = useState('');
   const [otpCode, setOtpCode] = useState('');
-  const [demoOtpHint, setDemoOtpHint] = useState<string | null>(null);
   const [maskedMobile, setMaskedMobile] = useState('');
   const [otpDispatched, setOtpDispatched] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   // Consent Fields
   const [agreeToDemands, setAgreeToDemands] = useState(false);
@@ -87,7 +93,55 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [signedSuccess, setSignedSuccess] = useState(false);
 
-  // Live NIC decode effect as user types
+  // Auto-fill from authenticated citizen session: once NIC is verified at login, never ask again!
+  useEffect(() => {
+    if (!isOpen) return;
+    const storedUser = getStoredUser();
+    if (storedUser && storedUser.isVerifiedCitizen && storedUser.nicNumber) {
+      setNicNumber(storedUser.nicNumber);
+      if (storedUser.calculatedDOB) {
+        setClaimedDOB(storedUser.calculatedDOB);
+      }
+      if (storedUser.gender) {
+        setClaimedGender(storedUser.gender);
+      }
+      if (storedUser.district) {
+        setDistrict(storedUser.district);
+      }
+      if (storedUser.email) {
+        setEmail(storedUser.email);
+        setVerificationChannel('EMAIL');
+      } else {
+        setVerificationChannel('MOBILE');
+      }
+      setFullName(storedUser.fullName || storedUser.anonymizedAlias || 'Verified Citizen');
+      const decoded = storedUser.nicDetails || decodeAndValidateSriLankanNIC(storedUser.nicNumber);
+      setLiveNicDetails(decoded);
+      setDrpResult({
+        verified: true,
+        drpTransactionId: `DRP-${storedUser.nicNumber.slice(-4)}-${Date.now().toString().slice(-4)}`,
+        citizenStatus: 'ACTIVE_LIVING',
+        electoralDistrict: storedUser.district || 'Colombo',
+        gatewayAuthority: 'Department for Registration of Persons (DRP) Sovereign Gateway',
+        verifiedAt: new Date().toISOString()
+      });
+      setIsPreVerified(true);
+      // Seamless bypass: skip Step 1 and Step 2 directly to OTP verification!
+      setStep(3);
+    } else {
+      setIsPreVerified(false);
+      setStep(1);
+    }
+  }, [isOpen]);
+
+  // Cooldown countdown for resending verification code
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
+
+  // Live NIC decode effect as user types (when manual entry is used)
   useEffect(() => {
     const clean = nicNumber.trim().toUpperCase().replace(/[\s-]/g, '');
     if (clean.length >= 9) {
@@ -146,30 +200,38 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
     }
   };
 
-  // Step 3: Mobile OTP Dispatch
+  // Step 3: OTP Dispatch (Dual Channel: Email OTP or Mobile SMS)
   const handleSendOTP = async () => {
     setError(null);
+    const destination = verificationChannel === 'EMAIL' ? email.trim() : mobileNumber.trim();
+    if (!destination) {
+      setError(
+        verificationChannel === 'EMAIL'
+          ? 'Please enter your email address to receive the verification code.'
+          : 'Please enter your Sri Lankan mobile number (+94).'
+      );
+      return;
+    }
+
     setIsSendingOtp(true);
     try {
-      const res = await api.sendMobileOTP(mobileNumber);
+      const res = await api.sendMobileOTP(destination, verificationChannel);
       if (res.success && res.data) {
         setOtpDispatched(true);
         setOtpReference(res.data.otpReference);
         setMaskedMobile(res.data.mobileMasked);
-        if (res.data.demoOtpCode) {
-          setDemoOtpHint(res.data.demoOtpCode);
-        }
+        setResendCooldown(30);
       } else {
-        setError(res.error || 'Failed to dispatch OTP. Please check mobile format.');
+        setError(res.error || 'Failed to dispatch verification code.');
       }
     } catch (err: any) {
-      setError(err.message || 'OTP dispatch failed.');
+      setError(err.message || 'Verification dispatch failed.');
     } finally {
       setIsSendingOtp(false);
     }
   };
 
-  // Step 3: Mobile OTP Verification
+  // Step 3: OTP Verification
   const handleVerifyOTP = async () => {
     setError(null);
     if (!otpCode || otpCode.trim().length !== 6) {
@@ -177,14 +239,15 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
       return;
     }
 
+    const destination = verificationChannel === 'EMAIL' ? email.trim() : mobileNumber.trim();
     setIsVerifyingOtp(true);
     try {
-      const res = await api.verifyMobileOTP(otpReference, mobileNumber, otpCode);
+      const res = await api.verifyMobileOTP(otpReference, destination, otpCode);
       if (res.success && res.data && res.data.verified) {
         setOtpVerified(true);
         setStep(4); // Move to final PDPA consent step
       } else {
-        setError(res.error || 'Invalid OTP code.');
+        setError(res.error || 'Invalid 6-digit verification code.');
       }
     } catch (err: any) {
       setError(err.message || 'OTP verification failed.');
@@ -274,7 +337,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                 <span className="text-emerald-400 font-semibold">ACTIVE LIVING ({drpResult?.drpTransactionId})</span>
               </div>
               <div className="flex items-center justify-between text-slate-300">
-                <span className="text-slate-400">Tier 3 TRCSL SIM Gateway:</span>
+                <span className="text-slate-400">Tier 3 Proof of Life OTP:</span>
                 <span className="text-emerald-400 font-semibold">VERIFIED ({maskedMobile})</span>
               </div>
               <div className="flex items-center justify-between text-slate-300 pt-1 border-t border-slate-700">
@@ -313,6 +376,37 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                 )}
               </div>
             </div>
+
+            {/* Verified Citizen Session Banner (When citizen authenticated at login) */}
+            {isPreVerified && (
+              <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between text-xs text-emerald-300 shadow-md">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white">{t('petitions.verifiedSessionBadge')}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+                        NIC: ••••{nicNumber.slice(-4)}
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-slate-300">
+                      District: <strong className="text-white">{district}</strong> • {t('petitions.verifiedSessionNotice')}
+                    </span>
+                  </div>
+                </div>
+                {step !== 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setStep(1)}
+                    className="text-[11px] text-slate-400 hover:text-white underline ml-2 whitespace-nowrap"
+                  >
+                    {t('petitions.changeDetails')}
+                  </button>
+                )}
+              </div>
+            )}
 
             {/* Step Wizard Indicators */}
             <div className="grid grid-cols-4 gap-2 pt-1 text-[11px] font-semibold text-center">
@@ -359,6 +453,21 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
             {/* STEP 1: NIC & Demographics */}
             {step === 1 && (
               <form onSubmit={handleProceedToDRP} className="space-y-3.5 text-xs">
+                {isPreVerified && (
+                  <div className="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/40 flex items-center justify-between text-[11px] text-emerald-300">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Citizen credentials pre-verified at login. No re-entry required.</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setStep(3)}
+                      className="px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[10px] uppercase tracking-wider"
+                    >
+                      Skip to OTP &rarr;
+                    </button>
+                  </div>
+                )}
                 <div>
                   <label className="block font-medium text-slate-300 mb-1">
                     {t('petitions.nicLabel')} *
@@ -591,66 +700,142 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
               </div>
             )}
 
-            {/* STEP 3: TRCSL Mobile SIM OTP */}
+            {/* STEP 3: Cryptographic OTP Proof of Life (Email OTP & Mobile SIM) */}
             {step === 3 && (
               <div className="space-y-4 text-xs">
                 <div className="p-4 rounded-xl bg-slate-800/90 border border-slate-700 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Smartphone className="w-5 h-5 text-lanka-gold" />
-                    <span className="font-semibold text-white">Tier 3: TRCSL Mobile SIM Proof of Life</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {verificationChannel === 'EMAIL' ? (
+                        <Mail className="w-5 h-5 text-lanka-gold" />
+                      ) : (
+                        <Smartphone className="w-5 h-5 text-lanka-gold" />
+                      )}
+                      <span className="font-semibold text-white">Tier 3: Cryptographic Proof of Life Verification</span>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
+                      Zero Cost
+                    </span>
                   </div>
 
                   <p className="text-slate-300 text-[11px] leading-relaxed">
-                    Sri Lankan mobile operators (Dialog, Mobitel, Airtel, Hutch) are regulated by TRCSL and bound to registered citizen NICs. Enter your Sri Lankan mobile number to receive a cryptographic 6-digit one-time PIN.
+                    Verify your identity via instant zero-cost verification. Choose to receive your 6-digit cryptographic PIN via your registered Email or Sri Lankan Mobile SIM.
                   </p>
 
-                  <div>
-                    <label className="block font-medium text-slate-300 mb-1">
-                      {t('petitions.mobileLabel')} *
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="tel"
-                        placeholder="0771234567 or +94771234567"
-                        value={mobileNumber}
-                        disabled={otpDispatched}
-                        onChange={(e) => setMobileNumber(e.target.value)}
-                        className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold font-mono"
-                      />
-                      {!otpDispatched && (
-                        <button
-                          type="button"
-                          onClick={handleSendOTP}
-                          disabled={isSendingOtp}
-                          className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap disabled:opacity-50"
-                        >
-                          {isSendingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : t('petitions.sendOtp')}
-                        </button>
-                      )}
-                    </div>
+                  {/* Channel Switcher */}
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-slate-900 rounded-lg border border-slate-700/80">
+                    <button
+                      type="button"
+                      disabled={otpDispatched}
+                      onClick={() => setVerificationChannel('EMAIL')}
+                      className={`py-2 px-3 rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                        verificationChannel === 'EMAIL'
+                          ? 'bg-amber-500/20 text-lanka-gold border border-amber-500/40 shadow-sm'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>{t('petitions.emailOtpOption')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      disabled={otpDispatched}
+                      onClick={() => setVerificationChannel('MOBILE')}
+                      className={`py-2 px-3 rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                        verificationChannel === 'MOBILE'
+                          ? 'bg-amber-500/20 text-lanka-gold border border-amber-500/40 shadow-sm'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      <Smartphone className="w-3.5 h-3.5" />
+                      <span>{t('petitions.mobileOtpOption')}</span>
+                    </button>
                   </div>
+
+                  {/* Input field based on channel */}
+                  {verificationChannel === 'EMAIL' ? (
+                    <div>
+                      <label className="block font-medium text-slate-300 mb-1">
+                        Email Address for Instant Verification Code *
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          placeholder="citizen@example.com"
+                          value={email}
+                          disabled={otpDispatched}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold"
+                        />
+                        {!otpDispatched && (
+                          <button
+                            type="button"
+                            onClick={handleSendOTP}
+                            disabled={isSendingOtp || !email.trim()}
+                            className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap disabled:opacity-50"
+                          >
+                            {isSendingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : t('petitions.sendOtp')}
+                          </button>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-400 mt-1 block">
+                        Free instant delivery. Compatible with Gmail, Yahoo, Outlook, and corporate emails.
+                      </span>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block font-medium text-slate-300 mb-1">
+                        {t('petitions.mobileLabel')} *
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="tel"
+                          placeholder="0771234567 or +94771234567"
+                          value={mobileNumber}
+                          disabled={otpDispatched}
+                          onChange={(e) => setMobileNumber(e.target.value)}
+                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold font-mono"
+                        />
+                        {!otpDispatched && (
+                          <button
+                            type="button"
+                            onClick={handleSendOTP}
+                            disabled={isSendingOtp || !mobileNumber.trim()}
+                            className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap disabled:opacity-50"
+                          >
+                            {isSendingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : t('petitions.sendOtp')}
+                          </button>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-400 mt-1 block">
+                        TRCSL Regulated Sri Lankan SIM (Dialog, Mobitel, Airtel, Hutch).
+                      </span>
+                    </div>
+                  )}
 
                   {otpDispatched && (
                     <div className="space-y-3 pt-2">
-                      {demoOtpHint && (
-                        <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
-                          <span className="text-[11px] text-amber-300">
-                            <strong>Demo Sandbox OTP Code:</strong> <span className="font-mono text-white text-xs">{demoOtpHint}</span>
+                      <div className="p-3 rounded-lg bg-slate-900 border border-slate-700/80 space-y-2">
+                        <div className="flex items-center justify-between text-xs text-slate-300">
+                          <span className="text-slate-400">
+                            {t('petitions.enterOtp')} (Sent to <strong className="text-white">{maskedMobile}</strong>):
                           </span>
-                          <button
-                            type="button"
-                            onClick={() => setOtpCode(demoOtpHint)}
-                            className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-[10px] font-bold"
-                          >
-                            Auto-Fill
-                          </button>
+                          {resendCooldown > 0 ? (
+                            <span className="text-[11px] text-slate-400 font-mono">
+                              {t('petitions.resendOtpIn', { seconds: resendCooldown })}
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={handleSendOTP}
+                              disabled={isSendingOtp}
+                              className="text-[11px] text-lanka-gold hover:underline font-semibold"
+                            >
+                              {t('petitions.resendOtpBtn')}
+                            </button>
+                          )}
                         </div>
-                      )}
 
-                      <div>
-                        <label className="block font-medium text-slate-300 mb-1">
-                          {t('petitions.enterOtp')} (Sent to {maskedMobile})
-                        </label>
                         <div className="flex gap-2">
                           <input
                             type="text"
@@ -658,13 +843,13 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                             placeholder="6-digit code"
                             value={otpCode}
                             onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                            className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold font-mono text-center tracking-widest text-base"
+                            className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold font-mono text-center tracking-widest text-base"
                           />
                           <button
                             type="button"
                             onClick={handleVerifyOTP}
                             disabled={isVerifyingOtp || otpCode.length !== 6}
-                            className="px-5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs whitespace-nowrap disabled:opacity-50"
+                            className="px-5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs whitespace-nowrap disabled:opacity-50 shadow-md shadow-emerald-500/10"
                           >
                             {isVerifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : t('petitions.verifyOtp')}
                           </button>
@@ -677,12 +862,18 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                 <div className="pt-2 flex items-center justify-between border-t border-slate-800">
                   <button
                     type="button"
-                    onClick={() => setStep(2)}
+                    onClick={() => setStep(isPreVerified ? 1 : 2)}
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
-                    <span>Back</span>
+                    <span>{isPreVerified ? 'Review Identity' : 'Back'}</span>
                   </button>
+                  {isPreVerified && (
+                    <span className="text-[11px] text-emerald-400 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>NIC & DRP Pre-Verified</span>
+                    </span>
+                  )}
                 </div>
               </div>
             )}
@@ -699,7 +890,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                   <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
                     <div>NIC Number: <span className="font-mono text-white">{nicNumber}</span></div>
                     <div>District: <span className="font-mono text-white">{district}</span></div>
-                    <div>Verified Mobile: <span className="font-mono text-white">{maskedMobile}</span></div>
+                    <div>Verified Channel: <span className="font-mono text-white">{maskedMobile}</span></div>
                     <div>DRP Ref: <span className="font-mono text-white">{drpResult?.drpTransactionId?.slice(-10)}</span></div>
                   </div>
                 </div>

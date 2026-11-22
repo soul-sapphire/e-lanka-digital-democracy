@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, Link } from 'react-router-dom';
-import { X, ShieldCheck, UserCheck, Lock, AlertCircle, Loader2, ArrowRight } from 'lucide-react';
+import { X, ShieldCheck, UserCheck, Lock, AlertCircle, Loader2, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { decodeAndValidateSriLankanNIC, formatSriLankanDate, SriLankanNICDetails } from '@e-lanka/shared';
 import { api, setAuthToken, setStoredUser } from '../services/api';
 
 interface CitizenSignInModalProps {
@@ -31,6 +32,17 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [liveNicDetails, setLiveNicDetails] = useState<SriLankanNICDetails | null>(null);
+
+  useEffect(() => {
+    const clean = nicNumber.trim().toUpperCase().replace(/[\s-]/g, '');
+    if (clean.length >= 9) {
+      const decoded = decodeAndValidateSriLankanNIC(clean);
+      setLiveNicDetails(decoded);
+    } else {
+      setLiveNicDetails(null);
+    }
+  }, [nicNumber]);
 
   if (!isOpen) return null;
 
@@ -39,11 +51,11 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
     setError(null);
 
     const cleanNIC = nicNumber.trim().toUpperCase().replace(/[\s-]/g, '');
+    let nicValidation: SriLankanNICDetails | null = null;
     if (cleanNIC) {
-      const oldNicRegex = /^[0-9]{9}[VX]$/;
-      const newNicRegex = /^[0-9]{12}$/;
-      if (!oldNicRegex.test(cleanNIC) && !newNicRegex.test(cleanNIC)) {
-        setError(t('auth.invalidNic'));
+      nicValidation = decodeAndValidateSriLankanNIC(cleanNIC);
+      if (!nicValidation.isValid) {
+        setError(nicValidation.validationError || t('auth.invalidNic'));
         return;
       }
     }
@@ -57,6 +69,20 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
       });
 
       if (res && res.token && res.user) {
+        // Enrich user session with verified citizen demographics for single-entry petition signing
+        if (cleanNIC && nicValidation && nicValidation.isValid) {
+          res.user.nicNumber = cleanNIC;
+          res.user.isVerifiedCitizen = true;
+          res.user.calculatedDOB = formatSriLankanDate(nicValidation.calculatedDOB);
+          res.user.gender = nicValidation.gender;
+          res.user.district = district;
+          res.user.email = email.trim() || undefined;
+          res.user.isVoterEligible = nicValidation.isVoterEligible;
+          res.user.nicDetails = nicValidation;
+          res.user.tier1Verified = true;
+          res.user.tier2Verified = true;
+        }
+
         setAuthToken(res.token);
         setStoredUser(res.user);
         onSuccess(res.user);
@@ -126,6 +152,41 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
               <span className="text-[10px] text-slate-400 mt-0.5 block">
                 {t('auth.nicHint')}
               </span>
+
+              {/* Live Mathematical Verification Feedback */}
+              {liveNicDetails && (
+                <div
+                  className={`mt-2 p-2.5 rounded-lg border text-[11px] transition-all ${
+                    liveNicDetails.isValid
+                      ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-300'
+                      : 'bg-red-950/30 border-red-500/40 text-red-300'
+                  }`}
+                >
+                  {liveNicDetails.isValid ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between font-semibold">
+                        <span className="flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Valid Sri Lankan NIC ({liveNicDetails.format})</span>
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">
+                          {liveNicDetails.isVoterEligible ? 'Voter Eligible' : 'Non-Voter'}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-300 flex items-center gap-3">
+                        <span>DOB: <strong className="font-mono text-white">{formatSriLankanDate(liveNicDetails.calculatedDOB)}</strong></span>
+                        <span>Gender: <strong className="font-mono text-white">{liveNicDetails.gender}</strong></span>
+                        <span>Day: <strong className="font-mono text-white">{liveNicDetails.dayOfYear}</strong></span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                      <span>{liveNicDetails.validationError || t('auth.invalidNic')}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>

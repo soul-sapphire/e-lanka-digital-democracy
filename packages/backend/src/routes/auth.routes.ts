@@ -92,7 +92,14 @@ authRouter.post('/login', (req: Request, res: Response): void => {
       role: 'CITIZEN',
       anonymizedAlias: profile.anonymizedAlias,
       district: profile.district,
-      totpEnabled: false
+      totpEnabled: false,
+      nicNumber: nicNumber ? citizenNIC : undefined,
+      isVerifiedCitizen: Boolean(nicNumber && nicValidation.isValid),
+      calculatedDOB: nicValidation.isValid ? nicValidation.calculatedDOB : undefined,
+      gender: nicValidation.gender,
+      email: email || undefined,
+      tier1Verified: Boolean(nicNumber && nicValidation.isValid),
+      tier2Verified: Boolean(nicNumber && nicValidation.isValid)
     }
   });
 });

@@ -22,7 +22,7 @@ export const CitizenDashboard: React.FC = () => {
 
   // Right to Erasure dialog state
   const [showErasureModal, setShowErasureModal] = useState(false);
-  const [erasureNic, setErasureNic] = useState('199256789012');
+  const [erasureNic, setErasureNic] = useState(user?.nicNumber || '199256789012');
   const [isErasing, setIsErasing] = useState(false);
   const [erasureResult, setErasureResult] = useState<any>(null);
 
@@ -92,7 +92,7 @@ export const CitizenDashboard: React.FC = () => {
 
           <div className="flex items-center gap-2">
             <span className="text-xs bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg text-slate-300 font-medium">
-              {t('dashboard.district')}: {engagement?.district || 'Colombo'}
+              {t('dashboard.district')}: {engagement?.district || user?.district || 'Colombo'}
             </span>
             <span className="text-xs bg-emerald-950/80 border border-emerald-700/80 text-emerald-400 px-3 py-1 rounded-lg font-medium flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" /> {t('dashboard.verifiedCitizenBadge')}

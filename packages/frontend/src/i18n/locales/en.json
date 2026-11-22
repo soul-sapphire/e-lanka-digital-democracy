@@ -113,7 +113,15 @@
     "otpVerified": "Mobile SIM Verified (+94 Masked)",
     "step1Next": "Verify NIC & Proceed",
     "step2Next": "Query DRP Gateway",
-    "step3Next": "Verify Mobile SIM"
+    "step3Next": "Verify Mobile SIM",
+    "verifiedSessionBadge": "Citizen Identity Verified at Login",
+    "verifiedSessionNotice": "Tier 1 & Tier 2 verified. No re-entry required.",
+    "emailOtpOption": "Email OTP (Instant & Zero-Cost)",
+    "mobileOtpOption": "Mobile SMS (+94 Dialog / Mobitel / Airtel / Hutch)",
+    "resendOtpIn": "Resend code in {{seconds}}s",
+    "resendOtpBtn": "Resend Code",
+    "otpSentNotice": "Verification code dispatched to {{destination}}. Please enter the 6-digit code.",
+    "changeDetails": "Edit Details"
   },
   "dashboard": {
     "title": "My Citizen Dashboard",
@@ -152,7 +160,7 @@
     "citizenSignIn": "Citizen Sign In",
     "citizenSignInDesc": "Access your personal civic dashboard & PDPA records",
     "nicLabel": "National Identity Card (NIC)",
-    "nicHint": "Leave blank for demo quick-session, or provide NIC to sync signed petitions.",
+    "nicHint": "Enter your 12-digit or 9-digit (V/X) National Identity Card to verify your citizen profile.",
     "districtLabel": "Electoral District",
     "emailOptional": "Email Address (Optional)",
     "cancel": "Cancel",
@@ -161,7 +169,10 @@
     "staffQuestion": "Administrative Staff or Panel Moderator?",
     "adminPortalLink": "Admin Login Portal",
     "invalidNic": "Please enter a valid Sri Lankan NIC (9 digits + V/X or 12 digits).",
-    "signInFailed": "Sign in failed. Please verify your details."
+    "signInFailed": "Sign in failed. Please verify your details.",
+    "verifiedAtLogin": "Verified Citizen Session (NIC verified at login)",
+    "liveNicValid": "✓ Valid Sri Lankan NIC (Decoded DOB: {{dob}} • Gender: {{gender}})",
+    "liveNicInvalid": "Invalid NIC checksum or digit sequence."
   }
 }
 

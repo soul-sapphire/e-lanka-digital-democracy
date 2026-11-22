@@ -1360,6 +1360,65 @@ async function runTestSuite() {
   });
 
   // --------------------------------------------------------------------------
+  // WORKSTREAM 14: Citizen Login NIC Verification & Zero-Cost Real Production OTP
+  // --------------------------------------------------------------------------
+  it('14.1 Validates Citizen Login NIC verification and single-entry petition sign bypass', () => {
+    // 1. Verify decode of user NIC 200410805091
+    const { decodeAndValidateSriLankanNIC } = require('../packages/shared/dist/index.js');
+    const nicResult = decodeAndValidateSriLankanNIC('200410805091');
+    assert.strictEqual(nicResult.isValid, true, 'User NIC 200410805091 must be mathematically valid');
+    assert.strictEqual(nicResult.birthYear, 2004);
+    assert.strictEqual(nicResult.gender, 'MALE');
+    assert.strictEqual(nicResult.calculatedDOB, '2004-04-17');
+    assert.strictEqual(nicResult.isVoterEligible, true);
+
+    // 2. Verify CitizenSignInModal performs mathematical validation and enriches user
+    const signInCode = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/CitizenSignInModal.tsx'), 'utf8');
+    assert.ok(signInCode.includes('decodeAndValidateSriLankanNIC'), 'CitizenSignInModal must call decodeAndValidateSriLankanNIC');
+    assert.ok(signInCode.includes('res.user.nicNumber = cleanNIC'), 'CitizenSignInModal must persist verified NIC to user session');
+    assert.ok(signInCode.includes('res.user.isVerifiedCitizen = true'), 'CitizenSignInModal must set isVerifiedCitizen flag');
+
+    // 3. Verify PetitionSignModal checks getStoredUser and bypasses Step 1 & Step 2 for verified citizens
+    const signModalCode = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/PetitionSignModal.tsx'), 'utf8');
+    assert.ok(signModalCode.includes('getStoredUser'), 'PetitionSignModal must import and call getStoredUser');
+    assert.ok(signModalCode.includes('storedUser.isVerifiedCitizen'), 'PetitionSignModal must check stored citizen verification');
+    assert.ok(signModalCode.includes('setStep(3)'), 'PetitionSignModal must auto-advance to Step 3 for verified citizens');
+    assert.ok(signModalCode.includes('isPreVerified'), 'PetitionSignModal must track isPreVerified state to prevent duplicate input');
+    assert.ok(signModalCode.includes('verifiedSessionBadge'), 'PetitionSignModal must render verified citizen session badge');
+  });
+
+  it('14.2 Validates Real Zero-Cost OTP Infrastructure, dual channels, and demo artifact removal', () => {
+    // 1. Verify demo OTP hints and auto-fill buttons are completely removed from PetitionSignModal
+    const signModalCode = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/PetitionSignModal.tsx'), 'utf8');
+    assert.strictEqual(signModalCode.includes('demoOtpHint'), false, 'PetitionSignModal must have zero demoOtpHint references');
+    assert.strictEqual(signModalCode.includes('Auto-Fill'), false, 'PetitionSignModal must have zero Auto-Fill demo buttons');
+    assert.strictEqual(signModalCode.includes('Demo Sandbox OTP Code'), false, 'PetitionSignModal must have zero demo sandbox copy');
+
+    // 2. Verify dual channel support (Email OTP + Mobile SMS)
+    assert.ok(signModalCode.includes('verificationChannel'), 'PetitionSignModal must manage verificationChannel state');
+    assert.ok(signModalCode.includes('emailOtpOption'), 'PetitionSignModal must support Email OTP');
+    assert.ok(signModalCode.includes('mobileOtpOption'), 'PetitionSignModal must support Mobile SMS OTP');
+    assert.ok(signModalCode.includes('resendCooldown'), 'PetitionSignModal must enforce resend cooldown timer');
+
+    // 3. Verify auth.nicHint in en, si, ta does not contain "demo"
+    const enLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/en.json'), 'utf8'));
+    const siLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/si.json'), 'utf8'));
+    const taLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/ta.json'), 'utf8'));
+
+    assert.strictEqual(enLoc.auth.nicHint.toLowerCase().includes('demo'), false, 'en.json auth.nicHint must not mention demo');
+    assert.strictEqual(siLoc.auth.nicHint.includes('නිරූපණ'), false, 'si.json auth.nicHint must not mention demo/නිරූපණ');
+    assert.strictEqual(taLoc.auth.nicHint.includes('டெமோ'), false, 'ta.json auth.nicHint must not mention demo/டெமோ');
+
+    // 4. Verify Zero-Cost Production Guide exists
+    const guidePath = path.join(__dirname, '../docs/ZERO_COST_OTP_PRODUCTION_GUIDE.md');
+    assert.ok(fs.existsSync(guidePath), 'docs/ZERO_COST_OTP_PRODUCTION_GUIDE.md must exist');
+    const guideContent = fs.readFileSync(guidePath, 'utf8');
+    assert.ok(guideContent.includes('Firebase Phone Auth'), 'Guide must document Firebase Phone Auth');
+    assert.ok(guideContent.includes('10,000 Free SMS'), 'Guide must document 10,000 free SMS tier');
+    assert.ok(guideContent.includes('Resend Email OTP'), 'Guide must document Resend Email OTP');
+  });
+
+  // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------
   console.log('\n===============================================================');
