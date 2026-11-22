@@ -102,6 +102,30 @@ export const PublicPolicyHub: React.FC = () => {
             {t('hero.subtitle')}
           </p>
 
+          {/* Above-the-fold Primary Action CTAs */}
+          <div className="pt-2 flex flex-wrap items-center gap-3">
+            <Link
+              to="/petitions"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-lanka-gold hover:bg-amber-400 text-slate-950 font-bold text-sm sm:text-base shadow-lg shadow-lanka-gold/20 hover:scale-[1.02] transition-all"
+            >
+              <Vote className="w-5 h-5 text-slate-950" />
+              <span>{t('hero.signPetitionCta')}</span>
+            </Link>
+
+            <a
+              href="#consultations"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById('consultations')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm sm:text-base border border-slate-700 hover:border-slate-600 shadow-md transition-all"
+            >
+              <FileText className="w-5 h-5 text-lanka-gold" />
+              <span>{t('hero.joinConsultationCta')}</span>
+              <ArrowRight className="w-4 h-4 text-slate-400" />
+            </a>
+          </div>
+
           {/* Quick Metrics (Dynamic Live Counts) */}
           <div className="pt-4 grid grid-cols-2 sm:grid-cols-3 gap-4 border-t border-slate-800/80">
             <div>
@@ -184,7 +208,7 @@ export const PublicPolicyHub: React.FC = () => {
       </section>
 
       {/* Policy Consultations Grid */}
-      <section className="space-y-4">
+      <section id="consultations" className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
             <FileText className="w-5 h-5 text-lanka-gold" />

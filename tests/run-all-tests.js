@@ -1174,6 +1174,37 @@ async function runTestSuite() {
     assert.ok(footerContent.includes('/admin/login'), 'Footer must provide access to /admin/login for moderators');
   });
 
+  it('13.2 Issue 4.2: Missing Master Narrative & Above-the-Fold CTAs in Policy Hub Hero Section', () => {
+    // 1. Verify Master Narrative headline in trilingual translations
+    const enLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/en.json'), 'utf8'));
+    const siLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/si.json'), 'utf8'));
+    const taLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/ta.json'), 'utf8'));
+
+    assert.strictEqual(
+      enLoc.hero.title,
+      'E-Lanka — Beyond Comments: Turn Your Voice into National Policy',
+      'English hero title must match exact Master Campaign Narrative'
+    );
+    assert.strictEqual(enLoc.hero.signPetitionCta, 'Sign an E-Petition', 'English CTA must match Sign an E-Petition');
+    assert.strictEqual(enLoc.hero.joinConsultationCta, 'Join a Consultation', 'English CTA must match Join a Consultation');
+
+    assert.ok(siLoc.hero.title.includes('හුදු අදහස්වලින් ඔබ්බට'), 'Sinhala hero title must reflect Master Campaign Narrative');
+    assert.strictEqual(siLoc.hero.signPetitionCta, 'ඊ-පෙත්සමක් අත්සන් කරන්න', 'Sinhala CTA must match Sign an E-Petition');
+    assert.strictEqual(siLoc.hero.joinConsultationCta, 'ප්‍රතිපත්ති සාකච්ඡාවකට එක්වන්න', 'Sinhala CTA must match Join a Consultation');
+
+    assert.ok(taLoc.hero.title.includes('வெறும் கருத்துக்களுக்கு அப்பால்'), 'Tamil hero title must reflect Master Campaign Narrative');
+    assert.strictEqual(taLoc.hero.signPetitionCta, 'மின்-மனுவில் கையொப்பமிடுங்கள்', 'Tamil CTA must match Sign an E-Petition');
+    assert.strictEqual(taLoc.hero.joinConsultationCta, 'கொள்கை ஆலோசனையில் இணையுங்கள்', 'Tamil CTA must match Join a Consultation');
+
+    // 2. Verify PublicPolicyHub.tsx has both CTAs above the fold
+    const hubPath = path.join(__dirname, '../packages/frontend/src/views/PublicPolicyHub.tsx');
+    const hubContent = fs.readFileSync(hubPath, 'utf8');
+    assert.ok(hubContent.includes('to="/petitions"'), 'PublicPolicyHub hero must link to /petitions');
+    assert.ok(hubContent.includes("t('hero.signPetitionCta')"), 'Hero must render signPetitionCta button');
+    assert.ok(hubContent.includes("t('hero.joinConsultationCta')"), 'Hero must render joinConsultationCta button');
+    assert.ok(hubContent.includes('id="consultations"'), 'PublicPolicyHub must have #consultations target section');
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------

@@ -18,8 +18,10 @@
     "online": "Connected"
   },
   "hero": {
-    "title": "Participatory Governance for Sri Lanka",
+    "title": "E-Lanka — Beyond Comments: Turn Your Voice into National Policy",
     "subtitle": "Cast your voice on national policy briefs, sign verified civic petitions, and shape legislation under statutory non-retaliation data protections.",
+    "signPetitionCta": "Sign an E-Petition",
+    "joinConsultationCta": "Join a Consultation",
     "explorePolicies": "Explore Policy Consultations",
     "viewPetitions": "Browse E-Petitions",
     "activeConsultations": "Active Consultations",
