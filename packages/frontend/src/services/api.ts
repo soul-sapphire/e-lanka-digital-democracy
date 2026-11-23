@@ -27,6 +27,7 @@ import {
 } from '@e-lanka/shared';
 import { OfflineQueueManager } from './offline-queue';
 import { sendEmailJSOTP } from './emailjs.service';
+import { sendGoogleScriptOTP } from './google-mail.service';
 import {
   getClientDemoPolicies,
   saveClientDemoPolicies,
@@ -903,11 +904,19 @@ export const api = {
       sessionStorage.setItem(`otp_${ref}`, JSON.stringify({ code, destination: email, channel: 'EMAIL' }));
       console.log(`[E-Lanka Verification Gateway] ✉ OTP dispatched to ${email} (Reference ${ref}): ${code}`);
 
-      // Live Email Dispatch via EmailJS directly from browser to user's real email inbox
+      // 1. High-Volume Primary Gateway: Google Apps Script (15,000 free emails/month, 500/day)
       let liveSent = false;
       try {
+        const gasRes = await sendGoogleScriptOTP(email, code, ref);
+        if (gasRes.success) liveSent = true;
+      } catch (err) {
+        console.warn('[Google Mail Gateway] Delivery attempt:', err);
+      }
+
+      // 2. Secondary Fallback Gateway: EmailJS
+      try {
         const emailjsRes = await sendEmailJSOTP(email, code, ref);
-        liveSent = emailjsRes.success;
+        if (emailjsRes.success) liveSent = true;
       } catch (err) {
         console.warn('[EmailJS] Delivery attempt:', err);
       }
