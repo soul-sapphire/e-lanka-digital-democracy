@@ -17,36 +17,30 @@ export async function sendEmailJSOTP(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const templateParams = {
-      // Identity & Routing
-      from_name: 'E-Lanka Digital Democracy',
-      sender_name: 'E-Lanka Democratic Platform',
-      reply_to: 'support@elanka.gov.lk',
+      // Recipient routing
       to_email: targetEmail.trim(),
       email: targetEmail.trim(),
       recipient: targetEmail.trim(),
       to_name: 'Citizen',
       name: 'Citizen',
-      subject: `[E-Lanka] Citizen Verification Code: ${otpCode}`,
 
-      // Pure E-Lanka OTP Variables
+      // Standard Verification Code variables (matches EmailJS standard templates)
       otp_code: otpCode,
       verification_code: otpCode,
       code: otpCode,
-      reference: reference,
-      summary_date: new Date().toLocaleDateString('en-GB'),
-      message: `Welcome to E-Lanka Digital Democracy.\n\nYour 6-digit citizen verification code is: ${otpCode}\n\nThis one-time passcode is valid for 2 minutes. Reference: ${reference}.\n\nFor your security, do not share this verification code with anyone.`,
-      recommendations: `Verification Code: ${otpCode} (Valid for 2 minutes) | Reference: ${reference}`,
+      passcode: otpCode,
 
-      // Neutralize any legacy or pediatric fields if using a shared template
-      child_name: 'E-Lanka Citizen Verification',
-      child_age: '',
-      child_gender: '',
-      headache_score: '',
-      fressh_score: '',
-      severity: 'Verified',
-      passport_link: '',
-      continue_link: '',
-      app_url: 'https://elanka.gov.lk'
+      // Metadata & Context
+      reference: reference,
+      expiry_time: '2 minutes',
+      time_stamp: new Date().toLocaleString('en-GB'),
+      subject: `[E-Lanka] Citizen Verification Code: ${otpCode}`,
+      message: `Your E-Lanka Digital Democracy one-time verification code is: ${otpCode}. This code is valid for 2 minutes. Reference: ${reference}. Never share this code with anyone.`,
+
+      // Institution & Compliance
+      platform_name: 'E-Lanka Digital Democracy Platform',
+      support_email: 'support@elanka.gov.lk',
+      pdpa_statement: 'Protected under Sri Lanka Personal Data Protection Act No. 9 of 2022.'
     };
 
     const res = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
