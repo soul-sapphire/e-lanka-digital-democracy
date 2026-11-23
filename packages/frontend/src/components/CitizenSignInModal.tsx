@@ -422,7 +422,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                       <div className="flex items-center justify-between">
                         <span className="font-semibold flex items-center gap-1.5 text-amber-400">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          {channel === 'EMAIL' ? 'Live Email Dispatched via EmailJS' : 'Verification Code Generated'}
+                          {channel === 'EMAIL' ? 'Live Verification Email Dispatched' : 'Verification Code Generated'}
                         </span>
                         <button
                           type="button"
@@ -440,7 +440,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                       </div>
                       <p className="text-[10px] text-slate-400 leading-snug">
                         {channel === 'EMAIL'
-                          ? '✉ Real verification email dispatched to your inbox via EmailJS. Check your Gmail inbox/spam or click Auto-Fill.'
+                          ? '✉ Real verification email dispatched to your inbox from elanka.portal@gmail.com. Check your inbox/spam or click Auto-Fill.'
                           : 'ℹ️ Mobile SMS gateway sandbox active. Enter the 6-digit code above or click Auto-Fill to verify.'}
                       </p>
                     </div>

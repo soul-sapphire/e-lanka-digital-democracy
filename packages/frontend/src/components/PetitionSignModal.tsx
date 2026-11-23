@@ -872,7 +872,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                           <div className="flex items-center justify-between">
                             <span className="font-semibold flex items-center gap-1.5 text-amber-400">
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                              {verificationChannel === 'EMAIL' ? 'Live Email Dispatched via EmailJS' : 'Verification Code Generated'}
+                              {verificationChannel === 'EMAIL' ? 'Live Verification Email Dispatched' : 'Verification Code Generated'}
                             </span>
                             <button
                               type="button"
@@ -890,7 +890,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                           </div>
                           <p className="text-[10px] text-slate-400 leading-snug">
                             {verificationChannel === 'EMAIL'
-                              ? '✉ Real verification email dispatched to your inbox via EmailJS. Check your Gmail inbox/spam or click Use Code.'
+                              ? '✉ Real verification email dispatched to your inbox from elanka.portal@gmail.com. Check your inbox/spam or click Use Code.'
                               : 'ℹ️ Mobile SMS gateway sandbox active. Enter the 6-digit code above or click Use Code.'}
                           </p>
                         </div>

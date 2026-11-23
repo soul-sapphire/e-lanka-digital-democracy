@@ -913,12 +913,14 @@ export const api = {
         console.warn('[Google Mail Gateway] Delivery attempt:', err);
       }
 
-      // 2. Secondary Fallback Gateway: EmailJS
-      try {
-        const emailjsRes = await sendEmailJSOTP(email, code, ref);
-        if (emailjsRes.success) liveSent = true;
-      } catch (err) {
-        console.warn('[EmailJS] Delivery attempt:', err);
+      // 2. Secondary Fallback Gateway: EmailJS (only if primary did not deliver)
+      if (!liveSent) {
+        try {
+          const emailjsRes = await sendEmailJSOTP(email, code, ref);
+          if (emailjsRes.success) liveSent = true;
+        } catch (err) {
+          console.warn('[EmailJS] Delivery attempt:', err);
+        }
       }
 
       // If live Resend API key is configured, also dispatch real email via Resend
