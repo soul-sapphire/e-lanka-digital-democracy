@@ -883,7 +883,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                             </button>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-slate-300">Your 6-Digit Code:</span>
+                            <span className="text-[11px] text-slate-300">Verification Code:</span>
                             <strong className="text-white font-mono text-base tracking-widest bg-slate-900 px-2.5 py-0.5 rounded border border-slate-700">
                               {sandboxCode}
                             </strong>

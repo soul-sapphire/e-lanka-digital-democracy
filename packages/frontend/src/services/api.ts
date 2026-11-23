@@ -903,7 +903,7 @@ export const api = {
       sessionStorage.setItem(`otp_${ref}`, JSON.stringify({ code, destination: email, channel: 'EMAIL' }));
       console.log(`[E-Lanka Verification Gateway] ✉ OTP dispatched to ${email} (Reference ${ref}): ${code}`);
 
-      // Live Email Dispatch via EmailJS directly to user's real email inbox
+      // Live Email Dispatch via EmailJS directly from browser to user's real email inbox
       let liveSent = false;
       try {
         const emailjsRes = await sendEmailJSOTP(email, code, ref);
@@ -912,7 +912,7 @@ export const api = {
         console.warn('[EmailJS] Delivery attempt:', err);
       }
 
-      // If live Resend API key is configured, also dispatch via Resend
+      // If live Resend API key is configured, also dispatch real email via Resend
       const resendKey = (import.meta as any).env?.VITE_RESEND_API_KEY;
       if (resendKey) {
         try {
