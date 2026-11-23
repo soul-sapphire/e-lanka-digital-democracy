@@ -121,7 +121,9 @@
     "resendOtpIn": "Resend code in {{seconds}}s",
     "resendOtpBtn": "Resend Code",
     "otpSentNotice": "Verification code dispatched to {{destination}}. Please enter the 6-digit code.",
-    "changeDetails": "Edit Details"
+    "changeDetails": "Edit Details",
+    "quotaSavingNotice": "Dividing requests: Use Email OTP to save national carrier SMS quota, or Mobile SMS for direct phone delivery.",
+    "fullVerificationActive": "Full 3-Tier Verification Active (NIC, DRP & OTP Verified at Login). Ready to record signature."
   },
   "dashboard": {
     "title": "My Citizen Dashboard",
@@ -172,7 +174,14 @@
     "signInFailed": "Sign in failed. Please verify your details.",
     "verifiedAtLogin": "Verified Citizen Session (NIC verified at login)",
     "liveNicValid": "✓ Valid Sri Lankan NIC (Decoded DOB: {{dob}} • Gender: {{gender}})",
-    "liveNicInvalid": "Invalid NIC checksum or digit sequence."
+    "liveNicInvalid": "Invalid NIC checksum or digit sequence.",
+    "chooseOtpChannel": "Choose verification channel to divide requests & save SMS quota",
+    "mobilePhoneOptional": "Sri Lankan Mobile Number (Optional)",
+    "sendOtpBtn": "Send Verification Code",
+    "enterOtpHint": "Enter 6-digit code sent to {{destination}}",
+    "verifyAndSignIn": "Verify & Sign In",
+    "signInWithoutOtp": "Sign In Directly (Verify Later)",
+    "otpVerifiedBadge": "✓ Proof of Life Verified"
   }
 }
 

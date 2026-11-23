@@ -73,20 +73,23 @@ router.post('/drp-check', async (req: Request, res: Response) => {
 
 /**
  * POST /api/v1/verification/send-otp
- * Tier 3: TRCSL Mobile SIM OTP Dispatch
+ * Tier 3: Cryptographic Proof of Life OTP Dispatch (Mobile SMS or Email)
  */
 router.post('/send-otp', async (req: Request, res: Response) => {
-  const { mobileNumber } = req.body;
+  const { mobileNumber, email, destination, channel } = req.body;
+  const target = destination || (channel === 'EMAIL' ? email : (mobileNumber || email));
 
-  if (!mobileNumber) {
+  if (!target) {
     return res.status(400).json({
       success: false,
-      error: 'Sri Lankan mobile number is required.'
+      error: 'Destination email address or Sri Lankan mobile number is required.'
     });
   }
 
+  const effectiveChannel = (channel === 'EMAIL' || target.includes('@')) ? 'EMAIL' : 'MOBILE';
+
   try {
-    const result = await mobileOTPService.dispatchOTP(mobileNumber);
+    const result = await mobileOTPService.dispatchOTP(target, effectiveChannel);
     if (!result.success) {
       return res.status(400).json({
         success: false,
@@ -108,19 +111,20 @@ router.post('/send-otp', async (req: Request, res: Response) => {
 
 /**
  * POST /api/v1/verification/verify-otp
- * Tier 3: Verify received 6-digit OTP
+ * Tier 3: Verify received 6-digit OTP (Mobile SMS or Email)
  */
 router.post('/verify-otp', (req: Request, res: Response) => {
-  const { otpReference, mobileNumber, otpCode } = req.body;
+  const { otpReference, mobileNumber, email, destination, otpCode, channel } = req.body;
+  const target = destination || mobileNumber || email;
 
-  if (!otpReference || !mobileNumber || !otpCode) {
+  if (!otpReference || !target || !otpCode) {
     return res.status(400).json({
       success: false,
-      error: 'Missing required parameters: otpReference, mobileNumber, and otpCode are required.'
+      error: 'Missing required parameters: otpReference, destination (phone or email), and otpCode are required.'
     });
   }
 
-  const result = mobileOTPService.verifyOTP(otpReference, mobileNumber, otpCode);
+  const result = mobileOTPService.verifyOTP(otpReference, target, otpCode, channel);
 
   if (!result.verified) {
     return res.status(400).json({

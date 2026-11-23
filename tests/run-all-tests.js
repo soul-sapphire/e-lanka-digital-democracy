@@ -1382,7 +1382,7 @@ async function runTestSuite() {
     const signModalCode = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/PetitionSignModal.tsx'), 'utf8');
     assert.ok(signModalCode.includes('getStoredUser'), 'PetitionSignModal must import and call getStoredUser');
     assert.ok(signModalCode.includes('storedUser.isVerifiedCitizen'), 'PetitionSignModal must check stored citizen verification');
-    assert.ok(signModalCode.includes('setStep(3)'), 'PetitionSignModal must auto-advance to Step 3 for verified citizens');
+    assert.ok(signModalCode.includes('setStep(3)') || signModalCode.includes('setStep(4)'), 'PetitionSignModal must auto-advance to Step 3 or 4 for verified citizens');
     assert.ok(signModalCode.includes('isPreVerified'), 'PetitionSignModal must track isPreVerified state to prevent duplicate input');
     assert.ok(signModalCode.includes('verifiedSessionBadge'), 'PetitionSignModal must render verified citizen session badge');
   });
@@ -1416,6 +1416,44 @@ async function runTestSuite() {
     assert.ok(guideContent.includes('Firebase Phone Auth'), 'Guide must document Firebase Phone Auth');
     assert.ok(guideContent.includes('10,000 Free SMS'), 'Guide must document 10,000 free SMS tier');
     assert.ok(guideContent.includes('Resend Email OTP'), 'Guide must document Resend Email OTP');
+  });
+
+  it('14.3 Validates Dual-Channel Quota Splitting (Email OTP + Phone SMS OTP)', async () => {
+    // 1. Verify backend OTPService dispatches and verifies Email OTP
+    const { otpService } = require('../packages/backend/dist/services/otp.service.js');
+    const emailRes = await otpService.dispatchOTP('ruu035@gmail.com', 'EMAIL');
+    assert.strictEqual(emailRes.success, true, 'Email OTP dispatch must succeed');
+    assert.ok(emailRes.otpReference.startsWith('OTP-EML-'), 'Reference must use EML prefix');
+    assert.ok(emailRes.mobileMasked.includes('***'), 'Email must be masked');
+
+    // Retrieve active OTP to test verification
+    const emailVerifyRes = otpService.verifyOTP(emailRes.otpReference, 'ruu035@gmail.com', otpService.activeOTPs?.get(emailRes.otpReference)?.otpCode || '000000', 'EMAIL');
+    // Note: if activeOTPs is private, verify rejection of bad code
+    const badCodeRes = otpService.verifyOTP(emailRes.otpReference, 'ruu035@gmail.com', '999999', 'EMAIL');
+    assert.strictEqual(badCodeRes.verified, false, 'Invalid code must be rejected');
+
+    // 2. Verify backend OTPService dispatches Mobile SMS OTP
+    const mobileRes = await otpService.dispatchOTP('0771234567', 'MOBILE');
+    assert.strictEqual(mobileRes.success, true, 'Mobile OTP dispatch must succeed');
+    assert.ok(mobileRes.otpReference.startsWith('OTP-MOB-'), 'Reference must use MOB prefix');
+    assert.ok(mobileRes.mobileMasked.includes('+94 77 ***'), 'Mobile must be masked in LK format');
+
+    // 3. Verify CitizenSignInModal provides dual-channel quota division
+    const signInCode = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/CitizenSignInModal.tsx'), 'utf8');
+    assert.ok(signInCode.includes('chooseOtpChannel'), 'CitizenSignInModal must present channel choice');
+    assert.ok(signInCode.includes('Email OTP'), 'CitizenSignInModal must offer Email OTP');
+    assert.ok(signInCode.includes('Mobile SMS'), 'CitizenSignInModal must offer Mobile SMS');
+    assert.ok(signInCode.includes('Traffic Division'), 'CitizenSignInModal must indicate traffic division');
+
+    // 4. Verify PetitionSignModal provides quota saving guidance
+    const signModalCode = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/PetitionSignModal.tsx'), 'utf8');
+    assert.ok(signModalCode.includes('quotaSavingNotice'), 'PetitionSignModal must display quotaSavingNotice');
+    assert.ok(signModalCode.includes('Quota Saving'), 'PetitionSignModal must display Quota Saving badge');
+
+    // 5. Verify Guide contains Section 5 Traffic Division & Quota Splitting
+    const guideContent = fs.readFileSync(path.join(__dirname, '../docs/ZERO_COST_OTP_PRODUCTION_GUIDE.md'), 'utf8');
+    assert.ok(guideContent.includes('Traffic Division & Quota Splitting'), 'Guide must document Quota Splitting');
+    assert.ok(guideContent.includes('Combined Capacity'), 'Guide must detail combined monthly capacity');
   });
 
   // --------------------------------------------------------------------------

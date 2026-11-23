@@ -110,6 +110,13 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
       }
       if (storedUser.email) {
         setEmail(storedUser.email);
+      }
+      if (storedUser.mobile) {
+        setMobileNumber(storedUser.mobile);
+      }
+      if (storedUser.verificationChannel) {
+        setVerificationChannel(storedUser.verificationChannel);
+      } else if (storedUser.email) {
         setVerificationChannel('EMAIL');
       } else {
         setVerificationChannel('MOBILE');
@@ -126,8 +133,18 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
         verifiedAt: new Date().toISOString()
       });
       setIsPreVerified(true);
-      // Seamless bypass: skip Step 1 and Step 2 directly to OTP verification!
-      setStep(3);
+
+      // If citizen already verified OTP at login, bypass Step 1, 2, AND 3 straight to 1-click signing!
+      if (storedUser.otpVerified) {
+        setOtpVerified(true);
+        if (storedUser.verifiedDestination) {
+          setMaskedMobile(storedUser.verifiedDestination);
+        }
+        setStep(4);
+      } else {
+        // Seamless bypass: skip Step 1 and Step 2 directly to OTP verification!
+        setStep(3);
+      }
     } else {
       setIsPreVerified(false);
       setStep(1);
@@ -752,6 +769,14 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                     </button>
                   </div>
 
+                  {/* Quota Division Guidance Banner */}
+                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-700/60 flex items-center gap-2 text-[11px] text-slate-300">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold shrink-0">
+                      Quota Saving
+                    </span>
+                    <span>{t('petitions.quotaSavingNotice')}</span>
+                  </div>
+
                   {/* Input field based on channel */}
                   {verificationChannel === 'EMAIL' ? (
                     <div>
@@ -886,6 +911,12 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                     <CheckCircle2 className="w-4 h-4" />
                     <span>Multi-Tier Verification Complete</span>
                   </div>
+
+                  {isPreVerified && otpVerified && (
+                    <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-[11px] text-emerald-300">
+                      {t('petitions.fullVerificationActive')}
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
                     <div>NIC Number: <span className="font-mono text-white">{nicNumber}</span></div>

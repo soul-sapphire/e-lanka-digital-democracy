@@ -60,9 +60,21 @@ As demonstrated during citizen sign-in (e.g. `ruu035@gmail.com`), citizens provi
 To respect citizen time and minimize privacy exposure:
 1. When a citizen clicks **Citizen Sign In** and enters their National Identity Card (e.g. `200410805091`):
    - The platform calculates the mathematical checksum, verifies the format (12-digit or 9-digit V/X), decodes the year of birth, day of year, and gender.
-   - The identity is marked as **Verified Citizen (Tier 1 & Tier 2 Confirmed)** in the browser session.
+   - The citizen can choose between **Email OTP** or **Mobile SMS** right during sign in to verify their identity.
+   - Once verified, the citizen identity is stored as **Tier 1, 2, and 3 Verified**.
 2. When the citizen browses to any national petition and clicks **Sign This Petition**:
    - The platform detects their verified session.
-   - **Step 1 (NIC Entry) and Step 2 (DRP Query) are automatically bypassed.**
-   - The modal starts immediately at **Step 3 (Proof of Life OTP)**.
-   - The citizen never has to type their NIC, DOB, or Gender again.
+   - **Step 1 (NIC Entry), Step 2 (DRP Query), and Step 3 (OTP Verification) are completely bypassed.**
+   - The citizen signs in a single click with full statutory compliance.
+
+---
+
+### 5. Traffic Division & Quota Splitting (Cost & Limit Optimization)
+
+To prevent any single free quota from being exhausted:
+* **Division by User Preference:** Users are presented with a toggle to choose either Email OTP or Phone SMS.
+* **Quota Preservation:**
+  * Citizens with internet access on laptops or smartphones typically choose **Email OTP**, which utilizes the 3,000–9,000 free email quota without touching mobile SMS limits.
+  * Rural or field citizens without active email inboxes choose **Mobile SMS OTP**, which uses the 10,000 free SMS tier from Google Firebase.
+* **Combined Capacity:** Together, this dual-channel architecture provides **13,000+ to 19,000+ monthly citizen verifications at $0.00 cost**.
+
