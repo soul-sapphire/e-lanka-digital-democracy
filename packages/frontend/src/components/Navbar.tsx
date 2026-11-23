@@ -126,11 +126,10 @@ export const Navbar: React.FC = () => {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-xs lg:text-sm font-medium whitespace-nowrap transition-colors ${
-                    isActive
-                      ? 'bg-slate-800 text-lanka-gold border border-slate-700'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-                  }`}
+                  className={`flex items-center gap-1.5 px-2.5 lg:px-3 py-1.5 rounded-md text-xs lg:text-sm font-medium whitespace-nowrap transition-colors ${isActive
+                    ? 'bg-slate-800 text-lanka-gold border border-slate-700'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                    }`}
                 >
                   <Icon className="w-4 h-4 shrink-0" />
                   <span className="whitespace-nowrap">{link.label}</span>
@@ -146,11 +145,10 @@ export const Navbar: React.FC = () => {
               <button
                 type="button"
                 onClick={() => changeLanguage('en')}
-                className={`px-2.5 py-1 rounded font-medium transition-all ${
-                  i18n.language === 'en'
-                    ? 'bg-lanka-gold text-slate-950 font-semibold shadow-sm'
-                    : 'text-slate-300 hover:text-white'
-                }`}
+                className={`px-2.5 py-1 rounded font-medium transition-all ${i18n.language === 'en'
+                  ? 'bg-lanka-gold text-slate-950 font-semibold shadow-sm'
+                  : 'text-slate-300 hover:text-white'
+                  }`}
                 title="Switch to English"
               >
                 EN
@@ -158,11 +156,10 @@ export const Navbar: React.FC = () => {
               <button
                 type="button"
                 onClick={() => changeLanguage('si')}
-                className={`px-2.5 py-1 rounded font-medium font-sinhala transition-all ${
-                  i18n.language === 'si'
-                    ? 'bg-lanka-gold text-slate-950 font-semibold shadow-sm'
-                    : 'text-slate-300 hover:text-white'
-                }`}
+                className={`px-2.5 py-1 rounded font-medium font-sinhala transition-all ${i18n.language === 'si'
+                  ? 'bg-lanka-gold text-slate-950 font-semibold shadow-sm'
+                  : 'text-slate-300 hover:text-white'
+                  }`}
                 title="සිංහල භාෂාවට මාරු වන්න"
               >
                 සිංහල
@@ -170,11 +167,10 @@ export const Navbar: React.FC = () => {
               <button
                 type="button"
                 onClick={() => changeLanguage('ta')}
-                className={`px-2.5 py-1 rounded font-medium font-tamil transition-all ${
-                  i18n.language === 'ta'
-                    ? 'bg-lanka-gold text-slate-950 font-semibold shadow-sm'
-                    : 'text-slate-300 hover:text-white'
-                }`}
+                className={`px-2.5 py-1 rounded font-medium font-tamil transition-all ${i18n.language === 'ta'
+                  ? 'bg-lanka-gold text-slate-950 font-semibold shadow-sm'
+                  : 'text-slate-300 hover:text-white'
+                  }`}
                 title="தமிழுக்கு மாறவும்"
               >
                 தமிழ்
@@ -249,14 +245,18 @@ export const Navbar: React.FC = () => {
                 key={link.to}
                 to={link.to}
                 onClick={() => setIsMenuOpen(false)}
-                className={`flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium ${
-                  isActive ? 'bg-slate-800 text-lanka-gold' : 'text-slate-300 hover:bg-slate-800/50'
-                }`}
+                className={`flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium ${isActive ? 'bg-slate-800 text-lanka-gold' : 'text-slate-300 hover:bg-slate-800/50'
+                  }`}
               >
                 <div className="flex items-center gap-2">
                   <Icon className="w-4 h-4" />
                   <span>{link.label}</span>
                 </div>
+                {(link as any).badge && (
+                  <span className="text-[9px] bg-red-900/60 text-red-300 px-1 rounded font-mono">
+                    {(link as any).badge}
+                  </span>
+                )}
               </Link>
             );
           })}

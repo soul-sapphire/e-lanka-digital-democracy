@@ -902,6 +902,28 @@ export const api = {
       sessionStorage.setItem(`otp_${ref}`, JSON.stringify({ code, destination: email, channel: 'EMAIL' }));
       console.log(`[E-Lanka Verification Gateway] ✉ OTP dispatched to ${email} (Reference ${ref}): ${code}`);
 
+      // If live Resend API key is configured, dispatch real email to recipient's inbox
+      const resendKey = (import.meta as any).env?.VITE_RESEND_API_KEY;
+      if (resendKey) {
+        try {
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${resendKey}`
+            },
+            body: JSON.stringify({
+              from: 'E-Lanka Digital Democracy <onboarding@resend.dev>',
+              to: [email],
+              subject: `[E-Lanka] Your Verification Code is ${code}`,
+              html: `<p>Your E-Lanka one-time verification code is: <strong>${code}</strong>. Valid for 2 minutes.</p>`
+            })
+          });
+        } catch (err) {
+          console.error('[Live Email Dispatch Failed]', err);
+        }
+      }
+
       return {
         success: true,
         data: {
