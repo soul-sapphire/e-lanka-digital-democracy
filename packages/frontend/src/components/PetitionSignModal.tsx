@@ -17,7 +17,7 @@ import {
   Lock
 } from 'lucide-react';
 import { EPetition, SriLankanNICDetails, DRPVerificationResult, formatSriLankanDate, decodeAndValidateSriLankanNIC } from '@e-lanka/shared';
-import { api, getStoredUser } from '../services/api';
+import { api, getStoredUser, setStoredUser } from '../services/api';
 import { LiveCounterWidget } from './LiveCounterWidget';
 
 interface PetitionSignModalProps {
@@ -134,11 +134,15 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
       });
       setIsPreVerified(true);
 
-      // If citizen already verified OTP at login, bypass Step 1, 2, AND 3 straight to 1-click signing!
-      if (storedUser.otpVerified) {
+      // If citizen already verified OTP at login or has a verified profile, bypass Step 1, 2, AND 3 straight to 1-click signing!
+      if (storedUser.otpVerified || storedUser.isVerifiedCitizen) {
         setOtpVerified(true);
         if (storedUser.verifiedDestination) {
           setMaskedMobile(storedUser.verifiedDestination);
+        } else if (storedUser.verifiedEmail) {
+          setMaskedMobile(storedUser.verifiedEmail);
+        } else if (storedUser.verifiedMobile) {
+          setMaskedMobile(storedUser.verifiedMobile);
         }
         setStep(4);
       } else {
@@ -262,6 +266,25 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
       const res = await api.verifyMobileOTP(otpReference, destination, otpCode);
       if (res.success && res.data && res.data.verified) {
         setOtpVerified(true);
+        // Save verified account credentials to unlock permanent zero-quota signing
+        const current = getStoredUser() || {
+          id: `citizen_${Date.now()}`,
+          anonymizedAlias: `Citizen-${district || 'Western'}-${nicNumber ? nicNumber.slice(-4) : '9421'}`,
+          district: district || 'Colombo',
+          role: 'CITIZEN'
+        };
+        current.isVerifiedCitizen = true;
+        current.otpVerified = true;
+        current.nicNumber = nicNumber.trim().toUpperCase().replace(/[\s-]/g, '');
+        current.district = district;
+        current.verificationChannel = verificationChannel;
+        current.verifiedDestination = maskedMobile || destination;
+        if (verificationChannel === 'EMAIL') {
+          current.verifiedEmail = destination;
+        } else {
+          current.verifiedMobile = destination;
+        }
+        setStoredUser(current);
         setStep(4); // Move to final PDPA consent step
       } else {
         setError(res.error || 'Invalid 6-digit verification code.');
@@ -913,8 +936,9 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                   </div>
 
                   {isPreVerified && otpVerified && (
-                    <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-[11px] text-emerald-300">
-                      {t('petitions.fullVerificationActive')}
+                    <div className="p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-500/40 text-[11px] text-emerald-300 space-y-1">
+                      <div>{t('petitions.fullVerificationActive')}</div>
+                      <div className="text-emerald-400 font-semibold">{t('petitions.verified1ClickNotice')}</div>
                     </div>
                   )}
 

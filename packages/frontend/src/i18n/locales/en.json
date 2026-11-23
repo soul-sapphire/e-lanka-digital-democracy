@@ -10,6 +10,7 @@
     "home": "Policy Hub",
     "petitions": "E-Petitions",
     "dashboard": "My Citizen Dashboard",
+    "profile": "My Profile",
     "admin": "Moderation Gate",
     "lms": "Academy",
     "login": "Citizen Login",
@@ -123,11 +124,14 @@
     "otpSentNotice": "Verification code dispatched to {{destination}}. Please enter the 6-digit code.",
     "changeDetails": "Edit Details",
     "quotaSavingNotice": "Dividing requests: Use Email OTP to save national carrier SMS quota, or Mobile SMS for direct phone delivery.",
-    "fullVerificationActive": "Full 3-Tier Verification Active (NIC, DRP & OTP Verified at Login). Ready to record signature."
+    "fullVerificationActive": "Full 3-Tier Verification Active (NIC, DRP & OTP Verified at Login). Ready to record signature.",
+    "verified1ClickNotice": "Verified Account Detected: 1-Click Instant Signing Active without SMS/Email verification."
   },
   "dashboard": {
     "title": "My Citizen Dashboard",
     "subtitle": "Your civic participation history is kept completely anonymous and confidential.",
+    "profileTitle": "My Citizen Profile & Civic Dashboard",
+    "profileSubtitle": "Manage your verified citizen credentials, track all signed e-petitions, and exercise your statutory PDPA rights.",
     "aliasLabel": "Your Anonymized Civic Identity",
     "district": "Registered District",
     "signedPetitions": "E-Petitions You Have Signed",
@@ -143,7 +147,18 @@
     "applicationEncryption": "Application Encryption",
     "encryptionActive": "Military-Grade Security Active",
     "identityProtection": "Identity Protection",
-    "identityDecoupled": "Decoupled via Pseudonymization"
+    "identityDecoupled": "Decoupled via Pseudonymization",
+    "verifiedEmail": "Verified Email",
+    "verifiedMobile": "Verified Mobile SIM",
+    "quotaFreeBadge": "Permanent 1-Click Signing Active (Zero Quota Needed)",
+    "quotaFreeDesc": "Your account is permanently verified. You can sign any civic petition instantly with 1-click without consuming SMS or Email verification quotas.",
+    "noPetitionsYet": "You haven't signed any petitions yet.",
+    "browsePetitions": "Browse Active E-Petitions",
+    "viewPetition": "View Petition",
+    "progressLabel": "{{current}} of {{goal}} signatures",
+    "totalSigned": "Total Signed: {{count}}",
+    "accountErasureNotice": "Account & Data Successfully Deleted under PDPA Section 16",
+    "accountErasureDesc": "Your verified credentials, email, and identity links have been scrubbed. Your civic vote counts remain securely preserved in national totals."
   },
   "admin": {
     "title": "Statutory Moderation Gate & Admin Portal",

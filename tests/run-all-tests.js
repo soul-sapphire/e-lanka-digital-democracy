@@ -1456,6 +1456,33 @@ async function runTestSuite() {
     assert.ok(guideContent.includes('Combined Capacity'), 'Guide must detail combined monthly capacity');
   });
 
+  it('14.4 Validates User Profile Page, Signed Petitions Tracker, and Centralized Right to Erasure (100k+ Scale)', () => {
+    // 1. Verify /profile route in App.tsx
+    const appContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/App.tsx'), 'utf8');
+    assert.ok(appContent.includes('path="/profile"'), 'App.tsx must register /profile route');
+
+    // 2. Verify User Profile & Signed Petitions Tracker in CitizenDashboard.tsx
+    const profileContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/views/CitizenDashboard.tsx'), 'utf8');
+    assert.ok(profileContent.includes('signedPetitions'), 'Profile must include signed petitions tracker');
+    assert.ok(profileContent.includes('quotaFreeBadge'), 'Profile must include quota-free 1-click signing badge');
+    assert.ok(profileContent.includes('erasureTitle'), 'Profile must include centralized statutory Right to Erasure (PDPA Sec 16)');
+    assert.ok(profileContent.includes('Delete My Account & Data'), 'Profile must provide Delete My Account & Data button');
+
+    // 3. Verify api.ts provides signed petitions persistence
+    const apiContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/services/api.ts'), 'utf8');
+    assert.ok(apiContent.includes('getStoredSignedPetitions'), 'api.ts must export getStoredSignedPetitions');
+    assert.ok(apiContent.includes('saveStoredSignedPetition'), 'api.ts must export saveStoredSignedPetition');
+
+    // 4. Verify Navbar links to /profile
+    const navbarContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/Navbar.tsx'), 'utf8');
+    assert.ok(navbarContent.includes('to="/profile"'), 'Navbar must link to /profile');
+
+    // 5. Verify Guide documents Section 6 100k+ scale zero-cost signing
+    const guideContent = fs.readFileSync(path.join(__dirname, '../docs/ZERO_COST_OTP_PRODUCTION_GUIDE.md'), 'utf8');
+    assert.ok(guideContent.includes('100,000+ Scale'), 'Guide must document 100,000+ scale zero-quota petition signing');
+    assert.ok(guideContent.includes('Lifetime Account Verification Persistence'), 'Guide must document lifetime account verification persistence');
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------

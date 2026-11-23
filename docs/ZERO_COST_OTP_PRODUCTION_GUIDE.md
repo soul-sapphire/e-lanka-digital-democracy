@@ -78,3 +78,19 @@ To prevent any single free quota from being exhausted:
   * Rural or field citizens without active email inboxes choose **Mobile SMS OTP**, which uses the 10,000 free SMS tier from Google Firebase.
 * **Combined Capacity:** Together, this dual-channel architecture provides **13,000+ to 19,000+ monthly citizen verifications at $0.00 cost**.
 
+---
+
+### 6. Lifetime Account Verification Persistence & Petitions Tracker (100,000+ Scale)
+
+To sustain high civic engagement where over 100,000 citizens sign multiple petitions without exceeding monthly free quotas:
+* **One-Time Account Verification:**
+  * When a citizen verifies their email or phone number once (either at sign-in or during their first petition signature), their citizen account (`elanka_user`) is permanently recorded with `isVerifiedCitizen: true`, `otpVerified: true`, and their verified credential (`verifiedEmail` or `verifiedMobile`).
+  * For all subsequent petition signatures, the platform checks their verified profile and enables **instant 1-click signing** without dispatching any additional SMS or email OTP codes.
+  * This decouples petition volume from verification quota: 10,000 verified citizens can sign 100,000+ petitions across different initiatives at **zero incremental carrier or email cost**.
+* **Citizen Profile Page (`/profile`):**
+  * **Verified Credential Display:** Transparently shows their verified email or phone (masked for privacy) and verified civic status.
+  * **Signed Petitions Tracker:** Automatically tracks all petitions signed by the citizen with live counters, progress bars, categories, and direct petition links.
+  * **Centralized Statutory Right to Erasure (PDPA No. 9 of 2022 Section 16):**
+    * Citizens can exercise their statutory right to erasure directly from their profile page.
+    * Decouples the citizen's identity, wipes personal identifiers, verified email, and phone records, and logs the cryptographic PDPA audit event while preserving immutable national vote totals.
+

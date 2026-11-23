@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import {
   UserCheck,
   Shield,
@@ -10,7 +11,11 @@ import {
   Lock,
   AlertTriangle,
   Loader2,
-  Key
+  Key,
+  Zap,
+  Mail,
+  Smartphone,
+  ArrowRight
 } from 'lucide-react';
 import { api, getStoredUser } from '../services/api';
 
@@ -48,6 +53,7 @@ export const CitizenDashboard: React.FC = () => {
       const res = await api.exerciseRightToErasure(erasureNic, 'ALL_PII');
       setErasureResult(res.result);
       setShowErasureModal(false);
+      setUser(null);
       // Reload engagement to show anonymized state
       loadEngagement();
     } catch (e) {
@@ -56,6 +62,26 @@ export const CitizenDashboard: React.FC = () => {
       setIsErasing(false);
     }
   };
+
+  const maskEmailDisplay = (emailStr: string) => {
+    if (!emailStr) return '';
+    const [local, domain] = emailStr.split('@');
+    if (local.length <= 2) return `${local[0]}***@${domain}`;
+    return `${local.slice(0, 2)}***${local.slice(-1)}@${domain}`;
+  };
+
+  const maskMobileDisplay = (phoneStr: string) => {
+    if (!phoneStr) return '';
+    const clean = phoneStr.replace(/^\+94/, '').replace(/^0/, '');
+    if (clean.length >= 7) {
+      return `+94 ${clean.slice(0, 2)} *** ${clean.slice(-4)}`;
+    }
+    return phoneStr;
+  };
+
+  const verifiedEmail = user?.verifiedEmail || (user?.verificationChannel === 'EMAIL' ? user?.email : null);
+  const verifiedMobile = user?.verifiedMobile || (user?.verificationChannel === 'MOBILE' ? user?.mobile : null);
+  const isAccountVerified = user?.isVerifiedCitizen || user?.otpVerified || !!verifiedEmail || !!verifiedMobile;
 
   return (
     <div className="space-y-8 pb-16 max-w-5xl mx-auto">
@@ -66,18 +92,18 @@ export const CitizenDashboard: React.FC = () => {
           <span>My Citizen Dashboard</span>
         </div>
         <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
-          {t('dashboard.title')}
+          {t('dashboard.profileTitle') || t('dashboard.title')}
         </h1>
         <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
-          {t('dashboard.subtitle')}
+          {t('dashboard.profileSubtitle') || t('dashboard.subtitle')}
         </p>
       </div>
 
-      {/* Identity Decoupling Verification Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 text-white space-y-4">
+      {/* Identity Decoupling & Verified Profile Card */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 text-white space-y-6 shadow-lg">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-lanka-maroon/40 border border-lanka-gold/40 flex items-center justify-center text-lanka-gold">
+            <div className="w-12 h-12 rounded-xl bg-lanka-maroon/40 border border-lanka-gold/40 flex items-center justify-center text-lanka-gold shrink-0">
               <UserCheck className="w-6 h-6" />
             </div>
             <div>
@@ -85,14 +111,14 @@ export const CitizenDashboard: React.FC = () => {
                 {t('dashboard.aliasLabel')}
               </span>
               <span className="text-lg font-bold text-white font-mono">
-                {engagement?.alias || user?.anonymizedAlias || 'Citizen-Western-9421'}
+                {user?.anonymizedAlias || engagement?.alias || 'Citizen-Western-9421'}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs bg-slate-800 border border-slate-700 px-3 py-1 rounded-lg text-slate-300 font-medium">
-              {t('dashboard.district')}: {engagement?.district || user?.district || 'Colombo'}
+              {t('dashboard.district')}: {user?.district || engagement?.district || 'Colombo'}
             </span>
             <span className="text-xs bg-emerald-950/80 border border-emerald-700/80 text-emerald-400 px-3 py-1 rounded-lg font-medium flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5" /> {t('dashboard.verifiedCitizenBadge')}
@@ -100,7 +126,47 @@ export const CitizenDashboard: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 text-xs">
+        {/* Verified Credentials Details */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-4 rounded-xl bg-slate-800/70 border border-slate-700 space-y-2">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+              Verified Credential
+            </span>
+            {verifiedEmail ? (
+              <div className="flex items-center gap-2 text-xs font-mono text-emerald-300">
+                <Mail className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{t('dashboard.verifiedEmail')}: <strong>{maskEmailDisplay(verifiedEmail)}</strong></span>
+              </div>
+            ) : verifiedMobile ? (
+              <div className="flex items-center gap-2 text-xs font-mono text-emerald-300">
+                <Smartphone className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{t('dashboard.verifiedMobile')}: <strong>{maskMobileDisplay(verifiedMobile)}</strong></span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
+                <Shield className="w-4 h-4 text-lanka-gold shrink-0" />
+                <span>NIC Decoupled via HMAC-SHA256</span>
+              </div>
+            )}
+            <div className="text-[10px] text-slate-400">
+              Verified & protected under Sri Lanka PDPA No. 9 of 2022. No raw PII exposed.
+            </div>
+          </div>
+
+          {/* Quota-Free Status Pill */}
+          <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-950/40 via-slate-850 to-slate-900 border border-emerald-800/60 space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+              <Zap className="w-4 h-4 text-amber-400" />
+              <span>{t('dashboard.quotaFreeBadge')}</span>
+            </div>
+            <p className="text-[11px] text-slate-300 leading-relaxed">
+              {t('dashboard.quotaFreeDesc')}
+            </p>
+          </div>
+        </div>
+
+        {/* Security Pillars */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1 text-xs">
           <div className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-1">
             <span className="text-slate-400 block font-medium">{t('dashboard.dataMinimization')}</span>
             <span className="text-emerald-400 font-semibold flex items-center gap-1">
@@ -124,13 +190,13 @@ export const CitizenDashboard: React.FC = () => {
 
       {/* Erasure Notification Banner if executed */}
       {erasureResult && (
-        <div className="p-5 rounded-2xl bg-emerald-950/60 border border-emerald-800 text-emerald-200 text-xs space-y-2">
+        <div className="p-5 rounded-2xl bg-emerald-950/60 border border-emerald-800 text-emerald-200 text-xs space-y-2 shadow-lg">
           <div className="flex items-center gap-2 font-bold text-sm text-emerald-300">
             <CheckCircle2 className="w-4 h-4" />
-            Account & Data Successfully Deleted under PDPA Section 16
+            {t('dashboard.accountErasureNotice')}
           </div>
           <p>
-            Your personal identifiable records have been scrubbed. Anonymized survey records: {erasureResult.anonymizedSurveyResponses}, Petition signatures decoupled: {erasureResult.anonymizedSignatures}. Immutable aggregate count preserved: {erasureResult.preservedAggregateCount}.
+            {t('dashboard.accountErasureDesc')} Anonymized survey records: {erasureResult.anonymizedSurveyResponses}, Petition signatures decoupled: {erasureResult.anonymizedSignatures}. Immutable aggregate count preserved: {erasureResult.preservedAggregateCount}.
           </p>
           <div className="font-mono text-[10px] text-emerald-400 pt-1">
             PDPA Audit ID: {erasureResult.pdpaAuditId}
@@ -138,66 +204,133 @@ export const CitizenDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* Activity Streams */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Signed Petitions */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-white space-y-4">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <Vote className="w-4 h-4 text-lanka-gold" />
-            <span>{t('dashboard.signedPetitions')}</span>
-          </h3>
-
-          <div className="space-y-3">
-            {engagement?.signedPetitions?.map((pet: any, idx: number) => (
-              <div
-                key={idx}
-                className="p-4 rounded-xl bg-slate-800/60 border border-slate-700 space-y-1.5"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-mono text-lanka-gold font-semibold">{pet.code}</span>
-                  <span className="text-[10px] text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800 font-mono">
-                    {pet.status}
-                  </span>
-                </div>
-                <h4 className="text-xs sm:text-sm font-semibold text-slate-200 leading-snug">
-                  {pet.title}
-                </h4>
-                <div className="text-[10px] text-slate-400 font-mono">
-                  Signed: {new Date(pet.signedAt).toLocaleDateString()} • Decoupled
-                </div>
-              </div>
-            ))}
+      {/* Signed Petitions Tracker Section */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 text-white space-y-6 shadow-xl">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div>
+            <h3 className="text-lg font-bold text-white flex items-center gap-2">
+              <Vote className="w-5 h-5 text-lanka-gold" />
+              <span>{t('dashboard.signedPetitions')}</span>
+            </h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Real-time parliamentary and legislative tracker of civic petitions supported by your verified voice.
+            </p>
           </div>
+          <span className="self-start sm:self-auto text-xs font-mono font-bold px-3 py-1 rounded-full bg-lanka-gold/15 text-lanka-gold border border-lanka-gold/30">
+            {t('dashboard.totalSigned', { count: engagement?.signedPetitions?.length || 0 })}
+          </span>
         </div>
 
-        {/* Participated Consultations */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-white space-y-4">
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <FileCheck className="w-4 h-4 text-emerald-400" />
-            <span>{t('dashboard.submittedSurveys')}</span>
-          </h3>
-
-          <div className="space-y-3">
-            {engagement?.participatedConsultations?.map((pol: any, idx: number) => (
-              <div
-                key={idx}
-                className="p-4 rounded-xl bg-slate-800/60 border border-slate-700 space-y-1.5"
-              >
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-mono text-lanka-gold font-semibold">{pol.code}</span>
-                  <span className="text-[10px] text-blue-300 bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800 font-mono">
-                    {pol.stage}
-                  </span>
-                </div>
-                <h4 className="text-xs sm:text-sm font-semibold text-slate-200 leading-snug">
-                  {pol.title}
-                </h4>
-                <div className="text-[10px] text-slate-400 font-mono">
-                  Submitted: {new Date(pol.submittedAt).toLocaleDateString()} • Encrypted (AES-256)
-                </div>
-              </div>
+        {loading ? (
+          <div className="space-y-4">
+            {[1, 2].map((n) => (
+              <div key={n} className="h-24 bg-slate-800/50 rounded-xl animate-pulse" />
             ))}
           </div>
+        ) : engagement?.signedPetitions && engagement.signedPetitions.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4">
+            {engagement.signedPetitions.map((pet: any, idx: number) => {
+              const currentSigs = pet.currentSignatures || 8421;
+              const targetSigs = pet.requiredSignatures || 10000;
+              const percent = Math.min(100, Math.round((currentSigs / targetSigs) * 100));
+
+              return (
+                <div
+                  key={idx}
+                  className="p-5 rounded-xl bg-slate-850 border border-slate-750 hover:border-slate-700 transition-all space-y-3 shadow-md"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-lanka-gold font-bold px-2 py-0.5 rounded bg-lanka-gold/10 border border-lanka-gold/30">
+                        {pet.code}
+                      </span>
+                      {pet.category && (
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
+                          {pet.category}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] text-emerald-400 bg-emerald-950/80 px-2.5 py-0.5 rounded-full border border-emerald-800 font-mono">
+                      {pet.status || 'ACTIVE'}
+                    </span>
+                  </div>
+
+                  <h4 className="text-sm sm:text-base font-bold text-white leading-snug">
+                    {pet.title}
+                  </h4>
+
+                  {/* Progress bar */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px] text-slate-400">
+                      <span>{t('dashboard.progressLabel', { current: currentSigs.toLocaleString(), goal: targetSigs.toLocaleString() })}</span>
+                      <span className="font-mono text-lanka-gold font-bold">{percent}%</span>
+                    </div>
+                    <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700/60">
+                      <div
+                        className="bg-gradient-to-r from-lanka-maroon via-lanka-gold to-emerald-500 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-800 text-[11px]">
+                    <span className="text-slate-400 font-mono">
+                      Signed: {new Date(pet.signedAt).toLocaleDateString()} • Decoupled Verification
+                    </span>
+                    <Link
+                      to={`/petitions`}
+                      className="inline-flex items-center gap-1 text-lanka-gold hover:text-amber-300 font-semibold transition-colors"
+                    >
+                      <span>{t('dashboard.viewPetition')}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8 space-y-3 bg-slate-850/50 rounded-xl border border-dashed border-slate-800">
+            <Vote className="w-10 h-10 text-slate-600 mx-auto" />
+            <p className="text-xs text-slate-400">{t('dashboard.noPetitionsYet')}</p>
+            <Link
+              to="/petitions"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-lanka-maroon hover:bg-red-800 text-white text-xs font-bold transition-colors shadow-md"
+            >
+              <span>{t('dashboard.browsePetitions')}</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* Participated Policy Consultations Stream */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 text-white space-y-4 shadow-lg">
+        <h3 className="text-base font-bold text-white flex items-center gap-2">
+          <FileCheck className="w-4 h-4 text-emerald-400" />
+          <span>{t('dashboard.submittedSurveys')}</span>
+        </h3>
+
+        <div className="space-y-3">
+          {engagement?.participatedConsultations?.map((pol: any, idx: number) => (
+            <div
+              key={idx}
+              className="p-4 rounded-xl bg-slate-850 border border-slate-750 space-y-1.5"
+            >
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-lanka-gold font-semibold">{pol.code}</span>
+                <span className="text-[10px] text-blue-300 bg-blue-950/80 px-2 py-0.5 rounded border border-blue-800 font-mono">
+                  {pol.stage}
+                </span>
+              </div>
+              <h4 className="text-xs sm:text-sm font-semibold text-slate-200 leading-snug">
+                {pol.title}
+              </h4>
+              <div className="text-[10px] text-slate-400 font-mono">
+                Submitted: {new Date(pol.submittedAt).toLocaleDateString()} • Encrypted (AES-256)
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -219,7 +352,7 @@ export const CitizenDashboard: React.FC = () => {
           <button
             type="button"
             onClick={() => setShowErasureModal(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-900/60 hover:bg-red-800 border border-red-700 text-red-100 text-xs font-bold uppercase tracking-wider transition-all"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-900/60 hover:bg-red-800 border border-red-700 text-red-100 text-xs font-bold uppercase tracking-wider transition-all shadow-md hover:scale-105"
           >
             <Trash2 className="w-4 h-4" />
             <span>{t('dashboard.erasureBtn')}</span>
@@ -263,7 +396,7 @@ export const CitizenDashboard: React.FC = () => {
                 type="button"
                 onClick={handleExecuteErasure}
                 disabled={isErasing}
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-red-700 hover:bg-red-600 text-white font-bold uppercase tracking-wider"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-red-700 hover:bg-red-600 text-white font-bold uppercase tracking-wider shadow-lg"
               >
                 {isErasing ? (
                   <>
@@ -281,4 +414,3 @@ export const CitizenDashboard: React.FC = () => {
     </div>
   );
 };
-

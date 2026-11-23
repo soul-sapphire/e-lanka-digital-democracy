@@ -71,6 +71,37 @@ export function clearStoredAuth(): void {
   localStorage.removeItem('elanka_user');
 }
 
+export interface StoredSignedPetition {
+  petitionId: string;
+  code: string;
+  title: string;
+  category?: string;
+  status: string;
+  signedAt: string;
+  currentSignatures?: number;
+  requiredSignatures?: number;
+}
+
+export function getStoredSignedPetitions(): StoredSignedPetition[] {
+  try {
+    const raw = localStorage.getItem('elanka_signed_petitions');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveStoredSignedPetition(item: StoredSignedPetition): void {
+  try {
+    const existing = getStoredSignedPetitions();
+    const filtered = existing.filter(p => p.petitionId !== item.petitionId);
+    filtered.unshift(item);
+    localStorage.setItem('elanka_signed_petitions', JSON.stringify(filtered));
+  } catch (err) {
+    console.error('Failed to save signed petition to citizen profile:', err);
+  }
+}
+
 async function tryFetch<T>(endpoint: string, options: RequestInit = {}): Promise<T | null> {
   const token = getAuthToken();
   const headers = new Headers(options.headers || {});
@@ -289,6 +320,31 @@ export const api = {
       saveClientDemoPetitions(petitions);
     }
 
+    // Record to citizen's profile tracker
+    const petitionTitle = petition ? (typeof petition.title === 'string' ? petition.title : (petition.title.en || 'Civic E-Petition')) : 'Civic E-Petition';
+    const petitionCode = petition?.code || 'PET-2026-001';
+    saveStoredSignedPetition({
+      petitionId: id,
+      code: petitionCode,
+      title: petitionTitle,
+      category: petition?.category || 'DEMOCRATIC_REFORM',
+      status: petition?.status || 'ACTIVE',
+      signedAt: new Date().toISOString(),
+      currentSignatures: newCount,
+      requiredSignatures: petition?.requiredSignatures || 10000
+    });
+
+    // Also persist verified status to user if logged in to unlock lifetime 1-click signing
+    const currentUser = getStoredUser();
+    if (currentUser) {
+      currentUser.isVerifiedCitizen = true;
+      currentUser.otpVerified = true;
+      if (submission.email && !currentUser.verifiedEmail) {
+        currentUser.verifiedEmail = submission.email;
+      }
+      setStoredUser(currentUser);
+    }
+
     return {
       success: true,
       message: 'Signature verified and cryptographically recorded.',
@@ -302,18 +358,33 @@ export const api = {
     if (live) return live;
 
     const user = getStoredUser();
+    const localSigned = getStoredSignedPetitions();
+    const defaultSigned: StoredSignedPetition[] = [
+      {
+        petitionId: 'e0000000-0000-0000-0000-000000000001',
+        code: 'PET-2026-012',
+        title: 'Mandate Open Fiber Access & Universal High-Speed Broadband across Rural Schools',
+        status: 'ACTIVE',
+        category: 'DIGITAL_RIGHTS',
+        signedAt: '2026-01-20T14:32:00Z',
+        currentSignatures: 8421,
+        requiredSignatures: 10000
+      }
+    ];
+
+    const seen = new Set<string>();
+    const allSigned: StoredSignedPetition[] = [];
+    for (const p of [...localSigned, ...defaultSigned]) {
+      if (!seen.has(p.petitionId)) {
+        seen.add(p.petitionId);
+        allSigned.push(p);
+      }
+    }
+
     return {
       alias: user?.anonymizedAlias || 'Citizen-Western-9421',
-      district: 'Colombo',
-      signedPetitions: [
-        {
-          petitionId: 'e0000000-0000-0000-0000-000000000001',
-          code: 'PET-2026-012',
-          title: 'Mandate Open Fiber Access & Universal High-Speed Broadband across Rural Schools',
-          status: 'ACTIVE',
-          signedAt: '2026-01-20T14:32:00Z'
-        }
-      ],
+      district: user?.district || 'Colombo',
+      signedPetitions: allSigned,
       participatedConsultations: [
         {
           policyId: 'b0000000-0000-0000-0000-000000000001',
@@ -332,6 +403,11 @@ export const api = {
   },
 
   exerciseRightToErasure: async (nicNumber: string, erasureScope: string = 'ALL_PII'): Promise<any> => {
+    // Clear stored user, tokens, and signed petitions locally to ensure complete decoupling
+    localStorage.removeItem('elanka_user');
+    localStorage.removeItem('elanka_auth_token');
+    localStorage.removeItem('elanka_signed_petitions');
+
     const live = await tryFetch<any>('/citizen/erasure', {
       method: 'POST',
       body: JSON.stringify({ nicNumber, erasureScope })

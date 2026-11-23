@@ -74,6 +74,7 @@ export const App: React.FC = () => {
             <Route path="/policies/:id" element={<PolicyDetailView />} />
             <Route path="/policies/:id/survey" element={<DynamicSurveyRunner />} />
             <Route path="/petitions" element={<EPetitionsView />} />
+            <Route path="/profile" element={<CitizenDashboard />} />
             <Route path="/dashboard" element={<CitizenDashboard />} />
             <Route path="/admin" element={<AdminModerationPanel />} />
             <Route path="/admin/login" element={<AdminLoginView />} />

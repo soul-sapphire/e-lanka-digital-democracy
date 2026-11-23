@@ -171,6 +171,11 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
             res.user.otpVerified = true;
             res.user.verificationChannel = channel;
             res.user.verifiedDestination = maskedDestination;
+            if (channel === 'EMAIL' && email.trim()) {
+              res.user.verifiedEmail = email.trim();
+            } else if (channel === 'MOBILE' && mobileNumber.trim()) {
+              res.user.verifiedMobile = mobileNumber.trim();
+            }
             res.user.tier3Verified = true;
           }
         }
@@ -179,7 +184,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
         setStoredUser(res.user);
         onSuccess(res.user);
         onClose();
-        navigate('/dashboard');
+        navigate('/profile');
       } else {
         setError(t('auth.signInFailed'));
       }

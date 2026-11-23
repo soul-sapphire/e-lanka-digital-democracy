@@ -61,7 +61,7 @@ export const Navbar: React.FC = () => {
   const navLinks = [
     { to: '/', label: t('nav.home'), icon: Landmark },
     { to: '/petitions', label: t('nav.petitions'), icon: Vote },
-    { to: '/dashboard', label: t('nav.dashboard'), icon: UserCheck },
+    { to: '/profile', label: t('nav.dashboard'), icon: UserCheck },
     { to: '/academy', label: t('nav.lms'), icon: BookOpen }
   ];
 
@@ -194,11 +194,16 @@ export const Navbar: React.FC = () => {
                   </Link>
                 ) : (
                   <Link
-                    to="/dashboard"
+                    to="/profile"
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
                   >
                     <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
                     <span className="max-w-[130px] truncate">{user.anonymizedAlias || 'Citizen'}</span>
+                    {(user.isVerifiedCitizen || user.otpVerified) && (
+                      <span className="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1.5 py-0.5 rounded font-bold">
+                        ✓ Verified
+                      </span>
+                    )}
                   </Link>
                 )}
                 <button
