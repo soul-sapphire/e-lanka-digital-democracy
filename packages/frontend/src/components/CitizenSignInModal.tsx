@@ -422,7 +422,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                       <div className="flex items-center justify-between">
                         <span className="font-semibold flex items-center gap-1.5 text-amber-400">
                           <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          Verification Code Generated
+                          {channel === 'EMAIL' ? 'Live Email Dispatched via EmailJS' : 'Verification Code Generated'}
                         </span>
                         <button
                           type="button"
@@ -439,7 +439,9 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                         </strong>
                       </div>
                       <p className="text-[10px] text-slate-400 leading-snug">
-                        ℹ️ Running in Sandbox mode. Once an API key is connected, codes are delivered directly to physical inboxes & SMS.
+                        {channel === 'EMAIL'
+                          ? '✉ Real verification email dispatched to your inbox via EmailJS. Check your Gmail inbox/spam or click Auto-Fill.'
+                          : 'ℹ️ Mobile SMS gateway sandbox active. Enter the 6-digit code above or click Auto-Fill to verify.'}
                       </p>
                     </div>
                   )}

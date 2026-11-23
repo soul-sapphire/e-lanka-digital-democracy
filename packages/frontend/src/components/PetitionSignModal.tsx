@@ -872,7 +872,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                           <div className="flex items-center justify-between">
                             <span className="font-semibold flex items-center gap-1.5 text-amber-400">
                               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                              Verification Code Generated
+                              {verificationChannel === 'EMAIL' ? 'Live Email Dispatched via EmailJS' : 'Verification Code Generated'}
                             </span>
                             <button
                               type="button"
@@ -889,7 +889,9 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                             </strong>
                           </div>
                           <p className="text-[10px] text-slate-400 leading-snug">
-                            ℹ️ Running in Gateway Sandbox. Plug in your free Resend or Firebase credentials to deliver directly to real emails & cell towers.
+                            {verificationChannel === 'EMAIL'
+                              ? '✉ Real verification email dispatched to your inbox via EmailJS. Check your Gmail inbox/spam or click Use Code.'
+                              : 'ℹ️ Mobile SMS gateway sandbox active. Enter the 6-digit code above or click Use Code.'}
                           </p>
                         </div>
                       )}

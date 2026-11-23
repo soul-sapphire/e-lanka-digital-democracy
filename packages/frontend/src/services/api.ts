@@ -26,6 +26,7 @@ import {
   formatSriLankanDate
 } from '@e-lanka/shared';
 import { OfflineQueueManager } from './offline-queue';
+import { sendEmailJSOTP } from './emailjs.service';
 import {
   getClientDemoPolicies,
   saveClientDemoPolicies,
@@ -902,7 +903,16 @@ export const api = {
       sessionStorage.setItem(`otp_${ref}`, JSON.stringify({ code, destination: email, channel: 'EMAIL' }));
       console.log(`[E-Lanka Verification Gateway] ✉ OTP dispatched to ${email} (Reference ${ref}): ${code}`);
 
-      // If live Resend API key is configured, dispatch real email to recipient's inbox
+      // Live Email Dispatch via EmailJS directly to user's real email inbox
+      let liveSent = false;
+      try {
+        const emailjsRes = await sendEmailJSOTP(email, code, ref);
+        liveSent = emailjsRes.success;
+      } catch (err) {
+        console.warn('[EmailJS] Delivery attempt:', err);
+      }
+
+      // If live Resend API key is configured, also dispatch via Resend
       const resendKey = (import.meta as any).env?.VITE_RESEND_API_KEY;
       if (resendKey) {
         try {
@@ -919,6 +929,7 @@ export const api = {
               html: `<p>Your E-Lanka one-time verification code is: <strong>${code}</strong>. Valid for 2 minutes.</p>`
             })
           });
+          liveSent = true;
         } catch (err) {
           console.error('[Live Email Dispatch Failed]', err);
         }
@@ -932,7 +943,9 @@ export const api = {
           otpReference: ref,
           expiresInSeconds: 120,
           demoOtpCode: code,
-          message: `Verification code dispatched to ${maskedEmail}. Please check your inbox.`
+          message: liveSent
+            ? `Verification code dispatched to ${maskedEmail}! Please check your email inbox.`
+            : `Verification code generated for ${maskedEmail}.`
         }
       };
     }
