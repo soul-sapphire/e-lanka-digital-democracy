@@ -17,19 +17,36 @@ export async function sendEmailJSOTP(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const templateParams = {
+      // Identity & Routing
+      from_name: 'E-Lanka Digital Democracy',
+      sender_name: 'E-Lanka Democratic Platform',
+      reply_to: 'support@elanka.gov.lk',
       to_email: targetEmail.trim(),
       email: targetEmail.trim(),
       recipient: targetEmail.trim(),
       to_name: 'Citizen',
       name: 'Citizen',
-      child_name: 'E-Lanka Citizen Verification',
+      subject: `[E-Lanka] Citizen Verification Code: ${otpCode}`,
+
+      // Pure E-Lanka OTP Variables
       otp_code: otpCode,
       verification_code: otpCode,
       code: otpCode,
       reference: reference,
       summary_date: new Date().toLocaleDateString('en-GB'),
-      message: `Your E-Lanka Digital Democracy verification code is: ${otpCode}. Valid for 2 minutes. Reference: ${reference}. Do not share this code.`,
-      recommendations: `Verification Code: ${otpCode} (Valid for 2 minutes). Reference: ${reference}`
+      message: `Welcome to E-Lanka Digital Democracy.\n\nYour 6-digit citizen verification code is: ${otpCode}\n\nThis one-time passcode is valid for 2 minutes. Reference: ${reference}.\n\nFor your security, do not share this verification code with anyone.`,
+      recommendations: `Verification Code: ${otpCode} (Valid for 2 minutes) | Reference: ${reference}`,
+
+      // Neutralize any legacy or pediatric fields if using a shared template
+      child_name: 'E-Lanka Citizen Verification',
+      child_age: '',
+      child_gender: '',
+      headache_score: '',
+      fressh_score: '',
+      severity: 'Verified',
+      passport_link: '',
+      continue_link: '',
+      app_url: 'https://elanka.gov.lk'
     };
 
     const res = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams, PUBLIC_KEY);
