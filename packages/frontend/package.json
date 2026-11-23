@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@e-lanka/shared": "^1.0.0",
-    "@emailjs/browser": "^5.0.3",
     "clsx": "^2.1.1",
     "i18next": "^23.11.5",
     "lucide-react": "^0.378.0",

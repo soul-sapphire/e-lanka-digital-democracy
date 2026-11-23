@@ -26,7 +26,6 @@ import {
   formatSriLankanDate
 } from '@e-lanka/shared';
 import { OfflineQueueManager } from './offline-queue';
-import { sendEmailJSOTP } from './emailjs.service';
 import { sendGoogleScriptOTP } from './google-mail.service';
 import {
   getClientDemoPolicies,
@@ -904,18 +903,15 @@ export const api = {
       sessionStorage.setItem(`otp_${ref}`, JSON.stringify({ code, destination: email, channel: 'EMAIL' }));
       console.log(`[E-Lanka Verification Gateway] ✉ OTP dispatched to ${email} (Reference ${ref}): ${code}`);
 
-      // Dual Real-Time Dispatch: High-Volume Google Mail Gateway + EmailJS Inbox Delivery
+      // High-Volume Verification Gateway: Google Apps Script via elanka.portal@gmail.com (15,000 free emails/mo)
       let liveSent = false;
-      const [gasResult, emailjsResult] = await Promise.allSettled([
-        sendGoogleScriptOTP(email, code, ref),
-        sendEmailJSOTP(email, code, ref)
-      ]);
-
-      if (gasResult.status === 'fulfilled' && gasResult.value.success) {
-        liveSent = true;
-      }
-      if (emailjsResult.status === 'fulfilled' && emailjsResult.value.success) {
-        liveSent = true;
+      try {
+        const gasResult = await sendGoogleScriptOTP(email, code, ref);
+        if (gasResult && gasResult.success) {
+          liveSent = true;
+        }
+      } catch (err) {
+        console.warn('[Google Mail Gateway] Delivery attempt:', err);
       }
 
       // If live Resend API key is configured, also dispatch real email via Resend
