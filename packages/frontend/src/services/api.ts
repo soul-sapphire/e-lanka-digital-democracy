@@ -904,23 +904,18 @@ export const api = {
       sessionStorage.setItem(`otp_${ref}`, JSON.stringify({ code, destination: email, channel: 'EMAIL' }));
       console.log(`[E-Lanka Verification Gateway] ✉ OTP dispatched to ${email} (Reference ${ref}): ${code}`);
 
-      // 1. High-Volume Primary Gateway: Google Apps Script (15,000 free emails/month, 500/day)
+      // Dual Real-Time Dispatch: High-Volume Google Mail Gateway + EmailJS Inbox Delivery
       let liveSent = false;
-      try {
-        const gasRes = await sendGoogleScriptOTP(email, code, ref);
-        if (gasRes.success) liveSent = true;
-      } catch (err) {
-        console.warn('[Google Mail Gateway] Delivery attempt:', err);
-      }
+      const [gasResult, emailjsResult] = await Promise.allSettled([
+        sendGoogleScriptOTP(email, code, ref),
+        sendEmailJSOTP(email, code, ref)
+      ]);
 
-      // 2. Secondary Fallback Gateway: EmailJS (only if primary did not deliver)
-      if (!liveSent) {
-        try {
-          const emailjsRes = await sendEmailJSOTP(email, code, ref);
-          if (emailjsRes.success) liveSent = true;
-        } catch (err) {
-          console.warn('[EmailJS] Delivery attempt:', err);
-        }
+      if (gasResult.status === 'fulfilled' && gasResult.value.success) {
+        liveSent = true;
+      }
+      if (emailjsResult.status === 'fulfilled' && emailjsResult.value.success) {
+        liveSent = true;
       }
 
       // If live Resend API key is configured, also dispatch real email via Resend
