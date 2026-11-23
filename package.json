@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "npm run build --workspace=@e-lanka/shared && npm run build --workspace=@e-lanka/backend && npm run build --workspace=@e-lanka/frontend",
     "test": "node tests/run-all-tests.js",
     "dev:backend": "npm run dev --workspace=@e-lanka/backend",
     "dev:frontend": "npm run dev --workspace=@e-lanka/frontend",

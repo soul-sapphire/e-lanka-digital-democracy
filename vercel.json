@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommand": "npm run build --workspace=@e-lanka/shared && npm run build --workspace=@e-lanka/frontend",
+  "outputDirectory": "packages/frontend/dist",
   "routes": [
     {
       "handle": "filesystem"
