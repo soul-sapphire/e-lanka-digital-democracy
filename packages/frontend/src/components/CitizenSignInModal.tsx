@@ -417,34 +417,26 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
               {/* OTP Code Entry Card */}
               {otpDispatched && !otpVerified && (
                 <div className="pt-2 border-t border-slate-700 space-y-3">
-                  {sandboxCode && (
-                    <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/40 text-amber-200 text-xs space-y-1.5 shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold flex items-center gap-1.5 text-amber-400">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                          {channel === 'EMAIL' ? 'Live Verification Email Dispatched' : 'Verification Code Generated'}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setOtpCode(sandboxCode)}
-                          className="px-2.5 py-0.5 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] transition-colors shadow-sm"
-                        >
-                          Auto-Fill: {sandboxCode}
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-slate-300">Verification Code:</span>
-                        <strong className="text-white font-mono text-base tracking-widest bg-slate-900 px-2.5 py-0.5 rounded border border-slate-700">
-                          {sandboxCode}
-                        </strong>
-                      </div>
-                      <p className="text-[10px] text-slate-400 leading-snug">
-                        {channel === 'EMAIL'
-                          ? '✉ Real verification email dispatched to your inbox from elanka.portal@gmail.com. Check your inbox/spam or click Auto-Fill.'
-                          : 'ℹ️ Mobile SMS gateway sandbox active. Enter the 6-digit code above or click Auto-Fill to verify.'}
-                      </p>
+                  <div className="p-3.5 rounded-xl bg-slate-800/90 border border-amber-500/30 text-xs space-y-2 shadow-sm">
+                    <div className="flex items-center gap-2 font-semibold text-amber-400">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <span>
+                        {channel === 'EMAIL' ? 'Verification Code Dispatched via Email' : 'Verification Code Sent'}
+                      </span>
                     </div>
-                  )}
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      {channel === 'EMAIL' ? (
+                        <>
+                          A 6-digit verification code has been sent to <strong className="text-white">{maskedDestination}</strong> from <strong className="text-amber-400">elanka.portal@gmail.com</strong>.
+                          <span className="block mt-1.5 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200">
+                            ⚠️ <strong>Check Spam Folder:</strong> If you don't see the email in your Primary inbox within 30 seconds, please check your <strong>Spam</strong> or <strong>Junk</strong> folder and click <em>"Report not spam"</em>.
+                          </span>
+                        </>
+                      ) : (
+                        `A 6-digit verification code has been sent via SMS to ${maskedDestination}. Enter it below to complete sign in.`
+                      )}
+                    </p>
+                  </div>
 
                   <div className="flex items-center justify-between text-[11px] text-slate-300">
                     <span>Code sent to <strong className="text-white">{maskedDestination}</strong>:</span>

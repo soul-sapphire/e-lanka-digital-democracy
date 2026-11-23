@@ -867,34 +867,26 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
 
                   {otpDispatched && (
                     <div className="space-y-3 pt-2">
-                      {sandboxCode && (
-                        <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/40 text-amber-200 text-xs space-y-1.5 shadow-sm">
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold flex items-center gap-1.5 text-amber-400">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                              {verificationChannel === 'EMAIL' ? 'Live Verification Email Dispatched' : 'Verification Code Generated'}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setOtpCode(sandboxCode)}
-                              className="px-2.5 py-0.5 rounded bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] transition-colors shadow-sm"
-                            >
-                              Use Code: {sandboxCode}
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[11px] text-slate-300">Verification Code:</span>
-                            <strong className="text-white font-mono text-base tracking-widest bg-slate-900 px-2.5 py-0.5 rounded border border-slate-700">
-                              {sandboxCode}
-                            </strong>
-                          </div>
-                          <p className="text-[10px] text-slate-400 leading-snug">
-                            {verificationChannel === 'EMAIL'
-                              ? '✉ Real verification email dispatched to your inbox from elanka.portal@gmail.com. Check your inbox/spam or click Use Code.'
-                              : 'ℹ️ Mobile SMS gateway sandbox active. Enter the 6-digit code above or click Use Code.'}
-                          </p>
+                      <div className="p-3.5 rounded-xl bg-slate-800/90 border border-amber-500/30 text-xs space-y-2 shadow-sm">
+                        <div className="flex items-center gap-2 font-semibold text-amber-400">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                          <span>
+                            {verificationChannel === 'EMAIL' ? 'Verification Code Dispatched via Email' : 'Verification Code Sent'}
+                          </span>
                         </div>
-                      )}
+                        <p className="text-[11px] text-slate-300 leading-relaxed">
+                          {verificationChannel === 'EMAIL' ? (
+                            <>
+                              A 6-digit verification code has been dispatched to <strong className="text-white">{maskedMobile}</strong> from <strong className="text-amber-400">elanka.portal@gmail.com</strong>.
+                              <span className="block mt-1.5 p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-200">
+                                ⚠️ <strong>Check Spam Folder:</strong> If you don't see the email in your Primary inbox within 30 seconds, please check your <strong>Spam</strong> or <strong>Junk</strong> folder and click <em>"Report not spam"</em>.
+                              </span>
+                            </>
+                          ) : (
+                            `A 6-digit verification code has been dispatched via SMS to ${maskedMobile}. Enter it below to sign the petition.`
+                          )}
+                        </p>
+                      </div>
 
                       <div className="p-3 rounded-lg bg-slate-900 border border-slate-700/80 space-y-2">
                         <div className="flex items-center justify-between text-xs text-slate-300">
