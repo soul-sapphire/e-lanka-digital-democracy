@@ -22,6 +22,7 @@ import { citizenRouter } from './routes/citizen.routes';
 import { adminRouter } from './routes/admin.routes';
 import { publicRouter } from './routes/public.routes';
 import { verificationRoutes } from './routes/verification.routes';
+import { webhookRouter } from './routes/webhook.routes';
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -51,6 +52,7 @@ app.use('/api/v1/citizen', citizenRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/public', publicRouter);
 app.use('/api/v1/verification', verificationRoutes);
+app.use('/api/v1/webhooks', webhookRouter);
 
 // Root Index / Welcome
 app.get('/', (req: Request, res: Response) => {
@@ -66,7 +68,8 @@ app.get('/', (req: Request, res: Response) => {
       citizenDashboard: '/api/v1/citizen/engagement',
       adminPendingQueue: '/api/v1/admin/pending-queue',
       pdpaAuditLogs: '/api/v1/admin/audit-logs',
-      lmsContextCards: '/api/v1/public/lms-context'
+      lmsContextCards: '/api/v1/public/lms-context',
+      lifterLMSWebhook: '/api/v1/webhooks/lifterlms'
     }
   });
 });

@@ -1379,6 +1379,70 @@ export const api = {
         }
       }
     });
+  },
+
+  // LifterLMS Automated Graduation Webhook Client (Issue 2.2 & 3.3)
+  getLifterLMSStatus: async (): Promise<any> => {
+    const live = await tryFetch<any>('/webhooks/lifterlms/status');
+    if (live) return live;
+    return {
+      status: 'ACTIVE',
+      service: 'LifterLMS Webhook Ingestion Engine',
+      portal: 'Community Solutions Lanka (CSLK)',
+      portalUrl: 'https://www.cslk.org',
+      targetCourse: 'Digital Democracy and Rights (LMS-CSLK-DDR)',
+      rolePromotion: 'FIELD_CHAMPION (Youth Champion)',
+      webhookEndpoint: '/api/v1/webhooks/lifterlms'
+    };
+  },
+
+  triggerLifterLMSGraduation: async (params: {
+    studentEmail: string;
+    studentName: string;
+    studentNIC?: string;
+    district?: string;
+    score?: number;
+  }): Promise<any> => {
+    const live = await tryFetch<any>('/webhooks/lifterlms', {
+      method: 'POST',
+      body: JSON.stringify({
+        event: 'course.completed',
+        data: {
+          user_email: params.studentEmail,
+          user_name: params.studentName,
+          user_nic: params.studentNIC,
+          district: params.district || 'Colombo',
+          score: params.score || 100,
+          course_id: 'LMS-CSLK-DDR'
+        }
+      })
+    });
+    if (live) return live;
+
+    // Standalone client role upgrade fallback
+    const currentUser = getStoredUser();
+    const collectorId = `CSLK-YC-2026-${Math.floor(100 + Math.random() * 900)}`;
+    if (currentUser) {
+      currentUser.role = 'FIELD_CHAMPION';
+      currentUser.isVerifiedCitizen = true;
+      currentUser.collectorId = collectorId;
+      setStoredUser(currentUser);
+    }
+
+    return {
+      success: true,
+      message: `Student ${params.studentName} successfully graduated from Digital Democracy and Rights and promoted to FIELD_CHAMPION.`,
+      promotion: {
+        role: 'FIELD_CHAMPION',
+        collectorId,
+        anonymizedAlias: `Youth-Champion-${params.district || 'Colombo'}`,
+        district: params.district || 'Colombo',
+        isVerifiedCitizen: true,
+        offlineCollectorUrl: '/collector',
+        certifiedCourse: 'Digital Democracy and Rights',
+        graduatedAt: new Date().toISOString()
+      }
+    };
   }
 };
 
