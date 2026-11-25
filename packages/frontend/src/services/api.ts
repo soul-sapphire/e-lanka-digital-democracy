@@ -43,12 +43,24 @@ import {
   DEMO_SURVEY_QUESTIONS,
   DEMO_PUBLIC_AGGREGATE
 } from './demo-data';
+import {
+  getSupabase,
+  fetchLivePoliciesFromSupabase,
+  fetchLivePetitionsFromSupabase,
+  fetchLiveCounterFromSupabase,
+  recordSignatureInSupabase
+} from './supabase.service';
 
 export {
   getClientDemoPolicies,
   saveClientDemoPolicies,
   getClientDemoPetitions,
-  saveClientDemoPetitions
+  saveClientDemoPetitions,
+  getSupabase,
+  fetchLivePoliciesFromSupabase,
+  fetchLivePetitionsFromSupabase,
+  fetchLiveCounterFromSupabase,
+  recordSignatureInSupabase
 };
 
 const API_BASE = '/api/v1';
@@ -166,6 +178,11 @@ export const api = {
     const live = await tryFetch<{ data: PolicyConsultation[] }>('/policies');
     if (live && live.data) {
       return live.data;
+    }
+    // Query live Supabase PostgreSQL (Singapore Region - ap-southeast-1)
+    const sbData = await fetchLivePoliciesFromSupabase(Boolean(isAdmin));
+    if (sbData && sbData.length > 0) {
+      return sbData;
     }
     // Standalone Demo Fallback (enforce unapproved draft privacy)
     return getClientDemoPolicies(Boolean(isAdmin));
@@ -290,6 +307,10 @@ export const api = {
     const live = await tryFetch<{ data: EPetition[] }>('/petitions');
     if (live && live.data) return live.data;
 
+    // Query live Supabase PostgreSQL (Singapore Region - ap-southeast-1)
+    const sbData = await fetchLivePetitionsFromSupabase();
+    if (sbData && sbData.length > 0) return sbData;
+
     return getClientDemoPetitions();
   },
 
@@ -297,7 +318,8 @@ export const api = {
     const live = await tryFetch<{ data: EPetition }>(`/petitions/${id}`);
     if (live && live.data) return live;
 
-    const petitions = getClientDemoPetitions();
+    const sbPetitions = await fetchLivePetitionsFromSupabase();
+    const petitions = sbPetitions && sbPetitions.length > 0 ? sbPetitions : getClientDemoPetitions();
     const petition = petitions.find(p => p.id === id) || petitions[0];
     return { data: petition };
   },
@@ -305,6 +327,10 @@ export const api = {
   getLiveCounter: async (id: string): Promise<{ currentSignatures: number; requiredSignatures: number; percentReached: number }> => {
     const live = await tryFetch<{ currentSignatures: number; requiredSignatures: number; percentReached: number }>(`/petitions/${id}/counter`);
     if (live) return live;
+
+    // Direct live counter from Supabase
+    const sbCounter = await fetchLiveCounterFromSupabase(id);
+    if (sbCounter) return sbCounter;
 
     const petitions = getClientDemoPetitions();
     const petition = petitions.find(p => p.id === id) || petitions[0];
@@ -323,8 +349,28 @@ export const api = {
     });
     if (live) return live;
 
+    const cleanNIC = submission.nicNumber.toUpperCase().trim();
+    const signerBlindIndex = `NIC_BLIND_${cleanNIC}`;
+
+    // Direct Supabase Live Persistence
+    const sbResult = await recordSignatureInSupabase({
+      petitionId: id,
+      signerBlindIndex,
+      district: submission.district || 'Colombo'
+    });
+
+    if (!sbResult.success && sbResult.error && sbResult.error.includes('already verified a signature')) {
+      const petitions = (await fetchLivePetitionsFromSupabase()) || getClientDemoPetitions();
+      const p = petitions.find(pet => pet.id === id);
+      return {
+        success: false,
+        message: 'This National Identity Card has already verified a signature for this petition.',
+        currentSignatures: p ? p.currentSignatures : 7420
+      };
+    }
+
     // Standalone client deduplication test via localStorage
-    const signedKey = `signed_${id}_${submission.nicNumber.toUpperCase().trim()}`;
+    const signedKey = `signed_${id}_${cleanNIC}`;
     if (localStorage.getItem(signedKey)) {
       const petitions = getClientDemoPetitions();
       const p = petitions.find(pet => pet.id === id);
@@ -339,10 +385,9 @@ export const api = {
 
     const petitions = getClientDemoPetitions();
     const petition = petitions.find(p => p.id === id);
-    let newCount = 7421;
+    let newCount = sbResult.newCount || 7421;
     if (petition) {
-      petition.currentSignatures += 1;
-      newCount = petition.currentSignatures;
+      petition.currentSignatures = newCount;
       saveClientDemoPetitions(petitions);
     }
 
