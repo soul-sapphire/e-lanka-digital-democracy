@@ -311,18 +311,34 @@ export const api = {
 
     // Query live Supabase PostgreSQL (Singapore Region - ap-southeast-1)
     const sbData = await fetchLivePetitionsFromSupabase();
-    if (sbData && sbData.length > 0) return sbData;
+    const local = getClientDemoPetitions();
 
-    return getClientDemoPetitions();
+    // Deduplicated merge: combine Supabase cloud records and locally published/cached petitions
+    const petitionMap = new Map<string, EPetition>();
+    if (sbData && Array.isArray(sbData)) {
+      sbData.forEach(p => petitionMap.set(p.id, p));
+    }
+    if (local && Array.isArray(local)) {
+      local.forEach(p => {
+        const alreadyExists = Array.from(petitionMap.values()).some(
+          existing => existing.id === p.id || existing.code === p.code
+        );
+        if (!alreadyExists) {
+          petitionMap.set(p.id, p);
+        }
+      });
+    }
+
+    const merged = Array.from(petitionMap.values());
+    return merged.length > 0 ? merged : local;
   },
 
   getPetitionById: async (id: string): Promise<{ data: EPetition }> => {
     const live = await tryFetch<{ data: EPetition }>(`/petitions/${id}`);
     if (live && live.data) return live;
 
-    const sbPetitions = await fetchLivePetitionsFromSupabase();
-    const petitions = sbPetitions && sbPetitions.length > 0 ? sbPetitions : getClientDemoPetitions();
-    const petition = petitions.find(p => p.id === id) || petitions[0];
+    const all = await api.getPetitions();
+    const petition = all.find(p => p.id === id || p.code === id) || all[0];
     return { data: petition };
   },
 
@@ -426,10 +442,19 @@ export const api = {
   },
 
   createPetition: async (petition: EPetition): Promise<{ success: boolean; data?: any; error?: string }> => {
-    // 1. Direct persistence to live Supabase if connected
+    // 1. Ensure valid UUID v4 compliant with PostgreSQL uuid type
+    const isValidUuid = (val?: string) =>
+      typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+    if (!isValidUuid(petition.id)) {
+      petition.id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'e' + Date.now().toString(16).padStart(7, '0') + '-0000-4000-8000-000000000001';
+    }
+
+    // 2. Direct persistence to live Supabase if connected
     const sbRes = await createPetitionInSupabase(petition);
 
-    // 2. Also cache locally in client-side petitions store
+    // 3. Cache locally in client-side petitions store so it appears instantly
     const localPetitions = getClientDemoPetitions();
     const existingIndex = localPetitions.findIndex(p => p.id === petition.id || p.code === petition.code);
     if (existingIndex >= 0) {
@@ -441,7 +466,7 @@ export const api = {
 
     return {
       success: true,
-      data: sbRes.data || petition
+      data: (sbRes.data && sbRes.data[0]) || petition
     };
   },
 

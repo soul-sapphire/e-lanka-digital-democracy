@@ -33,7 +33,8 @@ import {
   Send,
   Languages,
   PlusCircle,
-  CheckCheck
+  CheckCheck,
+  ExternalLink
 } from 'lucide-react';
 import { PolicyConsultation, PolicyLifecycleStage, EPetition } from '@e-lanka/shared';
 import { api, getStoredUser, clearStoredAuth } from '../services/api';
@@ -130,6 +131,27 @@ export const AdminModerationPanel: React.FC = () => {
   const [publishingPetition, setPublishingPetition] = useState(false);
   const [petitionPublishSuccess, setPetitionPublishSuccess] = useState<string | null>(null);
   const [petitionPublishError, setPetitionPublishError] = useState<string | null>(null);
+  const [publishedPetitionInfo, setPublishedPetitionInfo] = useState<{ code: string; title: string; id: string } | null>(null);
+
+  const resetPetitionForm = () => {
+    setDraftHeadlineEn('');
+    setDraftTitleEn('');
+    setDraftObjectiveEn('');
+    setDraftTargetAuthority('Parliament of Sri Lanka');
+    setDraftCategory('DIGITAL_ECONOMY');
+    setDraftRequiredSigs(5000);
+    setDraftDeadlineDays(30);
+    setTranslatedHeadlineSi('');
+    setTranslatedHeadlineTa('');
+    setTranslatedTitleSi('');
+    setTranslatedTitleTa('');
+    setTranslatedObjectiveSi('');
+    setTranslatedObjectiveTa('');
+    setTranslationSuccess(false);
+    setPetitionPublishSuccess(null);
+    setPetitionPublishError(null);
+    setPublishedPetitionInfo(null);
+  };
 
   // Moderation Gate Action Modal
   const [selectedProposal, setSelectedProposal] = useState<PolicyConsultation | null>(null);
@@ -470,7 +492,7 @@ export const AdminModerationPanel: React.FC = () => {
 
   const handlePublishTrilingualPetition = async () => {
     if (!draftTitleEn.trim() || !draftObjectiveEn.trim()) {
-      setPetitionPublishError('English Title and Objective Statement are required.');
+      setPetitionPublishError('English Title and Objective Statement are required. Please complete both fields before publishing.');
       return;
     }
 
@@ -479,26 +501,65 @@ export const AdminModerationPanel: React.FC = () => {
     setPetitionPublishSuccess(null);
 
     try {
+      // If translations are missing, automatically translate on the fly before publishing
+      let siHeadline = translatedHeadlineSi.trim();
+      let taHeadline = translatedHeadlineTa.trim();
+      let siTitle = translatedTitleSi.trim();
+      let taTitle = translatedTitleTa.trim();
+      let siObj = translatedObjectiveSi.trim();
+      let taObj = translatedObjectiveTa.trim();
+
+      if (!siTitle || !siObj || !taTitle || !taObj) {
+        try {
+          const autoTrans = await translatePetitionTrilingual({
+            headline: draftHeadlineEn || draftTitleEn,
+            title: draftTitleEn,
+            objective: draftObjectiveEn
+          });
+          siHeadline = siHeadline || autoTrans.headline.si;
+          taHeadline = taHeadline || autoTrans.headline.ta;
+          siTitle = siTitle || autoTrans.title.si;
+          taTitle = taTitle || autoTrans.title.ta;
+          siObj = siObj || autoTrans.objective.si;
+          taObj = taObj || autoTrans.objective.ta;
+
+          setTranslatedHeadlineSi(siHeadline);
+          setTranslatedHeadlineTa(taHeadline);
+          setTranslatedTitleSi(siTitle);
+          setTranslatedTitleTa(taTitle);
+          setTranslatedObjectiveSi(siObj);
+          setTranslatedObjectiveTa(taObj);
+          setTranslationSuccess(true);
+        } catch (transErr) {
+          console.warn('[Admin] Auto-translation fallback warning:', transErr);
+        }
+      }
+
       const petitionCode = `PET-2026-${String(Math.floor(100 + Math.random() * 900))}`;
       const deadlineDate = new Date(Date.now() + draftDeadlineDays * 24 * 3600 * 1000).toISOString();
 
+      // Ensure valid UUID v4 compliant with PostgreSQL uuid schema
+      const generatedUuid = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'e' + Date.now().toString(16).padStart(7, '0') + '-0000-4000-8000-000000000001';
+
       const newPetition: EPetition = {
-        id: `e${Date.now().toString().slice(-8)}-0000-0000-0000-000000000001`,
+        id: generatedUuid,
         code: petitionCode,
         headline: {
           en: draftHeadlineEn || draftTitleEn,
-          si: translatedHeadlineSi || draftHeadlineEn || draftTitleEn,
-          ta: translatedHeadlineTa || draftHeadlineEn || draftTitleEn
+          si: siHeadline || draftHeadlineEn || draftTitleEn,
+          ta: taHeadline || draftHeadlineEn || draftTitleEn
         },
         title: {
           en: draftTitleEn,
-          si: translatedTitleSi || draftTitleEn,
-          ta: translatedTitleTa || draftTitleEn
+          si: siTitle || draftTitleEn,
+          ta: taTitle || draftTitleEn
         },
         objectiveStatement: {
           en: draftObjectiveEn,
-          si: translatedObjectiveSi || draftObjectiveEn,
-          ta: translatedObjectiveTa || draftObjectiveEn
+          si: siObj || draftObjectiveEn,
+          ta: taObj || draftObjectiveEn
         },
         targetAuthority: draftTargetAuthority,
         category: draftCategory,
@@ -511,8 +572,13 @@ export const AdminModerationPanel: React.FC = () => {
       };
 
       await api.createPetition(newPetition);
-      setPetitionPublishSuccess(`✓ Official Trilingual Petition "${petitionCode}" published successfully! It is now live on the public /petitions hub for all verified citizens to sign.`);
-      setTimeout(() => setPetitionPublishSuccess(null), 8000);
+      const successMsg = `✓ Official Trilingual Petition "${petitionCode}" published successfully! It is now live on the public /petitions hub for all verified citizens to sign.`;
+      setPetitionPublishSuccess(successMsg);
+      setPublishedPetitionInfo({
+        code: petitionCode,
+        title: draftTitleEn,
+        id: newPetition.id
+      });
     } catch (err: any) {
       setPetitionPublishError(err.message || 'Failed to publish petition');
     } finally {
@@ -1939,7 +2005,47 @@ export const AdminModerationPanel: React.FC = () => {
               </div>
             </div>
 
-            {/* Step 3: Publish Button */}
+            {/* Step 3: Publish Button & Live Status */}
+            {petitionPublishError && (
+              <div className="p-4 rounded-xl bg-red-950/90 border border-red-500 text-red-200 text-xs flex items-start gap-2 shadow-lg animate-pulse">
+                <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <div className="font-bold text-red-100">Cannot Publish Yet</div>
+                  <div className="mt-0.5">{petitionPublishError}</div>
+                </div>
+              </div>
+            )}
+
+            {publishedPetitionInfo && (
+              <div className="p-5 rounded-2xl bg-emerald-950/90 border-2 border-emerald-500 text-emerald-100 space-y-3 shadow-xl">
+                <div className="flex items-center gap-2 text-sm font-bold text-emerald-300">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                  <span>Official Trilingual Petition Published Successfully!</span>
+                </div>
+                <div className="text-xs text-slate-300">
+                  Petition <span className="font-mono font-bold text-amber-400 px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700">{publishedPetitionInfo.code}</span> (<em>{publishedPetitionInfo.title}</em>) is now live on the public Sri Lankan e-Petitions portal for verified citizen signing.
+                </div>
+                <div className="flex flex-wrap items-center gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/petitions')}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 shadow-lg shadow-emerald-600/30"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    <span>View on E-Petitions Page</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetPetitionForm}
+                    className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 border border-slate-700"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    <span>Forge Another Petition</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="text-[11px] text-slate-400">
                 <span>Saving publishes live to Supabase PostgreSQL in Singapore and local offline queues.</span>

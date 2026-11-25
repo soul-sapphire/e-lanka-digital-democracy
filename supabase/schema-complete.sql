@@ -344,6 +344,18 @@ CREATE POLICY "Public read petitions"
   ON petitions FOR SELECT
   USING (TRUE);
 
+-- Petitions: Allow staff and public to insert petitions
+DROP POLICY IF EXISTS "Allow staff and public to insert petitions" ON petitions;
+CREATE POLICY "Allow staff and public to insert petitions"
+  ON petitions FOR INSERT
+  WITH CHECK (TRUE);
+
+-- Petitions: Allow update of petitions (e.g. signature counter increment)
+DROP POLICY IF EXISTS "Allow update of petitions" ON petitions;
+CREATE POLICY "Allow update of petitions"
+  ON petitions FOR UPDATE
+  USING (TRUE);
+
 -- Signatures: Allow insertion, deny administrative SELECT of raw individual signatures
 DROP POLICY IF EXISTS "Allow public insert of verified signatures" ON petition_signatures;
 CREATE POLICY "Allow public insert of verified signatures"

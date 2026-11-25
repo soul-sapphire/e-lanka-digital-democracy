@@ -275,8 +275,16 @@ export async function createPetitionInSupabase(petition: EPetition): Promise<{
   }
 
   try {
+    const isValidUuid = (val?: string) =>
+      typeof val === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
+    const validId = isValidUuid(petition.id)
+      ? petition.id
+      : (typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : 'e' + Date.now().toString(16).padStart(7, '0') + '-0000-4000-8000-000000000001');
+
     const row = {
-      id: petition.id,
+      id: validId,
       code: petition.code,
       headline_en: petition.headline?.en || petition.title.en,
       headline_si: petition.headline?.si || petition.title.si || petition.title.en,
@@ -297,7 +305,7 @@ export async function createPetitionInSupabase(petition: EPetition): Promise<{
 
     const { data, error } = await sb.from('petitions').insert(row).select();
     if (error) {
-      console.warn('[Supabase Frontend] Petition creation error:', error);
+      console.warn('[Supabase Frontend] Petition creation error / RLS status:', error);
       return { success: false, error: error.message };
     }
 
@@ -307,7 +315,7 @@ export async function createPetitionInSupabase(petition: EPetition): Promise<{
         action: 'POLICY_PUBLISHED',
         actor_role: 'POLICY_ADMIN',
         resource_type: 'PETITION',
-        resource_id: petition.id,
+        resource_id: validId,
         purpose_description: `Official trilingual petition ${petition.code} published via 1-Click Translation Engine`,
         immutable_signature: `HMAC_SEAL_${Date.now()}`
       })
