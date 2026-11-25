@@ -115,8 +115,8 @@ export const AdminModerationPanel: React.FC = () => {
   const [draftObjectiveEn, setDraftObjectiveEn] = useState('Mandate the Ministry of Plantation Industries and CEB to provide subsidized solar microgrid installations to 50,000 certified smallholder farmers by Q4 2027.');
   const [draftTargetAuthority, setDraftTargetAuthority] = useState('Ministry of Plantation Industries');
   const [draftCategory, setDraftCategory] = useState('AGRICULTURE_FOOD_SECURITY');
-  const [draftRequiredSigs, setDraftRequiredSigs] = useState(5000);
-  const [draftDeadlineDays, setDraftDeadlineDays] = useState(45);
+  const [draftRequiredSigs, setDraftRequiredSigs] = useState<number | string>(5000);
+  const [draftDeadlineDays, setDraftDeadlineDays] = useState<number | string>(45);
 
   // Auto-translated fields (Sinhala & Tamil)
   const [translatedHeadlineSi, setTranslatedHeadlineSi] = useState('');
@@ -536,7 +536,8 @@ export const AdminModerationPanel: React.FC = () => {
       }
 
       const petitionCode = `PET-2026-${String(Math.floor(100 + Math.random() * 900))}`;
-      const deadlineDate = new Date(Date.now() + draftDeadlineDays * 24 * 3600 * 1000).toISOString();
+      const deadlineDaysNum = Number(draftDeadlineDays) || 45;
+      const deadlineDate = new Date(Date.now() + deadlineDaysNum * 24 * 3600 * 1000).toISOString();
 
       // Ensure valid UUID v4 compliant with PostgreSQL uuid schema
       const generatedUuid = (typeof crypto !== 'undefined' && crypto.randomUUID)
@@ -1859,9 +1860,34 @@ export const AdminModerationPanel: React.FC = () => {
               <div>
                 <label className="block font-medium text-slate-300 mb-1">Required Quorum (Signatures)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="5000"
                   value={draftRequiredSigs}
-                  onChange={(e) => setDraftRequiredSigs(Number(e.target.value))}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === '') {
+                      setDraftRequiredSigs('');
+                      return;
+                    }
+                    // Extract digits only and strip leading zero if followed by other digits
+                    const digits = raw.replace(/\D/g, '');
+                    if (digits === '') {
+                      setDraftRequiredSigs('');
+                      return;
+                    }
+                    const clean = digits.replace(/^0+(?=\d)/, '');
+                    setDraftRequiredSigs(clean);
+                  }}
+                  onBlur={() => {
+                    if (draftRequiredSigs === '' || Number(draftRequiredSigs) <= 0) {
+                      setDraftRequiredSigs(5000);
+                    } else {
+                      setDraftRequiredSigs(Number(draftRequiredSigs));
+                    }
+                  }}
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-lanka-gold font-mono"
                 />
               </div>
@@ -1869,9 +1895,33 @@ export const AdminModerationPanel: React.FC = () => {
               <div>
                 <label className="block font-medium text-slate-300 mb-1">Campaign Window (Days)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  placeholder="45"
                   value={draftDeadlineDays}
-                  onChange={(e) => setDraftDeadlineDays(Number(e.target.value))}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === '') {
+                      setDraftDeadlineDays('');
+                      return;
+                    }
+                    const digits = raw.replace(/\D/g, '');
+                    if (digits === '') {
+                      setDraftDeadlineDays('');
+                      return;
+                    }
+                    const clean = digits.replace(/^0+(?=\d)/, '');
+                    setDraftDeadlineDays(clean);
+                  }}
+                  onBlur={() => {
+                    if (draftDeadlineDays === '' || Number(draftDeadlineDays) <= 0) {
+                      setDraftDeadlineDays(45);
+                    } else {
+                      setDraftDeadlineDays(Number(draftDeadlineDays));
+                    }
+                  }}
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-lanka-gold font-mono"
                 />
               </div>

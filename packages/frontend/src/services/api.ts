@@ -314,19 +314,37 @@ export const api = {
     const local = getClientDemoPetitions();
 
     // Deduplicated merge: combine Supabase cloud records and locally published/cached petitions
+    // Enforces strict uniqueness by ID, code, AND normalized English title (purging any duplicate test clicks)
     const petitionMap = new Map<string, EPetition>();
+    const seenTitles = new Set<string>();
+
     if (sbData && Array.isArray(sbData)) {
-      sbData.forEach(p => petitionMap.set(p.id, p));
+      sbData.forEach(p => {
+        petitionMap.set(p.id, p);
+        if (p.title?.en) seenTitles.add(p.title.en.trim().toLowerCase());
+        if (p.code) seenTitles.add(p.code.trim().toUpperCase());
+      });
     }
+
     if (local && Array.isArray(local)) {
+      const cleanLocal: EPetition[] = [];
       local.forEach(p => {
-        const alreadyExists = Array.from(petitionMap.values()).some(
-          existing => existing.id === p.id || existing.code === p.code
-        );
-        if (!alreadyExists) {
+        const titleKey = (p.title?.en || '').trim().toLowerCase();
+        const codeKey = (p.code || '').trim().toUpperCase();
+        const isDuplicate = petitionMap.has(p.id) ||
+                            (codeKey && seenTitles.has(codeKey)) ||
+                            (titleKey && seenTitles.has(titleKey));
+        if (!isDuplicate) {
           petitionMap.set(p.id, p);
+          if (titleKey) seenTitles.add(titleKey);
+          if (codeKey) seenTitles.add(codeKey);
+          cleanLocal.push(p);
         }
       });
+      // Automatically clean up user's localStorage so stale test duplicates vanish immediately
+      if (cleanLocal.length !== local.length) {
+        saveClientDemoPetitions(cleanLocal);
+      }
     }
 
     const merged = Array.from(petitionMap.values());
@@ -455,8 +473,14 @@ export const api = {
     const sbRes = await createPetitionInSupabase(petition);
 
     // 3. Cache locally in client-side petitions store so it appears instantly
+    // Deduplicate by ID, Code, OR Title so repeated publishing updates in-place rather than creating duplicates
     const localPetitions = getClientDemoPetitions();
-    const existingIndex = localPetitions.findIndex(p => p.id === petition.id || p.code === petition.code);
+    const petitionTitleKey = (petition.title?.en || '').trim().toLowerCase();
+    const existingIndex = localPetitions.findIndex(
+      p => p.id === petition.id || 
+           p.code === petition.code || 
+           (petitionTitleKey && (p.title?.en || '').trim().toLowerCase() === petitionTitleKey)
+    );
     if (existingIndex >= 0) {
       localPetitions[existingIndex] = petition;
     } else {
