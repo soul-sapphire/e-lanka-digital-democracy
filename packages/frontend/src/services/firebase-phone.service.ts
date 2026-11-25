@@ -62,9 +62,15 @@ function getFirebaseAuth(): { app: FirebaseApp; auth: Auth } {
  */
 function formatFirebaseError(err: any): string {
   const code = err?.code || '';
+  const msg = err?.message || '';
+
+  if (msg.toLowerCase().includes('region') || msg.toLowerCase().includes('sms unable to be sent')) {
+    return 'Sri Lanka (+94) is not enabled in Firebase SMS Region Policy. In Firebase Console > Authentication > Settings > "SMS region policy", add Sri Lanka (+94) to the allowlist.';
+  }
+
   switch (code) {
     case 'auth/operation-not-allowed':
-      return 'Phone authentication is not enabled in Firebase Console. Please enable "Phone" sign-in provider under Authentication > Sign-in method.';
+      return 'SMS dispatch blocked by Firebase policy. Please check Firebase Console > Authentication > Settings > "SMS region policy" to enable Sri Lanka (+94), or add a test phone number.';
     case 'auth/unauthorized-domain':
       return 'This web domain is not yet authorized in Firebase Console. Please add this domain under Authentication > Settings > Authorized domains.';
     case 'auth/captcha-check-failed':
@@ -72,7 +78,7 @@ function formatFirebaseError(err: any): string {
     case 'auth/invalid-phone-number':
       return 'Invalid mobile number format. Please enter a valid Sri Lankan mobile number (+94 7X XXX XXXX).';
     case 'auth/quota-exceeded':
-      return 'Daily SMS verification quota reached. Please try again later or use Email OTP.';
+      return 'Daily SMS verification quota reached (10/day on Spark). Please try again later or use zero-cost Email OTP.';
     case 'auth/too-many-requests':
       return 'Too many SMS requests sent in a short period. Please wait a few moments and try again.';
     case 'auth/invalid-verification-code':
