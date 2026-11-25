@@ -16,7 +16,8 @@ import {
   UserPlus,
   KeyRound,
   Fingerprint,
-  ScanFace
+  ScanFace,
+  ShieldAlert
 } from 'lucide-react';
 import {
   decodeAndValidateSriLankanNIC,
@@ -97,6 +98,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [liveNicDetails, setLiveNicDetails] = useState<SriLankanNICDetails | null>(null);
+  const [guardianAssentGiven, setGuardianAssentGiven] = useState(false);
 
   useEffect(() => {
     const clean = nicNumber.trim().toUpperCase().replace(/[\s-]/g, '');
@@ -288,6 +290,12 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
       return;
     }
 
+    const isMinor = nicValidation.isValid && !nicValidation.isVoterEligible;
+    if (isMinor && !guardianAssentGiven) {
+      setError('Under PDPA Section 14, youth registration (under 18) requires affirmative parental or legal guardian assent.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const citizenUser = {
@@ -303,6 +311,8 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
         calculatedDOB: formatSriLankanDate(nicValidation.calculatedDOB),
         gender: nicValidation.gender,
         isVoterEligible: nicValidation.isVoterEligible,
+        isMinorAccount: isMinor,
+        guardianAssentGiven: isMinor ? true : undefined,
         nicDetails: nicValidation,
         otpVerified: true,
         verificationChannel: 'EMAIL',
@@ -845,9 +855,34 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                 </div>
               </label>
 
+              {/* Minor Safeguards & Parental/Guardian Digital Assent (PDPA Sec. 14 / Online Safety Act 2024) */}
+              {liveNicDetails?.isValid && !liveNicDetails.isVoterEligible && (
+                <div className="p-3 rounded-xl bg-amber-950/40 border border-amber-600/50 space-y-2 text-left">
+                  <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
+                    <ShieldAlert className="w-4 h-4 shrink-0 text-amber-400" />
+                    <span>Youth Citizen Safeguards (PDPA Sec. 14 & Online Safety Act 2024)</span>
+                  </div>
+                  <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                    Based on your NIC details, you are eligible for <strong>Youth Civic Education & Student Consultations</strong> (ages 15–17). In accordance with Section 14 of Sri Lanka's Personal Data Protection Act No. 9 of 2022, minor accounts require affirmative digital parental or legal guardian assent.
+                  </p>
+                  <label className="flex items-start gap-2.5 pt-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      required
+                      checked={guardianAssentGiven}
+                      onChange={(e) => setGuardianAssentGiven(e.target.checked)}
+                      className="mt-0.5 rounded border-amber-600 bg-slate-900 text-amber-500 focus:ring-0"
+                    />
+                    <span className="text-[11px] text-amber-100 leading-tight">
+                      <strong>Parental/Guardian Assent:</strong> I confirm that I have obtained consent from my parent or legal guardian to participate in non-partisan youth civic education. E-Lanka enforces strict Zero-PII anonymization and does not sell or profile youth data.
+                    </span>
+                  </label>
+                </div>
+              )}
+
               <button
                 type="submit"
-                disabled={isSubmitting || !otpVerified || !liveNicDetails?.isValid}
+                disabled={isSubmitting || !otpVerified || !liveNicDetails?.isValid || (liveNicDetails && !liveNicDetails.isVoterEligible && !guardianAssentGiven)}
                 className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-emerald-600/10 text-xs mt-2"
               >
                 {isSubmitting ? (

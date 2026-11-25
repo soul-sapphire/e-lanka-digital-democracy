@@ -12,7 +12,9 @@ import {
   AlertTriangle,
   Mail,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck,
+  UserCheck
 } from 'lucide-react';
 
 export const PrivacyPolicyView: React.FC = () => {
@@ -175,11 +177,64 @@ export const PrivacyPolicyView: React.FC = () => {
         </ul>
       </div>
 
-      {/* Section 4: Contact & DPO */}
+      {/* Section 4: Minor Safeguards & Youth Civic Participation */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 space-y-4">
+        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <span className="text-lanka-gold font-mono">04.</span>
+          <span>Minor Safeguards & Youth Civic Participation (Ages 15–17) — PDPA Sec. 14 & Online Safety Act 2024</span>
+        </h2>
+        <p className="text-slate-300 leading-relaxed text-xs sm:text-sm">
+          Civic literacy and youth participation are fundamental pillars of modern democracy. Sri Lankan students who receive their National Identity Card (NIC) from age 15 are warmly encouraged to engage with the <strong>CSLK Youth Champions Digital Democracy Academy</strong> and participate in non-partisan youth consultation polls.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-2">
+            <h4 className="font-bold text-white text-xs sm:text-sm flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Section 14 Digital Assent Requirement</span>
+            </h4>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Pursuant to Section 14 of the Personal Data Protection Act No. 9 of 2022, processing of personal data relating to young persons requires affirmative digital parental or legal guardian assent during registration. Minor accounts cannot be activated without this verification.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-2">
+            <h4 className="font-bold text-white text-xs sm:text-sm flex items-center gap-2">
+              <Lock className="w-4 h-4 text-lanka-gold" />
+              <span>Absolute Prohibition of Youth Profiling</span>
+            </h4>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              In accordance with the Online Safety Act No. 9 of 2024, E-Lanka operates under an ironclad zero-commercialization rule. We prohibit commercial profiling, behavioral ad tracking, algorithmic micro-targeting, or collecting school/location telemetry on any youth user.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-2">
+            <h4 className="font-bold text-white text-xs sm:text-sm flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-sky-400" />
+              <span>Voting Age Demarcation (18+ Voting vs. 15-17 Educational)</span>
+            </h4>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Pursuant to the Constitution and the Parliamentary Elections Act, only citizens aged 18 and older are registered as parliamentary electors. Citizens aged 15–17 participate in non-binding educational consultations and civic curricula; signatures on statutory parliamentary petitions strictly require adult elector status.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-2">
+            <h4 className="font-bold text-white text-xs sm:text-sm flex items-center gap-2">
+              <Trash2 className="w-4 h-4 text-red-400" />
+              <span>Guardian Right to Immediate Erasure</span>
+            </h4>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              A parent or legal guardian may request immediate account deactivation and complete data erasure for their minor child at any time by contacting <code className="text-emerald-300 bg-slate-950 px-1 py-0.5 rounded">dpo@cslk.org</code> or by executing the one-click erasure tool within the platform dashboard.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Section 5: Contact & DPO */}
       <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 text-white space-y-3">
         <h3 className="text-base font-bold text-white flex items-center gap-2">
           <Mail className="w-4 h-4 text-lanka-gold" />
-          <span>Data Protection Officer & Statutory Inquiries</span>
+          <span>05. Data Protection Officer & Statutory Inquiries</span>
         </h3>
         <p className="text-xs text-slate-300 leading-relaxed">
           For inquiries regarding personal data protection, statutory erasure, or to file a formal request under the PDPA:

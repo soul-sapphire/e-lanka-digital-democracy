@@ -90,9 +90,10 @@ export function decodeAndValidateSriLankanNIC(rawNIC: string): SriLankanNICDetai
     };
   }
 
-  // Validate birth year reasonableness (between 1900 and current year - 16)
+  // Validate birth year reasonableness (between 1900 and current year - 15)
+  // Sri Lankan DRP issues NICs to school candidates starting at age 15 for G.C.E. O/Level exams
   const currentYear = new Date().getFullYear();
-  if (birthYear < 1900 || birthYear > currentYear - 16) {
+  if (birthYear < 1900 || birthYear > currentYear - 15) {
     return {
       nicNumber: clean,
       format,
@@ -100,9 +101,9 @@ export function decodeAndValidateSriLankanNIC(rawNIC: string): SriLankanNICDetai
       dayOfYear: rawDays,
       gender: 'MALE',
       calculatedDOB: '',
-      isVoterEligible,
+      isVoterEligible: false,
       isValid: false,
-      validationError: `Invalid birth year ${birthYear} encoded in NIC (Must be at least 16 years old).`
+      validationError: `Invalid birth year ${birthYear} encoded in NIC (Must be at least 15 years old for youth civic education).`
     };
   }
 
@@ -132,6 +133,11 @@ export function decodeAndValidateSriLankanNIC(rawNIC: string): SriLankanNICDetai
 
   const { formatted } = dayOfYearToDate(birthYear, dayOfYear);
 
+  // Under Sri Lankan law (Parliamentary Elections Act), voting age is strictly 18+.
+  // Minor citizens (aged 15-17) can register for educational civic consultations but are not voter-eligible.
+  const age = currentYear - birthYear;
+  const voterEligibilityFinal = isVoterEligible && age >= 18;
+
   return {
     nicNumber: clean,
     format,
@@ -139,7 +145,7 @@ export function decodeAndValidateSriLankanNIC(rawNIC: string): SriLankanNICDetai
     dayOfYear,
     gender,
     calculatedDOB: formatted,
-    isVoterEligible,
+    isVoterEligible: voterEligibilityFinal,
     isValid: true
   };
 }

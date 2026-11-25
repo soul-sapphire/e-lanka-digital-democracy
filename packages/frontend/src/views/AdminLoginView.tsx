@@ -11,7 +11,8 @@ import {
   ArrowRight,
   ShieldAlert,
   HelpCircle,
-  UserCheck
+  UserCheck,
+  Clock
 } from 'lucide-react';
 import { api, setAuthToken, setStoredUser } from '../services/api';
 
@@ -26,6 +27,14 @@ export const AdminLoginView: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [inactivityNotice, setInactivityNotice] = useState<string | null>(() => {
+    const notice = sessionStorage.getItem('admin_timeout_notice');
+    if (notice) {
+      sessionStorage.removeItem('admin_timeout_notice');
+      return notice;
+    }
+    return null;
+  });
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +106,16 @@ export const AdminLoginView: React.FC = () => {
               In accordance with Sri Lanka PDPA Sections 12 & 21 (Technical & Organisational Security Measures) and specifications, access to administrative functions requires verified staff credentials and RFC 6238 TOTP two-factor authentication.
             </p>
           </div>
+
+          {inactivityNotice && (
+            <div className="p-3.5 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs flex items-start gap-2.5 shadow-md">
+              <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <div className="font-bold text-amber-300">Administrative Session Locked (PDPA Section 21)</div>
+                <p className="text-[11px] leading-relaxed text-amber-200/90">{inactivityNotice}</p>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="p-3 rounded-lg bg-red-900/40 border border-red-700/60 text-red-200 text-xs flex items-start gap-2">
