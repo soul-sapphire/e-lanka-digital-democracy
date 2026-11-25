@@ -8,6 +8,7 @@
 
 import { Router, Request, Response } from 'express';
 import { DatabaseStore } from '../db/store';
+import { isSupabaseConfigured, testSupabaseConnection } from '../db/supabase';
 
 export const publicRouter = Router();
 
@@ -61,7 +62,11 @@ publicRouter.get('/lms-context', (req: Request, res: Response): void => {
 /**
  * System Health & Security Metrics
  */
-publicRouter.get('/health', (req: Request, res: Response): void => {
+publicRouter.get('/health', async (req: Request, res: Response): Promise<void> => {
+  const dbStatus = isSupabaseConfigured()
+    ? await testSupabaseConnection()
+    : { connected: false, mode: 'TRANSACTIONAL_FLE_MEMORY_ADAPTER' };
+
   res.json({
     status: 'ONLINE',
     platform: 'E-Lanka Digital Democracy Platform',
@@ -70,6 +75,10 @@ publicRouter.get('/health', (req: Request, res: Response): void => {
     encryptionStandard: 'AES-256-GCM Application Layer (FLE)',
     blindIndexing: 'HMAC-SHA256 (Salted)',
     totpStandard: 'RFC 6238 Compliant (Google Authenticator / FreeOTP)',
+    database: {
+      provider: isSupabaseConfigured() ? 'Supabase PostgreSQL (Cloud)' : 'In-Memory Encrypted Store (Fallback)',
+      ...dbStatus
+    },
     timestamp: new Date().toISOString()
   });
 });
