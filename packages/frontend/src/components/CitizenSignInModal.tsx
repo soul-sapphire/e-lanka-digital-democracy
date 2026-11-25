@@ -82,7 +82,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
   const [registerPassword, setRegisterPassword] = useState('');
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
-  // OTP Verification States (Email OTP Only - 100% Free, Zero Deposit)
+  // OTP Verification States (Dedicated Email OTP Gateway)
   const [otpDispatched, setOtpDispatched] = useState(false);
   const [otpReference, setOtpReference] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -350,27 +350,27 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-md w-full max-h-[90vh] flex flex-col text-white shadow-2xl relative my-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-t-2xl sm:rounded-2xl max-w-md w-full max-h-[92vh] sm:max-h-[90vh] flex flex-col text-white shadow-2xl relative my-0 sm:my-auto">
         {/* Fixed Header */}
-        <div className="p-5 pb-3 border-b border-slate-800 shrink-0">
+        <div className="p-4 sm:p-5 pb-3 border-b border-slate-800 shrink-0">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors"
+            className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2.5 mb-3">
-            <div className="w-9 h-9 rounded-lg bg-amber-500/20 text-lanka-gold border border-amber-500/30 flex items-center justify-center">
+          <div className="flex items-center gap-2.5 mb-3 pr-8">
+            <div className="w-9 h-9 rounded-lg bg-amber-500/20 text-lanka-gold border border-amber-500/30 flex items-center justify-center shrink-0">
               {authMode === 'LOGIN' ? <Lock className="w-5 h-5" /> : <UserCheck className="w-5 h-5 text-emerald-400" />}
             </div>
             <div>
               <h3 className="text-base font-bold text-white">
                 {authMode === 'LOGIN' ? 'Citizen Sign In' : 'Register Citizen Profile'}
               </h3>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-400 leading-tight">
                 {authMode === 'LOGIN'
                   ? 'Access your democratic rights, civic profile & signed petitions'
                   : 'Link your Sri Lankan NIC to activate 1-click petition signing'}
@@ -386,7 +386,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                 setAuthMode('LOGIN');
                 setError(null);
               }}
-              className={`py-2 px-3 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2.5 px-3 min-h-[40px] rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all ${
                 authMode === 'LOGIN'
                   ? 'bg-amber-500/20 text-lanka-gold border border-amber-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
@@ -401,7 +401,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                 setAuthMode('REGISTER');
                 setError(null);
               }}
-              className={`py-2 px-3 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all ${
+              className={`py-2.5 px-3 min-h-[40px] rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all ${
                 authMode === 'REGISTER'
                   ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
                   : 'text-slate-400 hover:text-slate-200'
@@ -414,7 +414,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
         </div>
 
         {/* Scrollable Body */}
-        <div className="p-5 overflow-y-auto space-y-4 text-xs">
+        <div className="p-4 sm:p-5 overflow-y-auto space-y-3.5 text-xs">
           {/* Dual-Channel Quota Allocation (Mobile hidden for public zero-cost scale) */}
           <div className="hidden" aria-hidden="true">
             <span>{t('auth.chooseOtpChannel')}</span>
@@ -460,7 +460,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                   type="button"
                   onClick={handleBiometricLogin}
                   disabled={isAuthenticatingBiometrics}
-                  className="w-full py-2.5 px-3 bg-gradient-to-r from-amber-500 hover:from-amber-400 to-amber-600 text-slate-950 font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/15 transition-all text-xs"
+                  className="w-full min-h-[44px] py-2.5 px-3 bg-gradient-to-r from-amber-500 hover:from-amber-400 to-amber-600 text-slate-950 font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/15 transition-all text-xs"
                 >
                   {isAuthenticatingBiometrics ? (
                     <>
@@ -499,7 +499,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                   placeholder="e.g. ruu035@gmail.com or 200410805091"
                   value={loginIdentifier}
                   onChange={(e) => setLoginIdentifier(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold font-mono"
+                  className="w-full min-h-[42px] bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 sm:py-2 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold font-mono"
                   required
                 />
               </div>
@@ -511,7 +511,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsPasswordlessMode(true)}
-                      className="text-[10px] text-amber-400 hover:text-amber-300 hover:underline"
+                      className="text-[10px] text-amber-400 hover:text-amber-300 hover:underline py-1"
                     >
                       Sign in with Email OTP instead
                     </button>
@@ -522,13 +522,14 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                       placeholder="Enter your password"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold pr-9"
+                      className="w-full min-h-[42px] bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 sm:py-2 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold pr-10"
                       required={!isPasswordlessMode}
                     />
                     <button
                       type="button"
                       onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white"
+                      className="absolute right-1 top-1 w-9 h-9 flex items-center justify-center text-slate-400 hover:text-white"
+                      aria-label="Toggle password visibility"
                     >
                       {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -544,7 +545,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsPasswordlessMode(false)}
-                      className="text-[10px] text-slate-400 hover:text-white hover:underline"
+                      className="text-[10px] text-slate-400 hover:text-white hover:underline py-1"
                     >
                       Use password
                     </button>
@@ -555,7 +556,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                       type="button"
                       onClick={() => handleSendOtp(loginIdentifier)}
                       disabled={isSendingOtp || !loginIdentifier.trim()}
-                      className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      className="w-full min-h-[44px] py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg flex items-center justify-center gap-1.5 disabled:opacity-50 text-xs"
                     >
                       {isSendingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send 6-Digit Email Code'}
                     </button>
@@ -568,13 +569,13 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                           placeholder="6-digit code"
                           value={otpCode}
                           onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-center text-white tracking-widest font-mono text-sm"
+                          className="flex-1 min-h-[42px] bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-center text-white tracking-widest font-mono text-sm"
                         />
                         <button
                           type="button"
                           onClick={() => handleVerifyOtp(loginIdentifier)}
                           disabled={isVerifyingOtp || otpCode.length !== 6 || otpVerified}
-                          className="px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg disabled:opacity-50"
+                          className="px-4 py-2 min-h-[42px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg disabled:opacity-50 text-xs"
                         >
                           {isVerifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : otpVerified ? '✓ Verified' : 'Verify'}
                         </button>
@@ -591,12 +592,12 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
               )}
 
               <div className="flex items-center justify-between pt-1">
-                <label className="flex items-center gap-2 cursor-pointer text-slate-400">
+                <label className="flex items-center gap-2 cursor-pointer text-slate-400 py-1">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="rounded border-slate-700 bg-slate-800 text-amber-500 focus:ring-0"
+                    className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-amber-500 focus:ring-0"
                   />
                   <span>Remember this device</span>
                 </label>
@@ -605,7 +606,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-amber-500/10 text-xs mt-2"
+                className="w-full min-h-[44px] py-2.5 px-4 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-lg shadow-amber-500/10 text-xs mt-2"
               >
                 {isSubmitting ? (
                   <>
@@ -718,7 +719,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                   required
                 />
                 <span className="text-[10px] text-slate-400 mt-0.5 block">
-                  Free instant verification via dedicated elanka.portal@gmail.com gateway.
+                  Direct verification via dedicated elanka.portal@gmail.com gateway.
                 </span>
               </div>
 
@@ -732,20 +733,21 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                     placeholder="Minimum 6 characters"
                     value={registerPassword}
                     onChange={(e) => setRegisterPassword(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold pr-9"
+                    className="w-full min-h-[42px] bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 sm:py-2 text-sm sm:text-xs text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold pr-10"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                    className="absolute right-2.5 top-2.5 text-slate-400 hover:text-white"
+                    className="absolute right-1 top-1 w-9 h-9 flex items-center justify-center text-slate-400 hover:text-white"
+                    aria-label="Toggle password visibility"
                   >
                     {showRegisterPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              {/* Zero-Cost Email OTP Verification */}
+              {/* Official Email OTP Verification */}
               <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-white flex items-center gap-1.5">
@@ -759,7 +761,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                     </span>
                   ) : (
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-medium">
-                      100% Free
+                      Official Gateway
                     </span>
                   )}
                 </div>
@@ -769,7 +771,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                     type="button"
                     onClick={() => handleSendOtp(email)}
                     disabled={isSendingOtp || !email.trim() || !email.includes('@')}
-                    className="w-full py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    className="w-full min-h-[44px] py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg flex items-center justify-center gap-1.5 disabled:opacity-50 text-xs"
                   >
                     {isSendingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Send 6-Digit Email Code'}
                   </button>

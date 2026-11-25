@@ -11,7 +11,7 @@ export const LMSAcademyView: React.FC = () => {
     title: 'Digital Democracy and Rights',
     subtitle: 'Official National Civic Literacy & Digital Rights Certification',
     category: 'Certified Civic Program',
-    duration: '100% Free • 3 Hours • Self-Paced • Sinhala / தமிழ் / English • Automated E-Certificate',
+    duration: 'Open Access • 3 Hours • Self-Paced • Sinhala / தமிழ் / English • Automated E-Certificate',
     level: 'All Sri Lankan Citizens & Youth',
     url: 'https://www.cslk.org/courses/digital-democracy-and-rights',
     modules: [
@@ -51,7 +51,7 @@ export const LMSAcademyView: React.FC = () => {
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-10 text-white space-y-3 shadow-xl">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-lanka-gold/15 border border-lanka-gold/30 text-xs font-semibold text-lanka-gold">
           <BookOpen className="w-3.5 h-3.5" />
-          <span>Free Trilingual Online Course • Hosted on www.cslk.org</span>
+          <span>Trilingual Online Course • Hosted on www.cslk.org</span>
         </div>
         <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
           Democracy Academy & Civic Learning Platform
@@ -72,7 +72,7 @@ export const LMSAcademyView: React.FC = () => {
                 OFFICIAL COURSE
               </span>
               <span className="text-emerald-400 font-semibold px-2.5 py-1 rounded bg-emerald-950/70 border border-emerald-800 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5" /> 100% Free & Open
+                <Sparkles className="w-3.5 h-3.5" /> Open Access & Accredited
               </span>
               <span className="text-slate-300 flex items-center gap-1">
                 <Globe2 className="w-3.5 h-3.5 text-lanka-gold" /> Trilingual: සිංහල • தமிழ் • English
@@ -187,7 +187,7 @@ export const LMSAcademyView: React.FC = () => {
             rel="noopener noreferrer"
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-lanka-gold hover:text-amber-300 font-bold text-xs uppercase tracking-wider transition"
           >
-            <span>Start Learning for Free</span>
+            <span>Start Learning Now</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>

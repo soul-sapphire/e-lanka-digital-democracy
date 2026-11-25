@@ -37,7 +37,7 @@ export const LMSCard: React.FC<LMSCardProps> = ({
               Official Course • CSLK.ORG
             </span>
             <span className="text-[11px] text-emerald-400 font-semibold px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800 flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> 100% Free
+              <Sparkles className="w-3 h-3" /> Open Access
             </span>
             <span className="text-[11px] text-slate-300 font-mono flex items-center gap-1">
               <Clock className="w-3 h-3 text-lanka-gold" /> 3 Hours • Self-Paced

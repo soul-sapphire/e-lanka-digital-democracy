@@ -404,11 +404,11 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
   const petitionTitle = petition.title[currentLang] || petition.title.en;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-xl w-full max-h-[90vh] flex flex-col p-5 sm:p-7 text-white shadow-2xl relative my-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/85 backdrop-blur-md p-0 sm:p-4 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-t-2xl sm:rounded-2xl max-w-xl w-full max-h-[94vh] sm:max-h-[90vh] flex flex-col p-4 sm:p-7 text-white shadow-2xl relative my-0 sm:my-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors z-10"
+          className="absolute top-3.5 right-3.5 sm:top-4 sm:right-4 text-slate-400 hover:text-white p-2 rounded-lg hover:bg-slate-800 transition-colors z-10"
           aria-label="Close modal"
         >
           <X className="w-5 h-5" />
@@ -856,7 +856,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                       )}
                     </div>
                     <span className="text-[10px] text-slate-400 mt-1 block">
-                      Free instant delivery via elanka.portal@gmail.com. Check your inbox and spam folder.
+                      Direct official delivery via elanka.portal@gmail.com. Check your inbox and spam folder.
                     </span>
                   </div>
 
@@ -1005,22 +1005,22 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                   </label>
                 </div>
 
-                <div className="pt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800">
+                <div className="pt-3 flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-t border-slate-800">
                   <button
                     type="button"
                     onClick={() => setStep(3)}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
+                    className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium min-h-[44px]"
                   >
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Back</span>
                   </button>
 
-                  <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                     <button
                       type="button"
                       onClick={handleBiometricSign}
                       disabled={isSubmitting}
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 hover:from-emerald-500 to-teal-600 text-white font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-md shadow-emerald-600/20"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 hover:from-emerald-500 to-teal-600 text-white font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-md shadow-emerald-600/20 min-h-[44px]"
                     >
                       <Fingerprint className="w-4 h-4" />
                       <span>Biometric Sign</span>
@@ -1028,7 +1028,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-lanka-gold hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-lg shadow-amber-500/10"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-lanka-gold hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-lg shadow-amber-500/10 min-h-[44px]"
                     >
                       {isSubmitting ? (
                         <>

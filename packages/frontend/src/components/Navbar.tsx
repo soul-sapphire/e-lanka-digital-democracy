@@ -221,8 +221,17 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-          {/* Mobile hamburger button */}
+          {/* Mobile hamburger button & quick sign-in */}
           <div className="flex md:hidden items-center gap-2">
+            {!user && (
+              <button
+                onClick={() => setShowSignInModal(true)}
+                className="flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-lanka-gold hover:bg-amber-400 text-slate-950 transition-colors shadow-sm"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
+              </button>
+            )}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none"

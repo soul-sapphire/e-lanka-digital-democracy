@@ -328,13 +328,13 @@ export const CitizenDashboard: React.FC = () => {
             </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             {biometricsList.length === 0 ? (
               <button
                 type="button"
                 onClick={handleEnrollBiometrics}
                 disabled={isRegisteringBio}
-                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50"
+                className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all disabled:opacity-50 min-h-[44px]"
               >
                 {isRegisteringBio ? (
                   <>
@@ -354,7 +354,7 @@ export const CitizenDashboard: React.FC = () => {
                   type="button"
                   onClick={handleTestBiometrics}
                   disabled={isTestingBio}
-                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center gap-1.5 border border-slate-700 transition-all disabled:opacity-50"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition-all disabled:opacity-50 min-h-[44px]"
                 >
                   {isTestingBio ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -366,7 +366,7 @@ export const CitizenDashboard: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => handleRemoveBiometrics(biometricsList[0].id)}
-                  className="px-3 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-300 font-medium text-xs border border-red-800/60 transition-all"
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-300 font-medium text-xs border border-red-800/60 transition-all min-h-[44px] flex items-center justify-center"
                 >
                   Remove Key
                 </button>
