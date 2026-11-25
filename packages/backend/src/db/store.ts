@@ -23,6 +23,7 @@ import { encryptField, encryptJson, decryptField } from '../crypto/fle';
 import { generateBlindIndex, generateCitizenAlias, computeBlindHash } from '../crypto/blind-index';
 import { verifyTOTP } from '../crypto/totp';
 import { PDPAService } from '../services/pdpa.service';
+import { getSupabaseClient } from './supabase';
 
 export class DatabaseStore {
   private static instance: DatabaseStore;
@@ -702,6 +703,30 @@ export class DatabaseStore {
     this.petitionSignatures.push(signatureRecord);
     petition.currentSignatures += 1;
     this.petitions.set(params.petitionId, petition);
+
+    // Asynchronously sync verified signature to Supabase PostgreSQL
+    try {
+      const client = getSupabaseClient();
+      if (client) {
+        Promise.resolve(client.from('petition_signatures').insert({
+          id: signatureRecord.id,
+          petition_id: signatureRecord.petitionId,
+          signer_blind_index: signatureRecord.signerBlindIndex,
+          district: params.district || 'Colombo',
+          signed_at: signatureRecord.signedAt
+        })).then((res: any) => {
+          if (res?.error) console.error('[Supabase Signature Sync Error]', res.error.message);
+        }).catch((err: any) => console.error('[Supabase Signature Sync Exception]', err));
+
+        Promise.resolve(client.from('petitions').update({
+          current_signatures: petition.currentSignatures
+        }).eq('id', params.petitionId)).then((res: any) => {
+          if (res?.error) console.error('[Supabase Petition Update Error]', res.error.message);
+        }).catch((err: any) => console.error('[Supabase Petition Update Exception]', err));
+      }
+    } catch (e) {
+      // Non-blocking in test/offline mode
+    }
 
     PDPAService.logAudit({
       action: 'EPETITION_SIGNED',

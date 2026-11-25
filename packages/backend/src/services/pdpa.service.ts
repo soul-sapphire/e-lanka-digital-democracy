@@ -17,6 +17,7 @@ import {
   RightToErasureRequest,
   ErasureResult
 } from '@e-lanka/shared';
+import { getSupabaseClient } from '../db/supabase';
 
 const AUDIT_SECRET = process.env.PDPA_AUDIT_SECRET || 'e-lanka-pdpa-audit-immutable-chain-2026-secret';
 
@@ -80,6 +81,30 @@ export class PDPAService {
     };
 
     this.auditLogs.unshift(record);
+
+    // Asynchronously persist immutable audit log to Supabase PostgreSQL when connected
+    try {
+      const client = getSupabaseClient();
+      if (client) {
+        Promise.resolve(client.from('pdpa_audit_logs').insert({
+          id,
+          action: params.action,
+          actor_role: params.actorRole,
+          actor_id_hash: actorIdHash,
+          resource_type: params.resourceType,
+          resource_id: params.resourceId,
+          purpose_description: params.purposeDescription,
+          ip_address_hash: ipAddressHash,
+          user_agent_hash: userAgentHash,
+          timestamp,
+          immutable_signature: signature
+        })).then((res: any) => {
+          if (res?.error) console.error('[Supabase Audit Log Sync Error]', res.error.message);
+        }).catch((err: any) => console.error('[Supabase Audit Log Sync Exception]', err));
+      }
+    } catch (e) {
+      // Non-blocking in test/offline mode
+    }
 
     // Limit in-memory ring buffer if not yet written to persistent DB
     if (this.auditLogs.length > 2000) {
