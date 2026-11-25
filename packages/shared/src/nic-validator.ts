@@ -7,7 +7,7 @@
  * Parses old 9-digit (YYDDDNNNC + V/X) and new 12-digit (YYYYDDDNNNNC) formats.
  */
 
-import { SriLankanNICDetails } from './types/verification';
+import { SriLankanNICDetails, SriLankanTelcoDetails } from './types/verification';
 
 const DAYS_IN_MONTHS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
@@ -245,4 +245,66 @@ export function verifyClaimedCitizenDetails(params: {
     nicDetails
   };
 }
+
+/**
+ * Detect Sri Lankan Telecommunications Carrier & Validate Subscriber Number
+ * Maps TRCSL allocated prefixes:
+ * - Dialog Axiata: 077, 076, 074
+ * - SLT-Mobitel: 071, 070
+ * - Airtel Lanka: 075
+ * - Hutchison Telecom: 078, 072
+ */
+export function detectSriLankanTelco(rawNumber: string): SriLankanTelcoDetails {
+  if (!rawNumber) {
+    return { isValid: false, rawInput: rawNumber, error: 'Mobile number is required.' };
+  }
+
+  const clean = rawNumber.trim().replace(/[\s-()]/g, '');
+  const match = clean.match(/^(?:\+94|0094|0)?(7[01245678]\d{7})$/);
+
+  if (!match) {
+    return {
+      isValid: false,
+      rawInput: rawNumber,
+      error: 'Enter a valid 9-digit Sri Lankan mobile number starting with 07X (e.g., 0771234567 or +94771234567).'
+    };
+  }
+
+  const subscriber = match[1]; // e.g. 771234567
+  const prefix2 = subscriber.slice(0, 2);
+
+  let operator: 'Dialog' | 'Mobitel' | 'Airtel' | 'Hutch' = 'Dialog';
+  let operatorBrandName = 'Dialog Axiata';
+  let operatorColor = '#ef4444';
+
+  if (['77', '76', '74'].includes(prefix2)) {
+    operator = 'Dialog';
+    operatorBrandName = 'Dialog Axiata';
+    operatorColor = '#ef4444';
+  } else if (['71', '70'].includes(prefix2)) {
+    operator = 'Mobitel';
+    operatorBrandName = 'SLT-Mobitel';
+    operatorColor = '#10b981';
+  } else if (prefix2 === '75') {
+    operator = 'Airtel';
+    operatorBrandName = 'Airtel Lanka';
+    operatorColor = '#dc2626';
+  } else if (['78', '72'].includes(prefix2)) {
+    operator = 'Hutch';
+    operatorBrandName = 'Hutchison Telecom';
+    operatorColor = '#f97316';
+  }
+
+  return {
+    isValid: true,
+    rawInput: rawNumber,
+    normalized: `+94${subscriber}`,
+    formatted: `+94 ${subscriber.slice(0, 2)} ${subscriber.slice(2, 5)} ${subscriber.slice(5)}`,
+    operator,
+    operatorBrandName,
+    operatorColor,
+    masked: `+94 ${subscriber.slice(0, 2)} *** ${subscriber.slice(-4)}`
+  };
+}
+
 

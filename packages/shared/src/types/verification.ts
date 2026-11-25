@@ -45,6 +45,18 @@ export interface MobileOTPVerifyResult {
   message: string;
 }
 
+export interface SriLankanTelcoDetails {
+  isValid: boolean;
+  rawInput: string;
+  normalized?: string; // e.g. +94771234567
+  formatted?: string;  // e.g. +94 77 123 4567
+  operator?: 'Dialog' | 'Mobitel' | 'Airtel' | 'Hutch' | 'Other';
+  operatorBrandName?: string;
+  operatorColor?: string;
+  masked?: string;     // e.g. +94 77 *** 4567
+  error?: string;
+}
+
 export interface SovereignVerificationSubmission {
   nicNumber: string;
   claimedDOB: string;

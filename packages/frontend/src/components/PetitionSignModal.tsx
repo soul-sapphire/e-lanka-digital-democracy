@@ -16,7 +16,15 @@ import {
   Calendar,
   Lock
 } from 'lucide-react';
-import { EPetition, SriLankanNICDetails, DRPVerificationResult, formatSriLankanDate, decodeAndValidateSriLankanNIC } from '@e-lanka/shared';
+import {
+  EPetition,
+  SriLankanNICDetails,
+  DRPVerificationResult,
+  formatSriLankanDate,
+  decodeAndValidateSriLankanNIC,
+  detectSriLankanTelco,
+  SriLankanTelcoDetails
+} from '@e-lanka/shared';
 import { api, getStoredUser, setStoredUser } from '../services/api';
 import { LiveCounterWidget } from './LiveCounterWidget';
 
@@ -77,6 +85,16 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [sandboxCode, setSandboxCode] = useState<string | null>(null);
+  const [liveTelcoDetails, setLiveTelcoDetails] = useState<SriLankanTelcoDetails | null>(null);
+
+  useEffect(() => {
+    const clean = mobileNumber.trim();
+    if (clean.length >= 8) {
+      setLiveTelcoDetails(detectSriLankanTelco(clean));
+    } else {
+      setLiveTelcoDetails(null);
+    }
+  }, [mobileNumber]);
 
   // Consent Fields
   const [agreeToDemands, setAgreeToDemands] = useState(false);
@@ -836,9 +854,17 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                     </div>
                   ) : (
                     <div>
-                      <label className="block font-medium text-slate-300 mb-1">
-                        {t('petitions.mobileLabel')} *
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block font-medium text-slate-300">
+                          {t('petitions.mobileLabel')} *
+                        </label>
+                        {liveTelcoDetails && liveTelcoDetails.isValid && (
+                          <span className="text-[10px] px-2 py-0.5 rounded font-semibold flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-amber-300">
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: liveTelcoDetails.operatorColor || '#10b981' }}></span>
+                            <span>{liveTelcoDetails.operatorBrandName}</span>
+                          </span>
+                        )}
+                      </div>
                       <div className="flex gap-2">
                         <input
                           type="tel"
@@ -859,9 +885,12 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                           </button>
                         )}
                       </div>
-                      <span className="text-[10px] text-slate-400 mt-1 block">
-                        TRCSL Regulated Sri Lankan SIM (Dialog, Mobitel, Airtel, Hutch).
-                      </span>
+                      <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400">
+                        <span>TRCSL Regulated Sri Lankan SIM (Dialog, Mobitel, Airtel, Hutch).</span>
+                        {liveTelcoDetails && liveTelcoDetails.isValid && (
+                          <span className="text-emerald-400 font-mono font-medium">{liveTelcoDetails.formatted}</span>
+                        )}
+                      </div>
                     </div>
                   )}
 
@@ -883,7 +912,15 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                               </span>
                             </>
                           ) : (
-                            `A 6-digit verification code has been dispatched via SMS to ${maskedMobile}. Enter it below to sign the petition.`
+                            <>
+                              A 6-digit verification code has been dispatched via SMS to <strong className="text-white">{maskedMobile}</strong>
+                              {liveTelcoDetails?.operatorBrandName && <span> ({liveTelcoDetails.operatorBrandName})</span>}.
+                              {sandboxCode && (
+                                <span className="block mt-1.5 p-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-200">
+                                  ℹ️ <strong>Mobile SMS Sandbox:</strong> Enter verification code <strong className="font-mono text-white bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700">{sandboxCode}</strong> below to sign the petition.
+                                </span>
+                              )}
+                            </>
                           )}
                         </p>
                       </div>

@@ -23,7 +23,9 @@ import {
   SentimentAnalysisResult,
   decodeAndValidateSriLankanNIC,
   verifyClaimedCitizenDetails,
-  formatSriLankanDate
+  formatSriLankanDate,
+  detectSriLankanTelco,
+  SriLankanTelcoDetails
 } from '@e-lanka/shared';
 import { OfflineQueueManager } from './offline-queue';
 import { sendGoogleScriptOTP } from './google-mail.service';
@@ -958,27 +960,45 @@ export const api = {
     });
     if (live && live.success) return live;
 
-    // Standalone fallback: Sri Lankan Mobile SIM
-    const clean = destination.trim().replace(/[\s-()]/g, '');
-    const lkRegex = /^(?:\+94|0094|0)?(7[01245678]\d{7})$/;
-    const match = clean.match(lkRegex);
-
-    if (!match) {
+    // Standalone fallback: Sri Lankan Mobile SIM with Network Carrier Detection
+    const telco = detectSriLankanTelco(destination);
+    if (!telco.isValid || !telco.normalized) {
       return {
         success: false,
-        error: 'Invalid Sri Lankan mobile format. Expected 07X XXX XXXX (e.g. 0771234567 or +94771234567).'
+        error: telco.error || 'Invalid Sri Lankan mobile format. Expected 07X XXX XXXX (e.g. 0771234567 or +94771234567).'
       };
     }
 
-    const subscriber = match[1];
-    const normalized = `+94${subscriber}`;
-    const masked = `+94 ${subscriber.slice(0, 2)} *** ${subscriber.slice(-4)}`;
+    const normalized = telco.normalized;
+    const masked = telco.masked || destination;
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const ref = `OTP-LK-${Date.now().toString().slice(-6)}`;
 
     // Store in sessionStorage for verification
-    sessionStorage.setItem(`otp_${ref}`, JSON.stringify({ code, mobile: normalized, channel: 'MOBILE' }));
-    console.log(`[E-Lanka Verification Gateway] 📱 OTP dispatched to ${normalized} (Reference ${ref}): ${code}`);
+    sessionStorage.setItem(`otp_${ref}`, JSON.stringify({ code, mobile: normalized, channel: 'MOBILE', operator: telco.operator }));
+    console.log(`[E-Lanka Verification Gateway] 📱 OTP dispatched to ${normalized} via ${telco.operatorBrandName} (Reference ${ref}): ${code}`);
+
+    // Check if live SMS Gateway Webhook is configured in environment
+    let liveSmsSent = false;
+    const smsGateway = (import.meta as any).env?.VITE_SMS_GATEWAY_URL;
+    if (smsGateway) {
+      try {
+        await fetch(smsGateway, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: normalized,
+            code: code,
+            reference: ref,
+            operator: telco.operator,
+            message: `${code} is your E-Lanka citizen verification code. Valid for 2 minutes. Ref: ${ref}`
+          })
+        });
+        liveSmsSent = true;
+      } catch (err) {
+        console.warn('[Live SMS Gateway Error]', err);
+      }
+    }
 
     return {
       success: true,
@@ -988,7 +1008,9 @@ export const api = {
         otpReference: ref,
         expiresInSeconds: 120,
         demoOtpCode: code,
-        message: `Verification code dispatched to ${masked}. Please enter the 6-digit code.`
+        message: liveSmsSent
+          ? `SMS verification code dispatched to ${masked} via ${telco.operatorBrandName}.`
+          : `SMS code generated for ${masked} (${telco.operatorBrandName}).`
       }
     };
   },

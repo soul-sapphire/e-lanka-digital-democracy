@@ -13,7 +13,13 @@ import {
   Mail,
   Smartphone
 } from 'lucide-react';
-import { decodeAndValidateSriLankanNIC, formatSriLankanDate, SriLankanNICDetails } from '@e-lanka/shared';
+import {
+  decodeAndValidateSriLankanNIC,
+  formatSriLankanDate,
+  SriLankanNICDetails,
+  detectSriLankanTelco,
+  SriLankanTelcoDetails
+} from '@e-lanka/shared';
 import { api, setAuthToken, setStoredUser } from '../services/api';
 
 interface CitizenSignInModalProps {
@@ -58,6 +64,7 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [liveNicDetails, setLiveNicDetails] = useState<SriLankanNICDetails | null>(null);
+  const [liveTelcoDetails, setLiveTelcoDetails] = useState<SriLankanTelcoDetails | null>(null);
 
   useEffect(() => {
     const clean = nicNumber.trim().toUpperCase().replace(/[\s-]/g, '');
@@ -68,6 +75,15 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
       setLiveNicDetails(null);
     }
   }, [nicNumber]);
+
+  useEffect(() => {
+    const clean = mobileNumber.trim();
+    if (clean.length >= 8) {
+      setLiveTelcoDetails(detectSriLankanTelco(clean));
+    } else {
+      setLiveTelcoDetails(null);
+    }
+  }, [mobileNumber]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -385,9 +401,17 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                 </div>
               ) : (
                 <div>
-                  <label className="block font-medium text-slate-300 mb-1">
-                    Sri Lankan Mobile Phone Number *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-medium text-slate-300">
+                      Sri Lankan Mobile Phone Number *
+                    </label>
+                    {liveTelcoDetails && liveTelcoDetails.isValid && (
+                      <span className="text-[10px] px-2 py-0.5 rounded font-semibold flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-amber-300">
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: liveTelcoDetails.operatorColor || '#10b981' }}></span>
+                        <span>{liveTelcoDetails.operatorBrandName}</span>
+                      </span>
+                    )}
+                  </div>
                   <div className="flex gap-2">
                     <input
                       type="tel"
@@ -408,9 +432,12 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                       </button>
                     )}
                   </div>
-                  <span className="text-[10px] text-slate-400 mt-1 block">
-                    Direct SMS to Dialog, Mobitel, Airtel, or Hutch (+94).
-                  </span>
+                  <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400">
+                    <span>Direct SMS to Dialog (077/076/074), Mobitel (071/070), Airtel (075), Hutch (078/072).</span>
+                    {liveTelcoDetails && liveTelcoDetails.isValid && (
+                      <span className="text-emerald-400 font-mono font-medium">{liveTelcoDetails.formatted}</span>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -433,7 +460,15 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                           </span>
                         </>
                       ) : (
-                        `A 6-digit verification code has been sent via SMS to ${maskedDestination}. Enter it below to complete sign in.`
+                        <>
+                          A 6-digit verification code has been dispatched via SMS to <strong className="text-white">{maskedDestination}</strong>
+                          {liveTelcoDetails?.operatorBrandName && <span> ({liveTelcoDetails.operatorBrandName})</span>}.
+                          {sandboxCode && (
+                            <span className="block mt-1.5 p-2 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-200">
+                              ℹ️ <strong>Mobile SMS Sandbox:</strong> Enter verification code <strong className="font-mono text-white bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700">{sandboxCode}</strong> below to sign in, or connect Firebase SMS in settings.
+                            </span>
+                          )}
+                        </>
                       )}
                     </p>
                   </div>
