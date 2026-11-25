@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { PublicPolicyHub } from './views/PublicPolicyHub';
@@ -17,6 +17,45 @@ import { AboutContactView } from './views/AboutContactView';
 import { FieldCollectorView } from './views/FieldCollectorView';
 import { OfflineQueueManager } from './services/offline-queue';
 import { Wifi, WifiOff, CheckCircle2 } from 'lucide-react';
+
+const ScrollToTop: React.FC = () => {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    if (hash) {
+      const targetId = hash.replace('#', '');
+      const tryScroll = () => {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return true;
+        }
+        return false;
+      };
+
+      if (!tryScroll()) {
+        const interval = setInterval(() => {
+          if (tryScroll()) {
+            clearInterval(interval);
+          }
+        }, 100);
+        const timer = setTimeout(() => clearInterval(interval), 2000);
+        return () => {
+          clearInterval(interval);
+          clearTimeout(timer);
+        };
+      }
+      return;
+    }
+
+    // Always reset viewport to the very top on route changes
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTo({ top: 0, left: 0 });
+    document.body.scrollTo({ top: 0, left: 0 });
+  }, [pathname, hash]);
+
+  return null;
+};
 
 export const App: React.FC = () => {
   const [offlineNotice, setOfflineNotice] = useState<string | null>(null);
@@ -56,6 +95,7 @@ export const App: React.FC = () => {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <div className="min-h-screen flex flex-col bg-slate-950 font-sans selection:bg-lanka-gold/30 selection:text-slate-950">
         <Navbar />
 

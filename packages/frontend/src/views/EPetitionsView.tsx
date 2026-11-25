@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Vote, Share2, Building, ShieldCheck, CheckCircle2, PlusCircle, AlertCircle } from 'lucide-react';
 import { EPetition } from '@e-lanka/shared';
-import { api } from '../services/api';
+import { api, getStoredUser } from '../services/api';
 import { LiveCounterWidget } from '../components/LiveCounterWidget';
 import { PetitionSignModal } from '../components/PetitionSignModal';
+import { CitizenSignInModal } from '../components/CitizenSignInModal';
 
 export const EPetitionsView: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -14,6 +15,11 @@ export const EPetitionsView: React.FC = () => {
   const [selectedPetition, setSelectedPetition] = useState<EPetition | null>(null);
   const [isSignModalOpen, setIsSignModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Mandatory Citizen Authentication States (Guarantees vote integrity for WhatsApp links & unauthenticated users)
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
+  const [pendingPetitionToSign, setPendingPetitionToSign] = useState<EPetition | null>(null);
+  const [signInNotice, setSignInNotice] = useState<string | null>(null);
 
   useEffect(() => {
     loadPetitions();
@@ -32,8 +38,30 @@ export const EPetitionsView: React.FC = () => {
   };
 
   const handleOpenSignModal = (petition: EPetition) => {
+    const user = getStoredUser();
+    // Enforce mandatory Citizen Sign In before any citizen can cast a vote
+    if (!user || !user.isVerifiedCitizen) {
+      setPendingPetitionToSign(petition);
+      const title = petition.title[currentLang] || petition.title.en;
+      setSignInNotice(
+        `Citizen Sign In Required: Please sign in or register with your NIC to cast your verified vote for "${title}".`
+      );
+      setIsSignInModalOpen(true);
+      return;
+    }
+
     setSelectedPetition(petition);
     setIsSignModalOpen(true);
+  };
+
+  const handleSignInSuccess = (user: any) => {
+    setIsSignInModalOpen(false);
+    setSignInNotice(null);
+    if (pendingPetitionToSign) {
+      setSelectedPetition(pendingPetitionToSign);
+      setIsSignModalOpen(true);
+      setPendingPetitionToSign(null);
+    }
   };
 
   const handleSignatureSuccess = (newCount: number) => {
@@ -174,6 +202,18 @@ export const EPetitionsView: React.FC = () => {
           onSuccess={handleSignatureSuccess}
         />
       )}
+
+      {/* Citizen Sign In Modal (Enforced for WhatsApp shared links & unauthenticated voters) */}
+      <CitizenSignInModal
+        isOpen={isSignInModalOpen}
+        onClose={() => {
+          setIsSignInModalOpen(false);
+          setPendingPetitionToSign(null);
+          setSignInNotice(null);
+        }}
+        onSuccess={handleSignInSuccess}
+        initialNotice={signInNotice}
+      />
     </div>
   );
 };

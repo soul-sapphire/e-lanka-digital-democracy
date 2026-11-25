@@ -40,6 +40,7 @@ interface CitizenSignInModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: (user: any) => void;
+  initialNotice?: string | null;
 }
 
 const SRI_LANKAN_DISTRICTS = [
@@ -53,7 +54,8 @@ const SRI_LANKAN_DISTRICTS = [
 export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
+  initialNotice
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -433,6 +435,13 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
               Zero PII Leak
             </span>
           </div>
+
+          {initialNotice && (
+            <div className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-amber-200 text-xs flex items-start gap-2.5 shadow-md">
+              <ShieldCheck className="w-4 h-4 text-lanka-gold shrink-0 mt-0.5" />
+              <span className="leading-relaxed font-medium">{initialNotice}</span>
+            </div>
+          )}
 
           {error && (
             <div className="p-3 rounded-lg bg-red-900/40 border border-red-700/60 text-red-200 text-xs flex items-start gap-2">
