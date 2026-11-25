@@ -3,7 +3,7 @@
  * Optimized for ultra-low bandwidth performance & offline resilience
  */
 
-const CACHE_NAME = 'elanka-cache-v1';
+const CACHE_NAME = 'elanka-cache-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -40,6 +40,22 @@ self.addEventListener('fetch', (event) => {
 
   // Skip caching non-GET requests or browser extensions
   if (event.request.method !== 'GET' || !url.protocol.startsWith('http')) {
+    return;
+  }
+
+  // Network-First for HTML navigation to ensure users always receive the latest deployment
+  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request))
+    );
     return;
   }
 
