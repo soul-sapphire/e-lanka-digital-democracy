@@ -263,6 +263,8 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
         setResendCooldown(30);
         if (res.data.demoOtpCode) {
           setSandboxCode(res.data.demoOtpCode);
+        } else {
+          setSandboxCode(null);
         }
       } else {
         setError(res.error || 'Failed to dispatch verification code.');

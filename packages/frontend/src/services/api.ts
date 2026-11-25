@@ -30,6 +30,11 @@ import {
 import { OfflineQueueManager } from './offline-queue';
 import { sendGoogleScriptOTP } from './google-mail.service';
 import {
+  dispatchRealMobileSMS,
+  verifyRealMobileSMS,
+  isFirebaseConfigured
+} from './firebase-phone.service';
+import {
   getClientDemoPolicies,
   saveClientDemoPolicies,
   getClientDemoPetitions,
@@ -971,16 +976,43 @@ export const api = {
 
     const normalized = telco.normalized;
     const masked = telco.masked || destination;
+
+    // 1. Live Real SMS via Google Firebase Phone Auth (Google Identity Toolkit - 10,000 free SMS/mo)
+    if (isFirebaseConfigured()) {
+      const fbResult = await dispatchRealMobileSMS(normalized);
+      if (fbResult.success) {
+        const ref = `OTP-FB-${Date.now().toString().slice(-6)}`;
+        sessionStorage.setItem(`otp_${ref}`, JSON.stringify({
+          channel: 'MOBILE',
+          provider: 'FIREBASE',
+          mobile: normalized,
+          operator: telco.operator
+        }));
+        return {
+          success: true,
+          data: {
+            success: true,
+            mobileMasked: masked,
+            otpReference: ref,
+            expiresInSeconds: 120,
+            message: `Real carrier SMS dispatched to ${masked} via ${telco.operatorBrandName}.`
+            // NOTE: demoOtpCode is intentionally omitted so no code is displayed on screen
+          }
+        };
+      } else {
+        return {
+          success: false,
+          error: fbResult.error || 'Failed to dispatch real SMS via Firebase Phone Auth.'
+        };
+      }
+    }
+
+    // 2. Live Real SMS via Custom SMS Gateway Webhook
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const ref = `OTP-LK-${Date.now().toString().slice(-6)}`;
-
-    // Store in sessionStorage for verification
-    sessionStorage.setItem(`otp_${ref}`, JSON.stringify({ code, mobile: normalized, channel: 'MOBILE', operator: telco.operator }));
-    console.log(`[E-Lanka Verification Gateway] 📱 OTP dispatched to ${normalized} via ${telco.operatorBrandName} (Reference ${ref}): ${code}`);
-
-    // Check if live SMS Gateway Webhook is configured in environment
     let liveSmsSent = false;
     const smsGateway = (import.meta as any).env?.VITE_SMS_GATEWAY_URL;
+
     if (smsGateway) {
       try {
         await fetch(smsGateway, {
@@ -1000,6 +1032,16 @@ export const api = {
       }
     }
 
+    // Store in sessionStorage for verification
+    sessionStorage.setItem(`otp_${ref}`, JSON.stringify({
+      code,
+      mobile: normalized,
+      channel: 'MOBILE',
+      provider: liveSmsSent ? 'GATEWAY' : 'SANDBOX',
+      operator: telco.operator
+    }));
+    console.log(`[E-Lanka Verification Gateway] 📱 OTP dispatched to ${normalized} via ${telco.operatorBrandName} (Reference ${ref}): ${code}`);
+
     return {
       success: true,
       data: {
@@ -1007,7 +1049,7 @@ export const api = {
         mobileMasked: masked,
         otpReference: ref,
         expiresInSeconds: 120,
-        demoOtpCode: code,
+        demoOtpCode: liveSmsSent ? undefined : code,
         message: liveSmsSent
           ? `SMS verification code dispatched to ${masked} via ${telco.operatorBrandName}.`
           : `SMS code generated for ${masked} (${telco.operatorBrandName}).`
@@ -1026,8 +1068,35 @@ export const api = {
     });
     if (live && live.success) return live;
 
-    // Standalone fallback
+    // Check Firebase Phone Auth session
     const raw = sessionStorage.getItem(`otp_${otpReference}`);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.provider === 'FIREBASE') {
+          const fbVerify = await verifyRealMobileSMS(otpCode);
+          if (fbVerify.verified) {
+            sessionStorage.removeItem(`otp_${otpReference}`);
+            return {
+              success: true,
+              data: {
+                verified: true,
+                mobileBlindHash: `blind_hash_${Date.now()}`,
+                verifiedAt: new Date().toISOString(),
+                message: 'Identity confirmed successfully via real carrier SMS.'
+              }
+            };
+          } else {
+            return {
+              success: false,
+              error: fbVerify.error || 'Invalid 6-digit SMS verification code. Please check your SMS messages and try again.'
+            };
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Standalone fallback
     if (!raw) {
       return {
         success: false,

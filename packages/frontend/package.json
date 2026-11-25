@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@e-lanka/shared": "^1.0.0",
+    "@firebase/app": "^0.16.7",
+    "@firebase/auth": "^1.13.11",
     "clsx": "^2.1.1",
     "i18next": "^23.11.5",
     "lucide-react": "^0.378.0",
