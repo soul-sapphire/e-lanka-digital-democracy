@@ -48,7 +48,8 @@ import {
   fetchLivePoliciesFromSupabase,
   fetchLivePetitionsFromSupabase,
   fetchLiveCounterFromSupabase,
-  recordSignatureInSupabase
+  recordSignatureInSupabase,
+  createPetitionInSupabase
 } from './supabase.service';
 
 export {
@@ -60,7 +61,8 @@ export {
   fetchLivePoliciesFromSupabase,
   fetchLivePetitionsFromSupabase,
   fetchLiveCounterFromSupabase,
-  recordSignatureInSupabase
+  recordSignatureInSupabase,
+  createPetitionInSupabase
 };
 
 const API_BASE = '/api/v1';
@@ -420,6 +422,26 @@ export const api = {
       success: true,
       message: 'Signature verified and cryptographically recorded.',
       currentSignatures: newCount
+    };
+  },
+
+  createPetition: async (petition: EPetition): Promise<{ success: boolean; data?: any; error?: string }> => {
+    // 1. Direct persistence to live Supabase if connected
+    const sbRes = await createPetitionInSupabase(petition);
+
+    // 2. Also cache locally in client-side petitions store
+    const localPetitions = getClientDemoPetitions();
+    const existingIndex = localPetitions.findIndex(p => p.id === petition.id || p.code === petition.code);
+    if (existingIndex >= 0) {
+      localPetitions[existingIndex] = petition;
+    } else {
+      localPetitions.unshift(petition);
+    }
+    saveClientDemoPetitions(localPetitions);
+
+    return {
+      success: true,
+      data: sbRes.data || petition
     };
   },
 

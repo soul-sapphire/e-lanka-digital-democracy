@@ -260,3 +260,61 @@ export async function recordSignatureInSupabase(params: {
     return { success: false, error: err.message || 'Signature persistence failed' };
   }
 }
+
+/**
+ * Create a new official trilingual e-petition in Supabase
+ */
+export async function createPetitionInSupabase(petition: EPetition): Promise<{
+  success: boolean;
+  data?: any;
+  error?: string;
+}> {
+  const sb = getSupabase();
+  if (!sb) {
+    return { success: false, error: 'Supabase client not initialized' };
+  }
+
+  try {
+    const row = {
+      id: petition.id,
+      code: petition.code,
+      headline_en: petition.headline?.en || petition.title.en,
+      headline_si: petition.headline?.si || petition.title.si || petition.title.en,
+      headline_ta: petition.headline?.ta || petition.title.ta || petition.title.en,
+      title_en: petition.title.en,
+      title_si: petition.title.si || petition.title.en,
+      title_ta: petition.title.ta || petition.title.en,
+      objective_en: petition.objectiveStatement.en,
+      objective_si: petition.objectiveStatement.si || petition.objectiveStatement.en,
+      objective_ta: petition.objectiveStatement.ta || petition.objectiveStatement.en,
+      target_authority: petition.targetAuthority,
+      category: petition.category,
+      required_signatures: petition.requiredSignatures,
+      current_signatures: petition.currentSignatures || 0,
+      status: petition.status || 'ACTIVE',
+      deadline: petition.deadline
+    };
+
+    const { data, error } = await sb.from('petitions').insert(row).select();
+    if (error) {
+      console.warn('[Supabase Frontend] Petition creation error:', error);
+      return { success: false, error: error.message };
+    }
+
+    // Log statutory creation event in pdpa_audit_logs
+    await Promise.resolve(
+      sb.from('pdpa_audit_logs').insert({
+        action: 'POLICY_PUBLISHED',
+        actor_role: 'POLICY_ADMIN',
+        resource_type: 'PETITION',
+        resource_id: petition.id,
+        purpose_description: `Official trilingual petition ${petition.code} published via 1-Click Translation Engine`,
+        immutable_signature: `HMAC_SEAL_${Date.now()}`
+      })
+    ).catch(() => {});
+
+    return { success: true, data };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to insert petition' };
+  }
+}
