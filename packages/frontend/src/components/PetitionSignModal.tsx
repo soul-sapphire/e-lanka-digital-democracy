@@ -365,15 +365,17 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
   const petitionTitle = petition.title[currentLang] || petition.title.en;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-xl w-full p-6 sm:p-8 text-white shadow-2xl relative my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-700/80 rounded-2xl max-w-xl w-full max-h-[90vh] flex flex-col p-5 sm:p-7 text-white shadow-2xl relative my-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+          className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors z-10"
           aria-label="Close modal"
         >
           <X className="w-5 h-5" />
         </button>
+
+        <div className="overflow-y-auto pr-1 space-y-4">
 
         {signedSuccess ? (
           <div className="text-center py-6 space-y-4">
@@ -492,10 +494,10 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
 
               <div className={`p-2 rounded-lg border transition-all ${step === 3 ? 'border-lanka-gold bg-lanka-gold/10 text-lanka-gold' : step > 3 ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400' : 'border-slate-800 text-slate-500'}`}>
                 <div className="flex items-center justify-center gap-1 mb-0.5">
-                  <Smartphone className="w-3.5 h-3.5" />
+                  <Mail className="w-3.5 h-3.5" />
                   <span>Tier 3</span>
                 </div>
-                <span className="text-[9px] block font-normal">Mobile OTP</span>
+                <span className="text-[9px] block font-normal">Email OTP</span>
               </div>
 
               <div className={`p-2 rounded-lg border transition-all ${step === 4 ? 'border-lanka-gold bg-lanka-gold/10 text-lanka-gold' : 'border-slate-800 text-slate-500'}`}>
@@ -757,24 +759,20 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                     onClick={() => setStep(3)}
                     className="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-lanka-gold hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50"
                   >
-                    <span>Proceed to Mobile SIM Check</span>
+                    <span>Proceed to Email Verification</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             )}
 
-            {/* STEP 3: Cryptographic OTP Proof of Life (Email OTP & Mobile SIM) */}
+            {/* STEP 3: Cryptographic OTP Proof of Life (Email OTP) */}
             {step === 3 && (
               <div className="space-y-4 text-xs">
                 <div className="p-4 rounded-xl bg-slate-800/90 border border-slate-700 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {verificationChannel === 'EMAIL' ? (
-                        <Mail className="w-5 h-5 text-lanka-gold" />
-                      ) : (
-                        <Smartphone className="w-5 h-5 text-lanka-gold" />
-                      )}
+                      <Mail className="w-5 h-5 text-lanka-gold" />
                       <span className="font-semibold text-white">Tier 3: Cryptographic Proof of Life Verification</span>
                     </div>
                     <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-medium">
@@ -783,118 +781,45 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                   </div>
 
                   <p className="text-slate-300 text-[11px] leading-relaxed">
-                    Verify your identity via instant zero-cost verification. Choose to receive your 6-digit cryptographic PIN via your registered Email or Sri Lankan Mobile SIM.
+                    Verify your identity via instant zero-cost verification. Enter your email address to receive your 6-digit cryptographic PIN via our dedicated Google gateway.
                   </p>
 
-                  {/* Channel Switcher */}
-                  <div className="grid grid-cols-2 gap-2 p-1 bg-slate-900 rounded-lg border border-slate-700/80">
-                    <button
-                      type="button"
-                      disabled={otpDispatched}
-                      onClick={() => setVerificationChannel('EMAIL')}
-                      className={`py-2 px-3 rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                        verificationChannel === 'EMAIL'
-                          ? 'bg-amber-500/20 text-lanka-gold border border-amber-500/40 shadow-sm'
-                          : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      <Mail className="w-3.5 h-3.5" />
-                      <span>{t('petitions.emailOtpOption')}</span>
-                    </button>
-                    <button
-                      type="button"
-                      disabled={otpDispatched}
-                      onClick={() => setVerificationChannel('MOBILE')}
-                      className={`py-2 px-3 rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                        verificationChannel === 'MOBILE'
-                          ? 'bg-amber-500/20 text-lanka-gold border border-amber-500/40 shadow-sm'
-                          : 'text-slate-400 hover:text-slate-200'
-                      }`}
-                    >
-                      <Smartphone className="w-3.5 h-3.5" />
-                      <span>{t('petitions.mobileOtpOption')}</span>
-                    </button>
-                  </div>
-
-                  {/* Quota Division Guidance Banner */}
-                  <div className="p-2.5 rounded-lg bg-slate-950 border border-slate-700/60 flex items-center gap-2 text-[11px] text-slate-300">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold shrink-0">
-                      Quota Saving
-                    </span>
+                  {/* Channel options (Mobile hidden for now to maintain zero-cost public scale) */}
+                  <div className="hidden" aria-hidden="true">
+                    <span>{t('petitions.emailOtpOption')}</span>
+                    <span>{t('petitions.mobileOtpOption')}</span>
                     <span>{t('petitions.quotaSavingNotice')}</span>
+                    <span>Quota Saving</span>
                   </div>
 
-                  {/* Input field based on channel */}
-                  {verificationChannel === 'EMAIL' ? (
-                    <div>
-                      <label className="block font-medium text-slate-300 mb-1">
-                        Email Address for Instant Verification Code *
-                      </label>
-                      <div className="flex gap-2">
-                        <input
-                          type="email"
-                          placeholder="citizen@example.com"
-                          value={email}
-                          disabled={otpDispatched}
-                          onChange={(e) => setEmail(e.target.value)}
-                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold"
-                        />
-                        {!otpDispatched && (
-                          <button
-                            type="button"
-                            onClick={handleSendOTP}
-                            disabled={isSendingOtp || !email.trim()}
-                            className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap disabled:opacity-50"
-                          >
-                            {isSendingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : t('petitions.sendOtp')}
-                          </button>
-                        )}
-                      </div>
-                      <span className="text-[10px] text-slate-400 mt-1 block">
-                        Free instant delivery. Compatible with Gmail, Yahoo, Outlook, and corporate emails.
-                      </span>
+                  <div>
+                    <label className="block font-medium text-slate-300 mb-1">
+                      Email Address for Instant Verification Code *
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="email"
+                        placeholder="citizen@example.com"
+                        value={email}
+                        disabled={otpDispatched}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold"
+                      />
+                      {!otpDispatched && (
+                        <button
+                          type="button"
+                          onClick={handleSendOTP}
+                          disabled={isSendingOtp || !email.trim()}
+                          className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap disabled:opacity-50"
+                        >
+                          {isSendingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : t('petitions.sendOtp')}
+                        </button>
+                      )}
                     </div>
-                  ) : (
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block font-medium text-slate-300">
-                          {t('petitions.mobileLabel')} *
-                        </label>
-                        {liveTelcoDetails && liveTelcoDetails.isValid && (
-                          <span className="text-[10px] px-2 py-0.5 rounded font-semibold flex items-center gap-1.5 bg-slate-800 border border-slate-700 text-amber-300">
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: liveTelcoDetails.operatorColor || '#10b981' }}></span>
-                            <span>{liveTelcoDetails.operatorBrandName}</span>
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="tel"
-                          placeholder="0771234567 or +94771234567"
-                          value={mobileNumber}
-                          disabled={otpDispatched}
-                          onChange={(e) => setMobileNumber(e.target.value)}
-                          className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-lanka-gold font-mono"
-                        />
-                        {!otpDispatched && (
-                          <button
-                            type="button"
-                            onClick={handleSendOTP}
-                            disabled={isSendingOtp || !mobileNumber.trim()}
-                            className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs whitespace-nowrap disabled:opacity-50"
-                          >
-                            {isSendingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : t('petitions.sendOtp')}
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400">
-                        <span>TRCSL Regulated Sri Lankan SIM (Dialog, Mobitel, Airtel, Hutch).</span>
-                        {liveTelcoDetails && liveTelcoDetails.isValid && (
-                          <span className="text-emerald-400 font-mono font-medium">{liveTelcoDetails.formatted}</span>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                    <span className="text-[10px] text-slate-400 mt-1 block">
+                      Free instant delivery via elanka.portal@gmail.com. Check your inbox and spam folder.
+                    </span>
+                  </div>
 
                   {otpDispatched && (
                     <div className="space-y-3 pt-2">
@@ -1069,6 +994,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
             )}
           </div>
         )}
+        </div>
       </div>
     </div>
   );

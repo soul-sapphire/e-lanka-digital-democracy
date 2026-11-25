@@ -74,6 +74,24 @@ export function setStoredUser(user: any): void {
   localStorage.setItem('elanka_user', JSON.stringify(user));
 }
 
+export function getRegisteredCitizens(): any[] {
+  try {
+    const raw = localStorage.getItem('elanka_registered_citizens');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveRegisteredCitizen(citizen: any): void {
+  try {
+    const current = getRegisteredCitizens();
+    const filtered = current.filter(c => c.id !== citizen.id && c.email !== citizen.email && (!c.nicNumber || c.nicNumber !== citizen.nicNumber));
+    filtered.push(citizen);
+    localStorage.setItem('elanka_registered_citizens', JSON.stringify(filtered));
+  } catch {}
+}
+
 export function clearStoredAuth(): void {
   localStorage.removeItem('elanka_auth_token');
   localStorage.removeItem('elanka_user');
@@ -770,6 +788,58 @@ export const api = {
       tier2Verified: Boolean(credentials.nicNumber && nicDetails?.isValid)
     };
     return { token: `jwt_citizen_${Date.now()}`, user };
+  },
+
+  citizenPasswordLogin: async (credentials: { identifier: string; password?: string }): Promise<any> => {
+    const live = await tryFetch<any>('/auth/citizen-login', {
+      method: 'POST',
+      body: JSON.stringify(credentials)
+    });
+    if (live && live.user) return live;
+
+    const id = credentials.identifier.trim().toLowerCase();
+    const cleanId = credentials.identifier.trim().toUpperCase().replace(/[\s-]/g, '');
+    const citizens = getRegisteredCitizens();
+    const found = citizens.find(
+      c => (c.email && c.email.toLowerCase() === id) ||
+           (c.username && c.username.toLowerCase() === id) ||
+           (c.nicNumber && c.nicNumber.toUpperCase() === cleanId)
+    );
+
+    if (found) {
+      if (found.password && credentials.password && found.password !== credentials.password) {
+        throw new Error('Incorrect password. Please verify your password and try again.');
+      }
+      return { token: `jwt_citizen_${Date.now()}`, user: found };
+    }
+
+    // If identifier is a valid Sri Lankan NIC, allow direct citizen session
+    const nicCheck = decodeAndValidateSriLankanNIC(cleanId);
+    if (nicCheck.isValid) {
+      return api.citizenLogin({ nicNumber: cleanId, email: id.includes('@') ? id : undefined });
+    }
+
+    // Default registered demo citizen fallback if user tests with their email
+    if (id.includes('@')) {
+      const demoCitizen = {
+        id: `usr_${Date.now()}`,
+        role: 'CITIZEN',
+        anonymizedAlias: `Citizen-${id.split('@')[0]}`,
+        email: id,
+        district: 'Colombo',
+        isVerifiedCitizen: true,
+        otpVerified: true,
+        verificationChannel: 'EMAIL',
+        verifiedEmail: id,
+        tier1Verified: true,
+        tier2Verified: true,
+        tier3Verified: true
+      };
+      saveRegisteredCitizen(demoCitizen);
+      return { token: `jwt_citizen_${Date.now()}`, user: demoCitizen };
+    }
+
+    throw new Error('Citizen account not found. Please click "Register & Verify NIC" to register your citizen profile.');
   },
 
   adminLogin: async (credentials: {
