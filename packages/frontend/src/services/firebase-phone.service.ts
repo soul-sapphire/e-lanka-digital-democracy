@@ -69,6 +69,8 @@ function formatFirebaseError(err: any): string {
   }
 
   switch (code) {
+    case 'auth/billing-not-enabled':
+      return 'Google requires a linked billing account (Blaze plan with 10,000 free SMS/mo) to send real carrier SMS. You can link billing in Firebase Console, add this number under "Phone numbers for testing", or switch to zero-cost Email OTP.';
     case 'auth/operation-not-allowed':
       return 'SMS dispatch blocked by Firebase policy. Please check Firebase Console > Authentication > Settings > "SMS region policy" to enable Sri Lanka (+94), or add a test phone number.';
     case 'auth/unauthorized-domain':
