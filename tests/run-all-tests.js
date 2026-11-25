@@ -1483,6 +1483,46 @@ async function runTestSuite() {
     assert.ok(guideContent.includes('Lifetime Account Verification Persistence'), 'Guide must document lifetime account verification persistence');
   });
 
+  it('14.5 Validates WebAuthn Biometric Authentication (Fingerprint & Face ID Passkeys)', () => {
+    // 1. Verify webauthn.service.ts exists and implements core methods
+    const webauthnPath = path.join(__dirname, '../packages/frontend/src/services/webauthn.service.ts');
+    assert.ok(fs.existsSync(webauthnPath), 'packages/frontend/src/services/webauthn.service.ts must exist');
+    const webauthnContent = fs.readFileSync(webauthnPath, 'utf8');
+    assert.ok(webauthnContent.includes('isBiometricsSupported'), 'Must export isBiometricsSupported');
+    assert.ok(webauthnContent.includes('registerBiometrics'), 'Must export registerBiometrics');
+    assert.ok(webauthnContent.includes('authenticateBiometrics'), 'Must export authenticateBiometrics');
+    assert.ok(webauthnContent.includes('detectPlatformName'), 'Must export detectPlatformName');
+
+    // 2. Verify CitizenSignInModal provides Biometric Quick Sign In
+    const signInContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/CitizenSignInModal.tsx'), 'utf8');
+    assert.ok(signInContent.includes('handleBiometricLogin'), 'CitizenSignInModal must implement handleBiometricLogin');
+    assert.ok(signInContent.includes('Biometric Passkey Sign In'), 'CitizenSignInModal must render Biometric Passkey Sign In');
+    assert.ok(signInContent.includes('enableBiometricsOnRegister'), 'CitizenSignInModal must support biometric registration');
+
+    // 3. Verify CitizenDashboard provides Biometric Management
+    const dashboardContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/views/CitizenDashboard.tsx'), 'utf8');
+    assert.ok(dashboardContent.includes('Biometric Passkeys & Fast Login'), 'CitizenDashboard must feature Biometric Passkeys card');
+    assert.ok(dashboardContent.includes('handleEnrollBiometrics'), 'CitizenDashboard must implement handleEnrollBiometrics');
+    assert.ok(dashboardContent.includes('handleTestBiometrics'), 'CitizenDashboard must implement handleTestBiometrics');
+
+    // 4. Verify PetitionSignModal supports Biometric Signing
+    const signModalContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/components/PetitionSignModal.tsx'), 'utf8');
+    assert.ok(signModalContent.includes('handleBiometricSign'), 'PetitionSignModal must implement handleBiometricSign');
+    assert.ok(signModalContent.includes('Biometric Sign'), 'PetitionSignModal must display Biometric Sign button');
+
+    // 5. Verify api.ts provides citizenBiometricLogin
+    const apiContent = fs.readFileSync(path.join(__dirname, '../packages/frontend/src/services/api.ts'), 'utf8');
+    assert.ok(apiContent.includes('citizenBiometricLogin'), 'api.ts must export citizenBiometricLogin');
+
+    // 6. Verify trilingual keys in en, si, ta
+    const enLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/en.json'), 'utf8'));
+    const siLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/si.json'), 'utf8'));
+    const taLoc = JSON.parse(fs.readFileSync(path.join(__dirname, '../packages/frontend/src/i18n/locales/ta.json'), 'utf8'));
+    assert.ok(enLoc.auth.biometricSignIn, 'en.json must have auth.biometricSignIn');
+    assert.ok(siLoc.auth.biometricSignIn, 'si.json must have auth.biometricSignIn');
+    assert.ok(taLoc.auth.biometricSignIn, 'ta.json must have auth.biometricSignIn');
+  });
+
   // --------------------------------------------------------------------------
   // Summary
   // --------------------------------------------------------------------------

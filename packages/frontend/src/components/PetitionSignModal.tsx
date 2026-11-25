@@ -14,7 +14,8 @@ import {
   ArrowLeft,
   KeyRound,
   Calendar,
-  Lock
+  Lock,
+  Fingerprint
 } from 'lucide-react';
 import {
   EPetition,
@@ -26,6 +27,7 @@ import {
   SriLankanTelcoDetails
 } from '@e-lanka/shared';
 import { api, getStoredUser, setStoredUser } from '../services/api';
+import { authenticateBiometrics } from '../services/webauthn.service';
 import { LiveCounterWidget } from './LiveCounterWidget';
 
 interface PetitionSignModalProps {
@@ -356,6 +358,43 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
       }
     } catch (err: any) {
       setError(err.message || 'Signature recording failed.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBiometricSign = async () => {
+    setError(null);
+    setIsSubmitting(true);
+    try {
+      const bioAuth = await authenticateBiometrics(nicNumber);
+      if (!bioAuth.success) {
+        setError(bioAuth.error || 'Biometric signature was cancelled.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const cleanNIC = nicNumber.trim().toUpperCase().replace(/[\s-]/g, '');
+      const res = await api.signPetition(petition.id, {
+        nicNumber: cleanNIC,
+        fullName: fullName || 'Verified Citizen',
+        email,
+        district,
+        agreeToDemands: true,
+        consentDataProcessing: true
+      });
+
+      if (res.success) {
+        setAgreeToDemands(true);
+        setConsentDataProcessing(true);
+        setLatestCount(res.currentSignatures);
+        setSignedSuccess(true);
+        onSuccess(res.currentSignatures);
+      } else {
+        setError(res.message || t('petitions.duplicateError'));
+      }
+    } catch (err: any) {
+      setError(err.message || 'Biometric signature recording failed.');
     } finally {
       setIsSubmitting(false);
     }
@@ -966,7 +1005,7 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                   </label>
                 </div>
 
-                <div className="pt-3 flex items-center justify-between border-t border-slate-800">
+                <div className="pt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800">
                   <button
                     type="button"
                     onClick={() => setStep(3)}
@@ -975,20 +1014,32 @@ export const PetitionSignModal: React.FC<PetitionSignModalProps> = ({
                     <ArrowLeft className="w-3.5 h-3.5" />
                     <span>Back</span>
                   </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-lanka-gold hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-lg shadow-amber-500/10"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Recording Signature...</span>
-                      </>
-                    ) : (
-                      <span>{t('petitions.confirmSign')}</span>
-                    )}
-                  </button>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleBiometricSign}
+                      disabled={isSubmitting}
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 hover:from-emerald-500 to-teal-600 text-white font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-md shadow-emerald-600/20"
+                    >
+                      <Fingerprint className="w-4 h-4" />
+                      <span>Biometric Sign</span>
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-lanka-gold hover:bg-amber-400 text-slate-950 font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-lg shadow-amber-500/10"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Recording Signature...</span>
+                        </>
+                      ) : (
+                        <span>{t('petitions.confirmSign')}</span>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </form>
             )}

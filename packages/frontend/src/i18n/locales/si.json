@@ -196,7 +196,10 @@
     "enterOtpHint": "{{destination}} වෙත එවන ලද ඉලක්කම් 6 කේතය ඇතුළත් කරන්න",
     "verifyAndSignIn": "තහවුරු කර පිවිසෙන්න",
     "signInWithoutOtp": "සෘජුවම පිවිසෙන්න (පසුව තහවුරු කරන්න)",
-    "otpVerifiedBadge": "✓ ජීවත්වන බව තහවුරු විය"
+    "otpVerifiedBadge": "✓ ජීවත්වන බව තහවුරු විය",
+    "biometricSignIn": "ඇඟිලි සලකුණ / මුහුණ හඳුනාගැනීමෙන් පිවිසෙන්න",
+    "biometricEnable": "මෙම උපාංගයේ ජෛවමිතික පිවිසුම සක්‍රිය කරන්න",
+    "biometricSignPetition": "ජෛවමිතික අත්සන"
   }
 }
 

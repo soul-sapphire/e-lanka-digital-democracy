@@ -14,7 +14,9 @@ import {
   Eye,
   EyeOff,
   UserPlus,
-  KeyRound
+  KeyRound,
+  Fingerprint,
+  ScanFace
 } from 'lucide-react';
 import {
   decodeAndValidateSriLankanNIC,
@@ -27,6 +29,12 @@ import {
   setStoredUser,
   saveRegisteredCitizen
 } from '../services/api';
+import {
+  isBiometricsSupported,
+  detectPlatformName,
+  authenticateBiometrics,
+  registerBiometrics
+} from '../services/webauthn.service';
 
 interface CitizenSignInModalProps {
   isOpen: boolean;
@@ -59,6 +67,13 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isPasswordlessMode, setIsPasswordlessMode] = useState(false);
+
+  // Biometric Authentication (WebAuthn / Passkeys) States
+  const [isBiometricsSupportedOnDevice, setIsBiometricsSupportedOnDevice] = useState(true);
+  const [isAuthenticatingBiometrics, setIsAuthenticatingBiometrics] = useState(false);
+  const [enableBiometricsOnRegister, setEnableBiometricsOnRegister] = useState(true);
+  const [biometricDeviceName, setBiometricDeviceName] = useState('Fingerprint / Face ID');
+  const [biometricInfoMsg, setBiometricInfoMsg] = useState<string | null>(null);
 
   // Register Form States
   const [nicNumber, setNicNumber] = useState('');
@@ -96,6 +111,50 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
     const timer = setTimeout(() => setResendCooldown((prev) => prev - 1), 1000);
     return () => clearTimeout(timer);
   }, [resendCooldown]);
+
+  useEffect(() => {
+    let active = true;
+    isBiometricsSupported().then((supported) => {
+      if (active) {
+        setIsBiometricsSupportedOnDevice(supported);
+        setBiometricDeviceName(detectPlatformName());
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  // Handle Instant Biometric Sign In (Fingerprint / Face ID / Windows Hello)
+  const handleBiometricLogin = async () => {
+    setError(null);
+    setBiometricInfoMsg(null);
+    setIsAuthenticatingBiometrics(true);
+    try {
+      const res = await authenticateBiometrics(loginIdentifier || undefined);
+      if (res.success && (res.nicNumber || res.credential)) {
+        const authRes = await api.citizenBiometricLogin({
+          credentialId: res.credential?.id,
+          nicNumber: res.nicNumber || res.credential?.nicNumber
+        });
+        if (authRes && authRes.token && authRes.user) {
+          setAuthToken(authRes.token);
+          setStoredUser(authRes.user);
+          onSuccess(authRes.user);
+          onClose();
+          navigate('/profile');
+          return;
+        }
+      }
+      if (res.error) {
+        setBiometricInfoMsg(res.error);
+      }
+    } catch (err: any) {
+      setBiometricInfoMsg(err.message || 'Biometric authentication was cancelled.');
+    } finally {
+      setIsAuthenticatingBiometrics(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -252,6 +311,24 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
         registeredAt: new Date().toISOString()
       };
 
+      // Optionally enroll device biometrics (Fingerprint / Face ID / Windows Hello)
+      if (enableBiometricsOnRegister) {
+        try {
+          const bioRes = await registerBiometrics({
+            nicNumber: cleanNIC,
+            email: cleanEmail,
+            username: cleanEmail.split('@')[0],
+            displayName: citizenUser.anonymizedAlias
+          });
+          if (bioRes.success && bioRes.credential) {
+            (citizenUser as any).biometricAuthEnabled = true;
+            (citizenUser as any).biometricCredentialId = bioRes.credential.id;
+          }
+        } catch (bioErr) {
+          console.warn('Optional biometric enrollment error:', bioErr);
+        }
+      }
+
       const res = {
         token: `jwt_citizen_${Date.now()}`,
         user: citizenUser
@@ -367,6 +444,52 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
           {/* TAB 1: CITIZEN SIGN IN (LOGIN SCREEN FIRST) */}
           {authMode === 'LOGIN' && (
             <form onSubmit={handleLoginSubmit} className="space-y-3.5">
+              {/* Biometric Quick Sign In (Fingerprint / Face ID / Windows Hello) */}
+              <div className="p-3 rounded-xl bg-gradient-to-r from-amber-500/10 via-slate-800/90 to-emerald-500/10 border border-amber-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-slate-200 flex items-center gap-1.5">
+                    <Fingerprint className="w-4 h-4 text-lanka-gold" />
+                    <span>Biometric Passkey Sign In</span>
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-lanka-gold font-mono font-medium flex items-center gap-1">
+                    <ScanFace className="w-3 h-3" />
+                    <span>Touch ID / Face ID</span>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleBiometricLogin}
+                  disabled={isAuthenticatingBiometrics}
+                  className="w-full py-2.5 px-3 bg-gradient-to-r from-amber-500 hover:from-amber-400 to-amber-600 text-slate-950 font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-amber-500/15 transition-all text-xs"
+                >
+                  {isAuthenticatingBiometrics ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                      <span>Touch Sensor or Glance at Camera...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Fingerprint className="w-4 h-4" />
+                      <span>Sign In with {biometricDeviceName}</span>
+                    </>
+                  )}
+                </button>
+                {biometricInfoMsg && (
+                  <p className="text-[10px] text-amber-300 bg-amber-950/40 border border-amber-800/50 p-1.5 rounded-lg text-center">
+                    {biometricInfoMsg}
+                  </p>
+                )}
+                <p className="text-[10px] text-slate-400 text-center">
+                  Protected by your device hardware. No password required.
+                </p>
+              </div>
+
+              <div className="relative flex py-0.5 items-center">
+                <div className="flex-grow border-t border-slate-800"></div>
+                <span className="flex-shrink mx-2 text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Or with password / OTP</span>
+                <div className="flex-grow border-t border-slate-800"></div>
+              </div>
+
               <div>
                 <label className="block font-medium text-slate-300 mb-1">
                   Username, Email, or NIC Number *
@@ -691,6 +814,25 @@ export const CitizenSignInModal: React.FC<CitizenSignInModalProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Biometric Passkey Registration Option */}
+              <label className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-800/90 border border-slate-700/80 cursor-pointer text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={enableBiometricsOnRegister}
+                  onChange={(e) => setEnableBiometricsOnRegister(e.target.checked)}
+                  className="mt-0.5 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-0"
+                />
+                <div className="flex-1">
+                  <span className="font-semibold text-white flex items-center gap-1.5 text-[11px]">
+                    <Fingerprint className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Enable {biometricDeviceName} on this device (Recommended)</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 block mt-0.5 leading-tight">
+                    Allows 1-click biometric sign-in next time without entering passwords.
+                  </span>
+                </div>
+              </label>
 
               <button
                 type="submit"

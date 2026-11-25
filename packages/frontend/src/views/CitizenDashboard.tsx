@@ -15,9 +15,19 @@ import {
   Zap,
   Mail,
   Smartphone,
-  ArrowRight
+  ArrowRight,
+  Fingerprint,
+  ScanFace
 } from 'lucide-react';
 import { api, getStoredUser } from '../services/api';
+import {
+  getBiometricsForNic,
+  registerBiometrics,
+  authenticateBiometrics,
+  removeBiometricRecord,
+  detectPlatformName,
+  BiometricCredentialRecord
+} from '../services/webauthn.service';
 
 export const CitizenDashboard: React.FC = () => {
   const { t } = useTranslation();
@@ -61,6 +71,76 @@ export const CitizenDashboard: React.FC = () => {
     } finally {
       setIsErasing(false);
     }
+  };
+
+  // Biometric Passkeys (Fingerprint / Face ID / Windows Hello) State
+  const [biometricsList, setBiometricsList] = useState<BiometricCredentialRecord[]>([]);
+  const [isRegisteringBio, setIsRegisteringBio] = useState(false);
+  const [isTestingBio, setIsTestingBio] = useState(false);
+  const [bioMessage, setBioMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (user?.nicNumber) {
+      setBiometricsList(getBiometricsForNic(user.nicNumber));
+    }
+  }, [user]);
+
+  const handleEnrollBiometrics = async () => {
+    if (!user?.nicNumber) return;
+    setIsRegisteringBio(true);
+    setBioMessage(null);
+    try {
+      const res = await registerBiometrics({
+        nicNumber: user.nicNumber,
+        email: user.email,
+        username: user.username,
+        displayName: user.anonymizedAlias
+      });
+      if (res.success && res.credential) {
+        setBiometricsList(getBiometricsForNic(user.nicNumber));
+        setBioMessage({
+          text: `Successfully enrolled ${detectPlatformName()} for NIC ${user.nicNumber}! You can now sign in with one touch.`,
+          type: 'success'
+        });
+      } else {
+        setBioMessage({
+          text: res.error || 'Biometric enrollment was cancelled.',
+          type: 'error'
+        });
+      }
+    } catch (err: any) {
+      setBioMessage({ text: err.message || 'Failed to enroll biometrics.', type: 'error' });
+    } finally {
+      setIsRegisteringBio(false);
+    }
+  };
+
+  const handleTestBiometrics = async () => {
+    setIsTestingBio(true);
+    setBioMessage(null);
+    try {
+      const res = await authenticateBiometrics(user?.nicNumber);
+      if (res.success) {
+        setBioMessage({
+          text: 'Biometric verification confirmed! Sensor and hardware cryptographic keys are 100% operational.',
+          type: 'success'
+        });
+      } else {
+        setBioMessage({ text: res.error || 'Verification unsuccessful.', type: 'error' });
+      }
+    } catch (err: any) {
+      setBioMessage({ text: err.message || 'Verification cancelled.', type: 'error' });
+    } finally {
+      setIsTestingBio(false);
+    }
+  };
+
+  const handleRemoveBiometrics = (id: string) => {
+    removeBiometricRecord(id);
+    if (user?.nicNumber) {
+      setBiometricsList(getBiometricsForNic(user.nicNumber));
+    }
+    setBioMessage({ text: 'Biometric credential removed from this device.', type: 'success' });
   };
 
   const maskEmailDisplay = (emailStr: string) => {
@@ -184,6 +264,114 @@ export const CitizenDashboard: React.FC = () => {
             <span className="text-lanka-gold font-semibold flex items-center gap-1">
               <Key className="w-3.5 h-3.5" /> {t('dashboard.identityDecoupled')}
             </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Biometric Passkey & Hardware Security Card */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-white space-y-4 shadow-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-lanka-gold border border-amber-500/30 flex items-center justify-center shrink-0">
+              <Fingerprint className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <span>Biometric Passkeys & Fast Login</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
+                  WebAuthn Standard
+                </span>
+              </h3>
+              <p className="text-xs text-slate-400">
+                Log in and sign civic petitions securely using your device fingerprint scanner, Face ID, or Windows Hello.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            {biometricsList.length > 0 ? (
+              <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-xs font-semibold flex items-center gap-1 border border-emerald-500/30">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Enrolled on Device</span>
+              </span>
+            ) : (
+              <span className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400 text-xs font-medium border border-slate-700">
+                Not Enrolled
+              </span>
+            )}
+          </div>
+        </div>
+
+        {bioMessage && (
+          <div
+            className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
+              bioMessage.type === 'success'
+                ? 'bg-emerald-950/60 border border-emerald-800/80 text-emerald-200'
+                : 'bg-red-950/60 border border-red-800/80 text-red-200'
+            }`}
+          >
+            {bioMessage.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+            )}
+            <span>{bioMessage.text}</span>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <div className="space-y-1 text-xs">
+            <span className="text-slate-300 block font-medium">Device Authenticator:</span>
+            <span className="text-slate-400 flex items-center gap-1.5 font-mono text-[11px]">
+              <ScanFace className="w-3.5 h-3.5 text-lanka-gold" />
+              <span>{detectPlatformName()}</span>
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {biometricsList.length === 0 ? (
+              <button
+                type="button"
+                onClick={handleEnrollBiometrics}
+                disabled={isRegisteringBio}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-md transition-all disabled:opacity-50"
+              >
+                {isRegisteringBio ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Touch Sensor...</span>
+                  </>
+                ) : (
+                  <>
+                    <Fingerprint className="w-3.5 h-3.5" />
+                    <span>Enable Fingerprint / Face ID</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleTestBiometrics}
+                  disabled={isTestingBio}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center gap-1.5 border border-slate-700 transition-all disabled:opacity-50"
+                >
+                  {isTestingBio ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  )}
+                  <span>Test Biometric Sensor</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveBiometrics(biometricsList[0].id)}
+                  className="px-3 py-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-300 font-medium text-xs border border-red-800/60 transition-all"
+                >
+                  Remove Key
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

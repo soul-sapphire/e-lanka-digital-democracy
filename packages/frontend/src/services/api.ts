@@ -842,6 +842,72 @@ export const api = {
     throw new Error('Citizen account not found. Please click "Register & Verify NIC" to register your citizen profile.');
   },
 
+  citizenBiometricLogin: async (options: { credentialId?: string; nicNumber?: string }): Promise<any> => {
+    const live = await tryFetch<any>('/auth/citizen-biometric-login', {
+      method: 'POST',
+      body: JSON.stringify(options)
+    });
+    if (live && live.user) return live;
+
+    const citizens = getRegisteredCitizens();
+    let matched: any = null;
+
+    if (options.nicNumber) {
+      const cleanNIC = options.nicNumber.trim().toUpperCase().replace(/[\s-]/g, '');
+      matched = citizens.find(
+        (c) => c.nicNumber && c.nicNumber.toUpperCase().replace(/[\s-]/g, '') === cleanNIC
+      );
+    }
+
+    if (!matched && options.credentialId) {
+      matched = citizens.find((c) => c.biometricCredentialId === options.credentialId);
+    }
+
+    if (!matched && options.nicNumber) {
+      const cleanNIC = options.nicNumber.trim().toUpperCase().replace(/[\s-]/g, '');
+      const nicCheck = decodeAndValidateSriLankanNIC(cleanNIC);
+      if (nicCheck.isValid) {
+        const user = {
+          id: `usr_bio_${Date.now()}`,
+          role: 'CITIZEN',
+          username: `citizen_${cleanNIC.slice(-4)}`,
+          email: `citizen_${cleanNIC.slice(-4)}@e-lanka.gov.lk`,
+          nicNumber: cleanNIC,
+          district: 'Colombo',
+          anonymizedAlias: `Citizen-Colombo-${cleanNIC.slice(-4)}`,
+          isVerifiedCitizen: true,
+          calculatedDOB: formatSriLankanDate(nicCheck.calculatedDOB),
+          gender: nicCheck.gender,
+          isVoterEligible: nicCheck.isVoterEligible,
+          nicDetails: nicCheck,
+          otpVerified: true,
+          verificationChannel: 'BIOMETRIC',
+          biometricAuthEnabled: true,
+          biometricCredentialId: options.credentialId,
+          tier1Verified: true,
+          tier2Verified: true,
+          tier3Verified: true,
+          registeredAt: new Date().toISOString()
+        };
+        saveRegisteredCitizen(user);
+        return { token: `jwt_citizen_bio_${Date.now()}`, user };
+      }
+    }
+
+    if (matched) {
+      matched.isVerifiedCitizen = true;
+      matched.otpVerified = true;
+      matched.biometricAuthEnabled = true;
+      if (options.credentialId) {
+        matched.biometricCredentialId = options.credentialId;
+      }
+      saveRegisteredCitizen(matched);
+      return { token: `jwt_citizen_bio_${Date.now()}`, user: matched };
+    }
+
+    throw new Error('No registered citizen profile matched this biometric credential.');
+  },
+
   adminLogin: async (credentials: {
     email: string;
     password: string;

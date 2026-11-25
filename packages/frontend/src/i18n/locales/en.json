@@ -196,7 +196,10 @@
     "enterOtpHint": "Enter 6-digit code sent to {{destination}}",
     "verifyAndSignIn": "Verify & Sign In",
     "signInWithoutOtp": "Sign In Directly (Verify Later)",
-    "otpVerifiedBadge": "✓ Proof of Life Verified"
+    "otpVerifiedBadge": "✓ Proof of Life Verified",
+    "biometricSignIn": "Sign In with Fingerprint / Face ID",
+    "biometricEnable": "Enable Biometric Login on this Device",
+    "biometricSignPetition": "Biometric Sign"
   }
 }
 
